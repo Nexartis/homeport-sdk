@@ -103,8 +103,9 @@ describe('fetchWithRetry', () => {
 	});
 
 	it('throws NnnError after exhausting retries on 500', async () => {
-		globalThis.fetch = vi.fn()
-			.mockResolvedValue(new Response('server error', { status: 500 }));
+		globalThis.fetch = vi.fn().mockImplementation(() =>
+			Promise.resolve(new Response('server error', { status: 500 }))
+		);
 
 		await expect(
 			fetchWithRetry('https://example.com', {}, 'test', {
