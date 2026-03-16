@@ -1,0 +1,45 @@
+{
+  "name": "@nexartis/nexartis-nanda-node-sdk",
+  "version": "1.0.0",
+  "description": "TypeScript SDK for Nexartis NANDA Node — agent discovery, registry, orchestration, A2A routing.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Nexartis/nexartis-nanda-node-sdk.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "type": "module",
+  "main": "./dist/core/index.js",
+  "types": "./dist/core/index.d.ts",
+  "exports": {
+    "./core": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "nanda",
+    "nnn",
+    "agent-discovery",
+    "a2a",
+    "orchestration",
+    "routing",
+    "nexartis"
+  ],
+  "author": "Nexartis",
+  "license": "UNLICENSED",
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^5.9.3"
+  }
+}
+
