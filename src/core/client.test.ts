@@ -4,11 +4,13 @@ import { NnnError, NnnErrorCode } from './errors';
 
 /** Helper to mock globalThis.fetch */
 function mockFetch(response: { status: number; body: unknown }) {
-	globalThis.fetch = vi.fn().mockResolvedValue(
-		new Response(JSON.stringify(response.body), {
-			status: response.status,
-			headers: { 'Content-Type': 'application/json' }
-		})
+	globalThis.fetch = vi.fn().mockImplementation(() =>
+		Promise.resolve(
+			new Response(JSON.stringify(response.body), {
+				status: response.status,
+				headers: { 'Content-Type': 'application/json' }
+			})
+		)
 	);
 }
 
