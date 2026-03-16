@@ -10,9 +10,13 @@
     "registry": "https://npm.pkg.github.com"
   },
   "type": "module",
-  "main": "./dist/core/index.js",
-  "types": "./dist/core/index.d.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
     "./core": {
       "types": "./dist/core/index.d.ts",
       "import": "./dist/core/index.js"
@@ -24,6 +28,7 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
     "prepublishOnly": "npm run build"
