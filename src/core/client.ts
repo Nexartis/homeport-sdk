@@ -95,6 +95,15 @@ async function safeCallback(
 	}
 }
 
+/** Detect whether a request targets an SSE (text/event-stream) endpoint. */
+function isStreamingRequest(init: RequestInit): boolean {
+	if (!init.headers || typeof init.headers !== 'object') return false;
+	if ('Accept' in (init.headers as Record<string, string>)) {
+		return (init.headers as Record<string, string>).Accept === 'text/event-stream';
+	}
+	return false;
+}
+
 // ── Circuit Breaker ─────────────────────────────────────────────
 
 interface CircuitBreakerState {
@@ -225,9 +234,15 @@ export class NnnClient {
 			const response = await fetchWithRetry(url, init, context, this.retryConfig);
 			const durationMs = Date.now() - startTime;
 
-			// Clone the response before passing to hooks so hook consumers
-			// cannot accidentally consume the body needed by the caller.
-			await this.hooks.afterResponse?.(url, response.clone(), durationMs);
+			const isSSE = isStreamingRequest(init);
+
+			// Fire afterResponse for non-streaming responses.
+			// For SSE (text/event-stream) responses, skip cloning — clone() tees
+			// the ReadableStream, and if the hook doesn't fully consume the
+			// cloned branch it will buffer indefinitely for long-lived streams.
+			if (!isSSE) {
+				await this.hooks.afterResponse?.(url, response.clone(), durationMs);
+			}
 
 			if (!response.ok) {
 				// HTTP error — record failure only for server errors (5xx),
@@ -246,9 +261,8 @@ export class NnnClient {
 
 			// Note: recordSuccess is deferred to safeParseJson() for JSON callers
 			// so that a JSON parse failure doesn't prematurely reset the streak.
-			// Streaming callers bypass safeParseJson, so record success here
-			// based on Accept header — SSE streams won't go through safeParseJson.
-			if (!skipBreaker && init.headers && typeof init.headers === 'object' && 'Accept' in init.headers && (init.headers as Record<string, string>).Accept === 'text/event-stream') {
+			// Streaming callers bypass safeParseJson, so record success here.
+			if (!skipBreaker && isSSE) {
 				this.recordSuccess();
 			}
 			return response;
