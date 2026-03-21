@@ -107,13 +107,6 @@ describe('fetchWithRetry', () => {
 			Promise.resolve(new Response('server error', { status: 500 }))
 		);
 
-		await expect(fetchWithRetry('https://example.com', {}, 'test', {
-			maxRetries: 1,
-			baseDelayMs: 1,
-			maxDelayMs: 10,
-			timeoutMs: 5000
-		})).rejects.toThrow(NnnError);
-
 		try {
 			await fetchWithRetry('https://example.com', {}, 'test', {
 				maxRetries: 1,
@@ -121,6 +114,8 @@ describe('fetchWithRetry', () => {
 				maxDelayMs: 10,
 				timeoutMs: 5000
 			});
+			// Should not reach here
+			expect.unreachable('fetchWithRetry should have thrown');
 		} catch (err) {
 			expect(err).toBeInstanceOf(NnnError);
 			const nnnErr = err as NnnError;

@@ -258,7 +258,11 @@ export class NnnClient {
 				throw err;
 			}
 			const durationMs = Date.now() - startTime;
-			if (!skipBreaker) this.recordFailure();
+
+			// 429 (rate-limit) is a client-side throttle, not a server failure —
+			// don't let it trip the circuit breaker.
+			const is429 = err instanceof NnnError && err.statusCode === 429;
+			if (!skipBreaker && !is429) this.recordFailure();
 
 			// Enrich NnnError with duration context before firing onError
 			// so hook consumers can access timing information
@@ -268,8 +272,10 @@ export class NnnClient {
 				// Fire afterResponse for retried-out 5xx/429 errors that carry
 				// the last HTTP response, honouring the "fires for every response"
 				// contract documented on NnnHooks.afterResponse.
+				// Clone the response so afterResponse body consumption doesn't
+				// prevent onError from inspecting the same response.
 				if (err.lastResponse) {
-					await this.hooks.afterResponse?.(url, err.lastResponse, durationMs);
+					await this.hooks.afterResponse?.(url, err.lastResponse.clone(), durationMs);
 				}
 			}
 			await this.hooks.onError?.(url, err);
