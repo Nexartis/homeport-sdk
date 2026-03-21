@@ -31,7 +31,12 @@
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "npm run build"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "*.ts": "tsc --noEmit && vitest run"
   },
   "keywords": [
     "nanda",
@@ -46,6 +51,8 @@
   "license": "UNLICENSED",
   "devDependencies": {
     "@types/node": "^25.5.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0"
   }
