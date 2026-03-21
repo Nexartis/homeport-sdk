@@ -17,6 +17,11 @@ export interface NnnHooks {
 	 * Called after every response (including 4xx/5xx). Fires before error handling.
 	 * The response passed to this hook is a **clone** — reading its body will not
 	 * affect the caller. However, avoid heavy body reads in hot paths.
+	 *
+	 * **Note:** For SSE (`text/event-stream`) responses this hook is intentionally
+	 * skipped because `response.clone()` tees the underlying `ReadableStream` and,
+	 * if the cloned branch is not fully consumed, buffers indefinitely for
+	 * long-lived streams.
 	 */
 	afterResponse?: (url: string, response: Response, durationMs: number) => void | Promise<void>;
 	/** Called on request failure (after retries exhausted). */

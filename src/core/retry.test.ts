@@ -107,6 +107,7 @@ describe('fetchWithRetry', () => {
 			Promise.resolve(new Response('server error', { status: 500 }))
 		);
 
+		let caughtError: unknown;
 		try {
 			await fetchWithRetry('https://example.com', {}, 'test', {
 				maxRetries: 1,
@@ -115,15 +116,17 @@ describe('fetchWithRetry', () => {
 				timeoutMs: 5000
 			});
 			// Should not reach here
-			expect.unreachable('fetchWithRetry should have thrown');
+			expect.fail('fetchWithRetry should have thrown');
 		} catch (err) {
-			expect(err).toBeInstanceOf(NnnError);
-			const nnnErr = err as NnnError;
-			expect(nnnErr.statusCode).toBe(500);
-			// lastResponse is attached so upstream hooks (e.g. afterResponse) can inspect it
-			expect(nnnErr.lastResponse).toBeDefined();
-			expect(nnnErr.lastResponse!.status).toBe(500);
+			caughtError = err;
 		}
+
+		expect(caughtError).toBeInstanceOf(NnnError);
+		const nnnErr = caughtError as NnnError;
+		expect(nnnErr.statusCode).toBe(500);
+		// lastResponse is attached so upstream hooks (e.g. afterResponse) can inspect it
+		expect(nnnErr.lastResponse).toBeDefined();
+		expect(nnnErr.lastResponse!.status).toBe(500);
 	});
 
 	it('does not retry on 404 (permanent failure)', async () => {

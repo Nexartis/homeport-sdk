@@ -95,13 +95,27 @@ async function safeCallback(
 	}
 }
 
-/** Detect whether a request targets an SSE (text/event-stream) endpoint. */
+/**
+ * Detect whether a request targets an SSE (text/event-stream) endpoint.
+ * Handles plain-object headers, `Headers` instances, and case-insensitive
+ * Accept values so detection remains reliable even if a `beforeRequest` hook
+ * mutates the headers.
+ */
 function isStreamingRequest(init: RequestInit): boolean {
-	if (!init.headers || typeof init.headers !== 'object') return false;
-	if ('Accept' in (init.headers as Record<string, string>)) {
-		return (init.headers as Record<string, string>).Accept === 'text/event-stream';
+	if (!init.headers) return false;
+
+	let accept: string | null | undefined;
+	if (init.headers instanceof Headers) {
+		accept = init.headers.get('Accept');
+	} else if (typeof init.headers === 'object') {
+		// Plain object — try common casings
+		const h = init.headers as Record<string, string>;
+		accept = h['Accept'] ?? h['accept'] ?? h['ACCEPT'];
 	}
-	return false;
+
+	if (!accept) return false;
+	// Handle combined values like "text/event-stream, application/json"
+	return accept.toLowerCase().includes('text/event-stream');
 }
 
 // ── Circuit Breaker ─────────────────────────────────────────────
