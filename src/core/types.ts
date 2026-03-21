@@ -336,3 +336,284 @@ export interface IndexChangeEvent {
 	timestamp: string;
 }
 
+// ── Sprint 1: Orchestration CRUD ──────────────────────────────────
+
+export interface WorkflowStep {
+	id: string;
+	workflowId: string;
+	agentId: string;
+	action: string;
+	order: number;
+	config: Record<string, unknown>;
+	dependsOn: string[];
+	condition: Record<string, unknown> | null;
+}
+
+export interface WorkflowDetail {
+	workflow: WorkflowRecord & {
+		dag: { nodes: unknown[]; edges: unknown[] };
+		metadata: Record<string, unknown>;
+	};
+	steps: WorkflowStep[];
+}
+
+export interface UpdateWorkflowRequest {
+	name?: string;
+	description?: string;
+	status?: 'draft' | 'active' | 'archived';
+	dag?: { nodes: unknown[]; edges: unknown[] };
+	metadata?: Record<string, unknown>;
+}
+
+export interface DelegateTaskRequest {
+	delegator_id: string;
+	action: string;
+	input?: Record<string, unknown>;
+	parent_workflow_id?: string;
+	parent_step_id?: string;
+	required_capabilities?: string[];
+	target_agent_id?: string;
+	timeout_ms?: number;
+	max_retries?: number;
+}
+
+export interface DelegationResult {
+	id: string;
+	status: 'pending' | 'completed' | 'failed';
+	delegator_id: string;
+	action: string;
+	target_agent_id?: string;
+	result?: unknown;
+	error?: string;
+	created_at: string;
+}
+
+export interface ListPatternsOptions {
+	category?: string;
+	builtin?: boolean;
+}
+
+export interface OrchestratorPattern {
+	id: string;
+	name: string;
+	description: string | null;
+	category: string;
+	dagTemplate: { nodes: unknown[]; edges: unknown[] };
+	inputSchema: Record<string, unknown> | null;
+	tags: string[];
+	isBuiltin: number;
+}
+
+export interface CreatePatternRequest {
+	name: string;
+	description?: string;
+	category?: string;
+	dag_template: { nodes: unknown[]; edges: unknown[] };
+	input_schema?: Record<string, unknown>;
+	tags?: string[];
+}
+
+export interface ListConflictsParams {
+	workflow_id?: string;
+	run_id?: string;
+	pending_only?: boolean;
+}
+
+export interface ConflictCandidate {
+	agent_id: string;
+	response: unknown;
+	score: number;
+	timestamp: number;
+	metadata?: Record<string, unknown>;
+}
+
+export interface OrchestrationConflict {
+	id: string;
+	workflow_id: string;
+	run_id: string | null;
+	step_id: string | null;
+	conflict_type: 'competing_response' | 'timeout_race' | 'capability_overlap';
+	strategy: 'highest_score' | 'first_wins' | 'voting' | 'manual';
+	candidates: ConflictCandidate[];
+	winner_agent_id: string | null;
+	winner_response: unknown;
+	resolution_score: number | null;
+	resolved: boolean;
+	resolved_at: string | null;
+	created_at: string;
+}
+
+export interface RaiseConflictRequest {
+	workflow_id: string;
+	run_id?: string;
+	step_id?: string;
+	conflict_type?: 'competing_response' | 'timeout_race' | 'capability_overlap';
+	strategy?: 'highest_score' | 'first_wins' | 'voting' | 'manual';
+	candidates: ConflictCandidate[];
+	metadata?: Record<string, unknown>;
+}
+
+export interface ConflictOutcome {
+	conflict_id: string;
+	resolved: boolean;
+	winner_agent_id: string | null;
+	winner_response: unknown;
+	resolution_score: number | null;
+	strategy: string;
+}
+
+// ── Sprint 2: Resolution & Trust ──────────────────────────────────
+
+export interface AgentAddr {
+	agent_id: string;
+	agent_url: string;
+	api_url: string | null;
+	facts_url: string | null;
+	ttl_seconds: number;
+	signature: string;
+	signed_at: number;
+}
+
+export interface ResolutionContext {
+	min_trust_score?: number;
+	required_capabilities?: string[];
+	protocol_preference?: 'a2a' | 'mcp' | 'https' | 'nlweb' | 'any';
+	caller_region?: string;
+}
+
+export interface ResolvedEndpoint {
+	url: string;
+	protocol: string;
+	score: number;
+	latency_ms: number | null;
+	trust_score: number | null;
+}
+
+export interface ResolutionResult {
+	agent_id: string;
+	endpoints: ResolvedEndpoint[];
+	strategy_used: string;
+	resolved_at: string;
+}
+
+export interface ReputationEntry {
+	agent_id: string;
+	reputation: number | null;
+	availability: number | null;
+	error_rate: number | null;
+	fraud_rate: number | null;
+	p95_latency_ms: number | null;
+	probe_success: number | null;
+	cert_score: number | null;
+	actions: string[];
+	snapshot_at: string | null;
+	cert_grade: string | null;
+	cert_capability: string | null;
+	cert_issued_at: string | null;
+}
+
+export interface TrustScoresOptions {
+	agent?: string;
+	offset?: number;
+	limit?: number;
+}
+
+export interface TrustFrameworksOptions {
+	id?: string;
+}
+
+
+// ── Sprint 3: Billing, Webhooks & Federation ──────────────────────
+
+export type SubscriptionPlan = 'starter' | 'pro' | 'enterprise';
+
+export interface CreateSubscriptionRequest {
+	key_id: string;
+	plan: SubscriptionPlan;
+}
+
+export interface CreateInvoiceRequest {
+	key_id: string;
+	period_id?: string;
+	subscription_id?: string;
+	line_items?: Array<{
+		description: string;
+		quantity: number;
+		unit_price_np: number;
+		total_np: number;
+	}>;
+	overage_call_count?: number;
+}
+
+export interface CreateCheckoutRequest {
+	capabilities: Array<{ id: string; quantity: number }>;
+	client_agent_id?: string;
+}
+
+export interface CheckoutLineItem {
+	capability_id: string;
+	quantity: number;
+	unit_price: number;
+	total: number;
+}
+
+export interface CheckoutTotals {
+	subtotal: number;
+	discount: number;
+	tax: number;
+	total: number;
+	currency: string;
+}
+
+export interface CheckoutPayment {
+	method: string;
+	status: string;
+	provider_ref: string | null;
+	amount: number;
+	currency: string;
+}
+
+export interface CheckoutSession {
+	id: string;
+	status: 'open' | 'pending_payment' | 'completed' | 'paid' | 'expired' | 'cancelled';
+	client_agent_id: string | null;
+	line_items: CheckoutLineItem[];
+	totals: CheckoutTotals;
+	payment: CheckoutPayment | null;
+	metadata: Record<string, unknown> | null;
+	created_at: number;
+	updated_at: number;
+	expires_at: number;
+}
+
+export interface CreateWebhookRequest {
+	callback_url: string;
+	events: string[];
+}
+
+export interface WebhookSubscription {
+	id: string;
+	callback_url: string;
+	events: string;
+	status: string;
+	owner_id: string;
+	created_at: string;
+	updated_at: string;
+}
+
+export interface CreateWebhookResponse {
+	id: string;
+	secret: string;
+	callback_url: string;
+	events: string[];
+	status: string;
+	message: string;
+}
+
+export interface EarningsActionRequest {
+	action: 'register-split' | 'compute-shares' | 'settle';
+	developerId?: string;
+	agentId?: string;
+	splitPct?: number;
+	periodId?: string;
+}

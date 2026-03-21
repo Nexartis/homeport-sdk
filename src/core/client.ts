@@ -37,7 +37,32 @@ import type {
 	IndexChangeEvent,
 	NnnHooks,
 	NnnCircuitBreakerConfig,
-	PaginatedResponse
+	PaginatedResponse,
+	WorkflowDetail,
+	UpdateWorkflowRequest,
+	DelegateTaskRequest,
+	DelegationResult,
+	ListPatternsOptions,
+	OrchestratorPattern,
+	CreatePatternRequest,
+	ListConflictsParams,
+	OrchestrationConflict,
+	RaiseConflictRequest,
+	ConflictOutcome,
+	AgentAddr,
+	ResolutionContext,
+	ResolutionResult,
+	ReputationEntry,
+	TrustScoresOptions,
+	TrustFrameworksOptions,
+	CreateSubscriptionRequest,
+	CreateInvoiceRequest,
+	CreateCheckoutRequest,
+	CheckoutSession,
+	CreateWebhookRequest,
+	CreateWebhookResponse,
+	WebhookSubscription,
+	EarningsActionRequest
 } from './types';
 
 import { fetchWithRetry } from './retry';
@@ -232,6 +257,21 @@ export class NnnClient {
 		return res.json() as Promise<T>;
 	}
 
+	/**
+	 * PATCH JSON helper — fetch + parse + error handling.
+	 */
+	private async patchJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
+		const res = await this.fetch(
+			`${this.baseUrl}${path}`,
+			{ method: 'PATCH', headers: this.headers(), body: JSON.stringify(body) },
+			ctx
+		);
+		if (!res.ok) {
+			throw NnnError.fromStatus(res.status, `${ctx} failed (${res.status}): ${await res.text()}`);
+		}
+		return res.json() as Promise<T>;
+	}
+
 	// ── Health ────────────────────────────────────────────────────────
 
 	/** GET /health */
@@ -408,6 +448,221 @@ export class NnnClient {
 			input ?? {},
 			'runWorkflow'
 		);
+	}
+
+	/** GET /api/orchestration/:id — Get a single workflow by ID. */
+	async getWorkflow(workflowId: string): Promise<WorkflowDetail> {
+		return this.getJson(`/api/orchestration/${encodeURIComponent(workflowId)}`, 'getWorkflow');
+	}
+
+	/** PATCH /api/orchestration/:id — Update a workflow. */
+	async updateWorkflow(
+		workflowId: string,
+		updates: UpdateWorkflowRequest
+	): Promise<{ ok: boolean; workflow: WorkflowRecord }> {
+		this.logger.debug('Updating workflow', { workflowId });
+		return this.patchJson(`/api/orchestration/${encodeURIComponent(workflowId)}`, updates, 'updateWorkflow');
+	}
+
+	/** DELETE /api/orchestration/:id — Delete a workflow. */
+	async deleteWorkflow(workflowId: string): Promise<{ ok: boolean; deleted: string }> {
+		this.logger.debug('Deleting workflow', { workflowId });
+		return this.deleteJson(`/api/orchestration/${encodeURIComponent(workflowId)}`, 'deleteWorkflow');
+	}
+
+	/** POST /api/orchestration/delegate — Delegate a task to an agent. */
+	async delegateTask(params: DelegateTaskRequest): Promise<DelegationResult> {
+		this.logger.debug('Delegating task', { action: params.action, delegator: params.delegator_id });
+		return this.postJson('/api/orchestration/delegate', params, 'delegateTask');
+	}
+
+	/** GET /api/orchestration/delegate?workflow_id= — List delegations for a workflow. */
+	async listDelegations(workflowId: string): Promise<{ delegations: DelegationResult[] }> {
+		const sp = new URLSearchParams({ workflow_id: workflowId });
+		return this.getJson(`/api/orchestration/delegate?${sp.toString()}`, 'listDelegations');
+	}
+
+	/** GET /api/orchestration/patterns — List orchestration patterns. */
+	async listPatterns(options: ListPatternsOptions = {}): Promise<{ patterns: OrchestratorPattern[] }> {
+		const sp = new URLSearchParams();
+		if (options.category) sp.set('category', options.category);
+		if (options.builtin !== undefined) sp.set('builtin', String(options.builtin));
+		const qs = sp.toString();
+		return this.getJson(`/api/orchestration/patterns${qs ? `?${qs}` : ''}`, 'listPatterns');
+	}
+
+	/** POST /api/orchestration/patterns — Create a new orchestration pattern. */
+	async createPattern(params: CreatePatternRequest): Promise<{ status: string; pattern: OrchestratorPattern }> {
+		this.logger.debug('Creating pattern', { name: params.name });
+		return this.postJson('/api/orchestration/patterns', params, 'createPattern');
+	}
+
+	/** GET /api/orchestration/conflicts — List orchestration conflicts. */
+	async listConflicts(params: ListConflictsParams = {}): Promise<{ conflicts: OrchestrationConflict[]; total: number }> {
+		const sp = new URLSearchParams();
+		if (params.workflow_id) sp.set('workflow_id', params.workflow_id);
+		if (params.run_id) sp.set('run_id', params.run_id);
+		if (params.pending_only !== undefined) sp.set('pending_only', String(params.pending_only));
+		const qs = sp.toString();
+		return this.getJson(`/api/orchestration/conflicts${qs ? `?${qs}` : ''}`, 'listConflicts');
+	}
+
+	/** POST /api/orchestration/conflicts — Raise and resolve a conflict. */
+	async raiseConflict(params: RaiseConflictRequest): Promise<ConflictOutcome> {
+		this.logger.debug('Raising conflict', { workflowId: params.workflow_id });
+		return this.postJson('/api/orchestration/conflicts', params, 'raiseConflict');
+	}
+
+	// ── Resolution & Trust ──────────────────────────────────────────
+
+	/** GET /resolve/:agent_id — Resolve an agent to its address record. */
+	async resolveAgent(agentId: string): Promise<AgentAddr> {
+		return this.getJson(`/resolve/${encodeURIComponent(agentId)}`, 'resolveAgent');
+	}
+
+	/** POST /resolve — Adaptive resolution with context-aware ranking. */
+	async adaptiveResolve(agentId: string, context?: ResolutionContext): Promise<ResolutionResult> {
+		return this.postJson('/resolve', { agent_id: agentId, context }, 'adaptiveResolve');
+	}
+
+	/** GET /reputation — Get reputation scores for all agents. */
+	async getReputation(): Promise<{ agents: ReputationEntry[]; total: number; fetchedAt: string }> {
+		return this.getJson('/reputation', 'getReputation');
+	}
+
+	/** GET /api/trust/scores — Get trust scores (optionally for a single agent). */
+	async getTrustScores(options: TrustScoresOptions = {}): Promise<Record<string, unknown>> {
+		const sp = new URLSearchParams();
+		if (options.agent) sp.set('agent', options.agent);
+		if (options.offset !== undefined) sp.set('offset', String(options.offset));
+		if (options.limit !== undefined) sp.set('limit', String(options.limit));
+		const qs = sp.toString();
+		return this.getJson(`/api/trust/scores${qs ? `?${qs}` : ''}`, 'getTrustScores');
+	}
+
+	/** GET /api/trust/framework — Get trust frameworks (optionally a single one). */
+	async getTrustFrameworks(options: TrustFrameworksOptions = {}): Promise<Record<string, unknown>> {
+		const sp = new URLSearchParams();
+		if (options.id) sp.set('id', options.id);
+		const qs = sp.toString();
+		return this.getJson(`/api/trust/framework${qs ? `?${qs}` : ''}`, 'getTrustFrameworks');
+	}
+
+	/** POST /api/trust/cross-registry — Sync trust scores across federated registries. */
+	async syncCrossRegistryTrust(adminKey?: string): Promise<Record<string, unknown>> {
+		const headers: Record<string, string> = { ...this.headers() };
+		if (adminKey) headers['Authorization'] = `Bearer ${adminKey}`;
+		const res = await this.fetch(
+			`${this.baseUrl}/api/trust/cross-registry`,
+			{ method: 'POST', headers, body: JSON.stringify({}) },
+			'syncCrossRegistryTrust'
+		);
+		if (!res.ok) {
+			throw NnnError.fromStatus(res.status, `syncCrossRegistryTrust failed (${res.status}): ${await res.text()}`);
+		}
+		return res.json() as Promise<Record<string, unknown>>;
+	}
+
+	// ── Billing & Subscriptions ─────────────────────────────────────
+
+	/** GET /api/subscriptions?keyId= — Get subscription for a key. */
+	async getSubscription(keyId: string): Promise<Record<string, unknown>> {
+		return this.getJson(`/api/subscriptions?keyId=${encodeURIComponent(keyId)}`, 'getSubscription');
+	}
+
+	/** POST /api/subscriptions — Create a new subscription. */
+	async createSubscription(params: CreateSubscriptionRequest): Promise<Record<string, unknown>> {
+		return this.postJson('/api/subscriptions', params, 'createSubscription');
+	}
+
+	/** GET /api/invoices?keyId= — List invoices for a key. */
+	async listInvoices(keyId: string): Promise<Record<string, unknown>> {
+		return this.getJson(`/api/invoices?keyId=${encodeURIComponent(keyId)}`, 'listInvoices');
+	}
+
+	/** POST /api/invoices — Create a new invoice. */
+	async createInvoice(params: CreateInvoiceRequest): Promise<Record<string, unknown>> {
+		return this.postJson('/api/invoices', params, 'createInvoice');
+	}
+
+	// ── Checkout Sessions ───────────────────────────────────────────
+
+	/** POST /api/ucp/checkout-sessions — Create a checkout session. */
+	async createCheckoutSession(params: CreateCheckoutRequest): Promise<CheckoutSession> {
+		return this.postJson('/api/ucp/checkout-sessions', params, 'createCheckoutSession');
+	}
+
+	/** GET /api/ucp/checkout-sessions?id= — Get a checkout session. */
+	async getCheckoutSession(sessionId: string): Promise<CheckoutSession> {
+		return this.getJson(`/api/ucp/checkout-sessions?id=${encodeURIComponent(sessionId)}`, 'getCheckoutSession');
+	}
+
+	/** PATCH /api/ucp/checkout-sessions/:id — Submit payment for a checkout session. */
+	async submitCheckoutPayment(sessionId: string, payment: Record<string, unknown>): Promise<Record<string, unknown>> {
+		return this.patchJson(`/api/ucp/checkout-sessions/${encodeURIComponent(sessionId)}`, { payment }, 'submitCheckoutPayment');
+	}
+
+	/** DELETE /api/ucp/checkout-sessions/:id — Cancel a checkout session. */
+	async cancelCheckoutSession(sessionId: string): Promise<{ id: string; status: string }> {
+		return this.deleteJson(`/api/ucp/checkout-sessions/${encodeURIComponent(sessionId)}`, 'cancelCheckoutSession');
+	}
+
+	// ── Webhooks ────────────────────────────────────────────────────
+
+	/** GET /api/webhooks — List webhook subscriptions. */
+	async listWebhooks(): Promise<{ subscriptions: WebhookSubscription[] }> {
+		return this.getJson('/api/webhooks', 'listWebhooks');
+	}
+
+	/** POST /api/webhooks — Create a webhook subscription. */
+	async createWebhook(params: CreateWebhookRequest): Promise<CreateWebhookResponse> {
+		return this.postJson('/api/webhooks', params, 'createWebhook');
+	}
+
+	/** GET /api/webhooks/:id — Get a single webhook subscription. */
+	async getWebhook(webhookId: string): Promise<{ subscription: WebhookSubscription }> {
+		return this.getJson(`/api/webhooks/${encodeURIComponent(webhookId)}`, 'getWebhook');
+	}
+
+	/** PATCH /api/webhooks/:id — Update a webhook (pause/resume). */
+	async updateWebhook(webhookId: string, action: 'pause' | 'resume'): Promise<Record<string, unknown>> {
+		return this.patchJson(`/api/webhooks/${encodeURIComponent(webhookId)}`, { action }, 'updateWebhook');
+	}
+
+	/** DELETE /api/webhooks/:id — Delete a webhook subscription. */
+	async deleteWebhook(webhookId: string): Promise<{ ok: boolean; deleted: string }> {
+		return this.deleteJson(`/api/webhooks/${encodeURIComponent(webhookId)}`, 'deleteWebhook');
+	}
+
+	// ── Earnings ────────────────────────────────────────────────────
+
+	/** GET /api/developer/earnings — Get developer earnings. */
+	async getEarnings(developerId: string, view?: string): Promise<Record<string, unknown>> {
+		const sp = new URLSearchParams({ developerId });
+		if (view) sp.set('view', view);
+		return this.getJson(`/api/developer/earnings?${sp.toString()}`, 'getEarnings');
+	}
+
+	/** POST /api/developer/earnings — Perform an earnings action. */
+	async earningsAction(params: EarningsActionRequest): Promise<Record<string, unknown>> {
+		return this.postJson('/api/developer/earnings', params, 'earningsAction');
+	}
+
+	// ── Federation ──────────────────────────────────────────────────
+
+	/** GET /federation/peers — Get federation peer list. */
+	async getFederationPeers(): Promise<Record<string, unknown>> {
+		return this.getJson('/federation/peers', 'getFederationPeers');
+	}
+
+	/** GET /federation/status — Get federation status. */
+	async getFederationStatus(): Promise<Record<string, unknown>> {
+		return this.getJson('/federation/status', 'getFederationStatus');
+	}
+
+	/** GET /federation/agents — Get federated agents. */
+	async getFederatedAgents(): Promise<Record<string, unknown>> {
+		return this.getJson('/federation/agents', 'getFederatedAgents');
 	}
 
 	// ── 1.1 A2A JSON-RPC Client ─────────────────────────────────────

@@ -246,6 +246,664 @@ describe('NnnClient', () => {
 		});
 	});
 
+	// ── Sprint 1: Orchestration CRUD ────────────────────────────────
+
+	describe('getWorkflow()', () => {
+		it('fetches a single workflow by ID', async () => {
+			const detail = {
+				workflow: { id: 'wf-1', name: 'WF1', ownerId: 'o1', status: 'active', dag: { nodes: [], edges: [] }, metadata: {}, createdAt: '2026-01-01', updatedAt: '2026-01-01' },
+				steps: [{ id: 's1', workflowId: 'wf-1', agentId: 'a1', action: 'run', order: 1, config: {}, dependsOn: [], condition: null }]
+			};
+			mockFetch({ status: 200, body: detail });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getWorkflow('wf-1');
+			expect(result.workflow.id).toBe('wf-1');
+			expect(result.steps).toHaveLength(1);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/orchestration/wf-1');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 404, body: 'not found' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.getWorkflow('nonexistent')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('updateWorkflow()', () => {
+		it('sends PATCH request to update a workflow', async () => {
+			const updated = { ok: true, workflow: { id: 'wf-1', name: 'Updated', ownerId: 'o1', status: 'active', createdAt: '2026-01-01', updatedAt: '2026-01-02' } };
+			mockFetch({ status: 200, body: updated });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.updateWorkflow('wf-1', { name: 'Updated', status: 'active' });
+			expect(result.ok).toBe(true);
+			expect(result.workflow.name).toBe('Updated');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/orchestration/wf-1');
+			expect(fetchCall[1].method).toBe('PATCH');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'internal error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.updateWorkflow('wf-1', { name: 'Fail' })).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('deleteWorkflow()', () => {
+		it('sends DELETE request to delete a workflow', async () => {
+			mockFetch({ status: 200, body: { ok: true, deleted: 'wf-1' } });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.deleteWorkflow('wf-1');
+			expect(result.ok).toBe(true);
+			expect(result.deleted).toBe('wf-1');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/orchestration/wf-1');
+			expect(fetchCall[1].method).toBe('DELETE');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 404, body: 'not found' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.deleteWorkflow('nonexistent')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('delegateTask()', () => {
+		it('posts a delegation request', async () => {
+			const delegation = { id: 'del-1', status: 'completed', delegator_id: 'agent-1', action: 'summarize', target_agent_id: 'agent-2', result: { summary: 'done' }, created_at: '2026-01-01' };
+			mockFetch({ status: 200, body: delegation });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.delegateTask({ delegator_id: 'agent-1', action: 'summarize', target_agent_id: 'agent-2' });
+			expect(result.id).toBe('del-1');
+			expect(result.status).toBe('completed');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/orchestration/delegate');
+			expect(fetchCall[1].method).toBe('POST');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'internal error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.delegateTask({ delegator_id: 'a', action: 'b' })).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('listDelegations()', () => {
+		it('fetches delegations for a workflow', async () => {
+			const delegations = [{ id: 'del-1', status: 'completed', delegator_id: 'a1', action: 'run', created_at: '2026-01-01' }];
+			mockFetch({ status: 200, body: { delegations } });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.listDelegations('wf-1');
+			expect(result.delegations).toHaveLength(1);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/orchestration/delegate');
+			expect(fetchCall[0]).toContain('workflow_id=wf-1');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.listDelegations('wf-1')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('listPatterns()', () => {
+		it('lists patterns without filters', async () => {
+			const patterns = [{ id: 'p1', name: 'Sequential', description: null, category: 'basic', dagTemplate: { nodes: [], edges: [] }, inputSchema: null, tags: [], isBuiltin: 1 }];
+			mockFetch({ status: 200, body: { patterns } });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.listPatterns();
+			expect(result.patterns).toHaveLength(1);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/orchestration/patterns');
+			expect(fetchCall[0]).not.toContain('?');
+		});
+
+		it('passes filter params', async () => {
+			mockFetch({ status: 200, body: { patterns: [] } });
+			const client = new NnnClient(BASE_CONFIG);
+			await client.listPatterns({ category: 'advanced', builtin: true });
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('category=advanced');
+			expect(fetchCall[0]).toContain('builtin=true');
+		});
+	});
+
+	describe('createPattern()', () => {
+		it('posts a new pattern', async () => {
+			const pattern = { id: 'p2', name: 'Fan-out', description: 'Parallel', category: 'advanced', dagTemplate: { nodes: [], edges: [] }, inputSchema: null, tags: ['parallel'], isBuiltin: 0 };
+			mockFetch({ status: 201, body: { status: 'created', pattern } });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.createPattern({ name: 'Fan-out', dag_template: { nodes: [], edges: [] }, tags: ['parallel'] });
+			expect(result.status).toBe('created');
+			expect(result.pattern.name).toBe('Fan-out');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/orchestration/patterns');
+			expect(fetchCall[1].method).toBe('POST');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 400, body: 'bad request' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.createPattern({ name: '', dag_template: { nodes: [], edges: [] } })).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('listConflicts()', () => {
+		it('lists conflicts without filters', async () => {
+			const conflicts = [{ id: 'c1', workflow_id: 'wf-1', run_id: null, step_id: null, conflict_type: 'competing_response', strategy: 'highest_score', candidates: [], winner_agent_id: null, winner_response: null, resolution_score: null, resolved: false, resolved_at: null, created_at: '2026-01-01' }];
+			mockFetch({ status: 200, body: { conflicts, total: 1 } });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.listConflicts();
+			expect(result.conflicts).toHaveLength(1);
+			expect(result.total).toBe(1);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/orchestration/conflicts');
+		});
+
+		it('passes filter params', async () => {
+			mockFetch({ status: 200, body: { conflicts: [], total: 0 } });
+			const client = new NnnClient(BASE_CONFIG);
+			await client.listConflicts({ workflow_id: 'wf-1', pending_only: true });
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('workflow_id=wf-1');
+			expect(fetchCall[0]).toContain('pending_only=true');
+		});
+	});
+
+	describe('raiseConflict()', () => {
+		it('raises and resolves a conflict', async () => {
+			const outcome = { conflict_id: 'c1', resolved: true, winner_agent_id: 'a1', winner_response: { result: 'ok' }, resolution_score: 0.95, strategy: 'highest_score' };
+			mockFetch({ status: 200, body: outcome });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.raiseConflict({
+				workflow_id: 'wf-1',
+				candidates: [
+					{ agent_id: 'a1', response: { result: 'ok' }, score: 0.95, timestamp: Date.now() },
+					{ agent_id: 'a2', response: { result: 'meh' }, score: 0.7, timestamp: Date.now() }
+				]
+			});
+			expect(result.resolved).toBe(true);
+			expect(result.winner_agent_id).toBe('a1');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/orchestration/conflicts');
+			expect(fetchCall[1].method).toBe('POST');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.raiseConflict({ workflow_id: 'wf-1', candidates: [] })).rejects.toThrow(NnnError);
+		});
+	});
+
+	// ── Sprint 2: Resolution & Trust ────────────────────────────────
+
+	describe('resolveAgent()', () => {
+		it('resolves an agent by ID', async () => {
+			const addr = { agent_id: 'agent-1', agent_url: 'https://agent.example.com', api_url: null, facts_url: null, ttl_seconds: 300, signature: 'sig123', signed_at: 1700000000 };
+			mockFetch({ status: 200, body: addr });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.resolveAgent('agent-1');
+			expect(result.agent_id).toBe('agent-1');
+			expect(result.ttl_seconds).toBe(300);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/resolve/agent-1');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 404, body: 'not found' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.resolveAgent('unknown')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('adaptiveResolve()', () => {
+		it('performs adaptive resolution with context', async () => {
+			const resolution = { agent_id: 'agent-1', endpoints: [{ url: 'https://a.com', protocol: 'a2a', score: 0.9, latency_ms: 50, trust_score: 0.85 }], strategy_used: 'trust-weighted', resolved_at: '2026-01-01' };
+			mockFetch({ status: 200, body: resolution });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.adaptiveResolve('agent-1', { min_trust_score: 0.8, protocol_preference: 'a2a' });
+			expect(result.endpoints).toHaveLength(1);
+			expect(result.strategy_used).toBe('trust-weighted');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/resolve');
+			expect(fetchCall[1].method).toBe('POST');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.adaptiveResolve('agent-1')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('getReputation()', () => {
+		it('fetches reputation data', async () => {
+			const rep = { agents: [{ agent_id: 'a1', reputation: 0.95, availability: 0.99, error_rate: 0.01, fraud_rate: 0, p95_latency_ms: 120, probe_success: 1, cert_score: 0.9, actions: ['chat'], snapshot_at: '2026-01-01', cert_grade: 'A', cert_capability: null, cert_issued_at: null }], total: 1, fetchedAt: '2026-01-01' };
+			mockFetch({ status: 200, body: rep });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getReputation();
+			expect(result.agents).toHaveLength(1);
+			expect(result.total).toBe(1);
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.getReputation()).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('getTrustScores()', () => {
+		it('fetches trust scores without filters', async () => {
+			mockFetch({ status: 200, body: { agents: [], total: 0, fetchedAt: '2026-01-01' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getTrustScores();
+			expect(result).toHaveProperty('agents');
+		});
+
+		it('passes agent filter', async () => {
+			mockFetch({ status: 200, body: { agent: { agent_id: 'a1', trust_score: 0.9 }, fetchedAt: '2026-01-01' } });
+			const client = new NnnClient(BASE_CONFIG);
+			await client.getTrustScores({ agent: 'a1' });
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('agent=a1');
+		});
+	});
+
+	describe('getTrustFrameworks()', () => {
+		it('fetches all frameworks', async () => {
+			mockFetch({ status: 200, body: { frameworks: [], total: 0, fetchedAt: '2026-01-01' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getTrustFrameworks();
+			expect(result).toHaveProperty('frameworks');
+		});
+
+		it('fetches a specific framework by ID', async () => {
+			mockFetch({ status: 200, body: { framework: { id: 'fw-1', name: 'OWASP' }, fetchedAt: '2026-01-01' } });
+			const client = new NnnClient(BASE_CONFIG);
+			await client.getTrustFrameworks({ id: 'fw-1' });
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('id=fw-1');
+		});
+	});
+
+	describe('syncCrossRegistryTrust()', () => {
+		it('triggers cross-registry trust sync', async () => {
+			mockFetch({ status: 200, body: { ok: true, fetch: { peer_url: 'https://peer.com', agents_fetched: 5, errors: 0, duration_ms: 1200 }, compute: { scores_computed: 5, errors: 0 } } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.syncCrossRegistryTrust('admin-key-123');
+			expect(result).toHaveProperty('ok', true);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/trust/cross-registry');
+			expect(fetchCall[1].method).toBe('POST');
+			expect(fetchCall[1].headers['Authorization']).toBe('Bearer admin-key-123');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 403, body: 'forbidden' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.syncCrossRegistryTrust()).rejects.toThrow(NnnError);
+		});
+	});
+
+	// ── Sprint 3: Billing, Webhooks & Federation ───────────────────
+
+	describe('getSubscription()', () => {
+		it('fetches subscription by key ID', async () => {
+			mockFetch({ status: 200, body: { subscription: { id: 'sub-1' }, plan: 'pro', plans: [] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getSubscription('key-1');
+			expect(result).toHaveProperty('subscription');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/subscriptions');
+			expect(fetchCall[0]).toContain('keyId=key-1');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 404, body: 'not found' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.getSubscription('bad')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('createSubscription()', () => {
+		it('creates a subscription', async () => {
+			mockFetch({ status: 201, body: { status: 'created', subscription: { id: 'sub-1' }, charged_np: 100 } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.createSubscription({ key_id: 'key-1', plan: 'pro' });
+			expect(result).toHaveProperty('status', 'created');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[1].method).toBe('POST');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 400, body: 'bad request' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.createSubscription({ key_id: 'bad', plan: 'pro' })).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('listInvoices()', () => {
+		it('lists invoices by key ID', async () => {
+			mockFetch({ status: 200, body: { invoices: [{ id: 'inv-1' }] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.listInvoices('key-1');
+			expect(result).toHaveProperty('invoices');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('keyId=key-1');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.listInvoices('bad')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('createInvoice()', () => {
+		it('creates an invoice', async () => {
+			mockFetch({ status: 201, body: { status: 'created', invoice: { id: 'inv-1' } } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.createInvoice({ key_id: 'key-1' });
+			expect(result).toHaveProperty('status', 'created');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[1].method).toBe('POST');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.createInvoice({ key_id: 'bad' })).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('createCheckoutSession()', () => {
+		it('creates a checkout session', async () => {
+			const session = { id: 'cs-1', status: 'open', client_agent_id: null, line_items: [], totals: { subtotal: 100, discount: 0, tax: 0, total: 100, currency: 'NP' }, payment: null, metadata: null, created_at: 1700000000, updated_at: 1700000000, expires_at: 1700003600 };
+			mockFetch({ status: 201, body: session });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.createCheckoutSession({ capabilities: [{ id: 'cap-1', quantity: 1 }] });
+			expect(result.id).toBe('cs-1');
+			expect(result.status).toBe('open');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/ucp/checkout-sessions');
+			expect(fetchCall[1].method).toBe('POST');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 400, body: 'bad request' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.createCheckoutSession({ capabilities: [] })).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('getCheckoutSession()', () => {
+		it('gets a checkout session by ID', async () => {
+			const session = { id: 'cs-1', status: 'open', client_agent_id: null, line_items: [], totals: { subtotal: 0, discount: 0, tax: 0, total: 0, currency: 'NP' }, payment: null, metadata: null, created_at: 0, updated_at: 0, expires_at: 0 };
+			mockFetch({ status: 200, body: session });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getCheckoutSession('cs-1');
+			expect(result.id).toBe('cs-1');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('id=cs-1');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 404, body: 'not found' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.getCheckoutSession('bad')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('submitCheckoutPayment()', () => {
+		it('submits payment for a session', async () => {
+			mockFetch({ status: 200, body: { id: 'cs-1', status: 'completed', payment: { method: 'crypto', amount: 100 }, settlement_id: 'stl-1' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.submitCheckoutPayment('cs-1', { method: 'crypto', amount: 100 });
+			expect(result).toHaveProperty('status', 'completed');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/api/ucp/checkout-sessions/cs-1');
+			expect(fetchCall[1].method).toBe('PATCH');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 402, body: 'payment required' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.submitCheckoutPayment('cs-1', {})).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('cancelCheckoutSession()', () => {
+		it('cancels a checkout session', async () => {
+			mockFetch({ status: 200, body: { id: 'cs-1', status: 'cancelled' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.cancelCheckoutSession('cs-1');
+			expect(result.status).toBe('cancelled');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[1].method).toBe('DELETE');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 404, body: 'not found' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.cancelCheckoutSession('bad')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('listWebhooks()', () => {
+		it('lists webhook subscriptions', async () => {
+			mockFetch({ status: 200, body: { subscriptions: [{ id: 'wh-1', callback_url: 'https://hook.example.com', events: 'agent.registered', status: 'active', owner_id: 'o1', created_at: '2026-01-01', updated_at: '2026-01-01' }] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.listWebhooks();
+			expect(result.subscriptions).toHaveLength(1);
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.listWebhooks()).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('createWebhook()', () => {
+		it('creates a webhook', async () => {
+			mockFetch({ status: 201, body: { id: 'wh-1', secret: 'sec-123', callback_url: 'https://hook.example.com', events: ['agent.registered'], status: 'active', message: 'created' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.createWebhook({ callback_url: 'https://hook.example.com', events: ['agent.registered'] });
+			expect(result.id).toBe('wh-1');
+			expect(result.secret).toBe('sec-123');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[1].method).toBe('POST');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 400, body: 'bad request' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.createWebhook({ callback_url: '', events: [] })).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('getWebhook()', () => {
+		it('gets a single webhook', async () => {
+			mockFetch({ status: 200, body: { subscription: { id: 'wh-1', callback_url: 'https://hook.example.com', events: 'agent.registered', status: 'active', owner_id: 'o1', created_at: '2026-01-01', updated_at: '2026-01-01' } } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getWebhook('wh-1');
+			expect(result.subscription.id).toBe('wh-1');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 404, body: 'not found' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.getWebhook('bad')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('updateWebhook()', () => {
+		it('pauses a webhook', async () => {
+			mockFetch({ status: 200, body: { id: 'wh-1', status: 'paused' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.updateWebhook('wh-1', 'pause');
+			expect(result).toHaveProperty('status', 'paused');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[1].method).toBe('PATCH');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 404, body: 'not found' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.updateWebhook('bad', 'pause')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('deleteWebhook()', () => {
+		it('deletes a webhook', async () => {
+			mockFetch({ status: 200, body: { ok: true, deleted: 'wh-1' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.deleteWebhook('wh-1');
+			expect(result.ok).toBe(true);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[1].method).toBe('DELETE');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 404, body: 'not found' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.deleteWebhook('bad')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('getEarnings()', () => {
+		it('fetches developer earnings', async () => {
+			mockFetch({ status: 200, body: { developerId: 'dev-1', totalEarnings: 1000 } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getEarnings('dev-1');
+			expect(result).toHaveProperty('totalEarnings', 1000);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('developerId=dev-1');
+		});
+
+		it('passes view param', async () => {
+			mockFetch({ status: 200, body: { settlements: [] } });
+			const client = new NnnClient(BASE_CONFIG);
+			await client.getEarnings('dev-1', 'settlements');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('view=settlements');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.getEarnings('bad')).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('earningsAction()', () => {
+		it('performs an earnings action', async () => {
+			mockFetch({ status: 200, body: { ok: true, action: 'settle' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.earningsAction({ action: 'settle', developerId: 'dev-1', periodId: 'p-1' });
+			expect(result).toHaveProperty('ok', true);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[1].method).toBe('POST');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 400, body: 'bad action' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.earningsAction({ action: 'settle' })).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('getFederationPeers()', () => {
+		it('fetches federation peers', async () => {
+			mockFetch({ status: 200, body: { peers: [{ url: 'https://peer.example.com' }], summary: { total: 1 } } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getFederationPeers();
+			expect(result).toHaveProperty('peers');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.getFederationPeers()).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('getFederationStatus()', () => {
+		it('fetches federation status', async () => {
+			mockFetch({ status: 200, body: { configured_peer: 'https://peer.example.com', peers: [] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getFederationStatus();
+			expect(result).toHaveProperty('configured_peer');
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.getFederationStatus()).rejects.toThrow(NnnError);
+		});
+	});
+
+	describe('getFederatedAgents()', () => {
+		it('fetches federated agents', async () => {
+			mockFetch({ status: 200, body: { count: 5, agents: [{ agent_id: 'a1' }] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.getFederatedAgents();
+			expect(result).toHaveProperty('count', 5);
+		});
+
+		it('throws NnnError on failure', async () => {
+			mockFetch({ status: 500, body: 'error' });
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.getFederatedAgents()).rejects.toThrow(NnnError);
+		});
+	});
+
 	// ── Phase 1 Tests ────────────────────────────────────────────────
 
 	describe('sendA2ARequest()', () => {
