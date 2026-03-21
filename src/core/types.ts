@@ -11,7 +11,7 @@
 
 /** Lifecycle hooks for request/response interception. */
 export interface NnnHooks {
-	/** Called before every request. Can modify headers or URL. */
+	/** Called before every request. Can inspect the URL and mutate `init` (e.g. headers). */
 	beforeRequest?: (url: string, init: RequestInit) => void | Promise<void>;
 	/** Called after every successful response. */
 	afterResponse?: (url: string, response: Response, durationMs: number) => void | Promise<void>;
@@ -330,11 +330,11 @@ export interface IndexDiffResult {
 
 export type IndexChangeCallback = (event: IndexChangeEvent) => void | Promise<void>;
 
-export interface IndexChangeEvent {
-	type: 'added' | 'removed' | 'updated';
-	agent: NnnAgent;
-	timestamp: string;
-}
+/** Discriminated union for index change events. 'removed' only carries the agentId. */
+export type IndexChangeEvent =
+	| { type: 'added'; agent: NnnAgent; timestamp: string }
+	| { type: 'updated'; agent: NnnAgent; timestamp: string }
+	| { type: 'removed'; agentId: string; timestamp: string };
 
 // ── Sprint 1: Orchestration CRUD ──────────────────────────────────
 

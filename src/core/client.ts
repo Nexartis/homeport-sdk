@@ -217,11 +217,29 @@ export class NnnClient {
 			const response = await fetchWithRetry(url, init, context, this.retryConfig);
 			const durationMs = Date.now() - startTime;
 
-			this.recordSuccess();
+			// Always call afterResponse for observability (logging, metrics)
 			await this.hooks.afterResponse?.(url, response, durationMs);
 
+			if (!response.ok) {
+				// HTTP error — record failure, call onError, throw with durationMs
+				const bodyText = await response.text();
+				const error = NnnError.fromStatus(
+					response.status,
+					`${context} failed (${response.status}): ${bodyText}`
+				);
+				error.context.durationMs = durationMs;
+				this.recordFailure();
+				await this.hooks.onError?.(url, error);
+				throw error;
+			}
+
+			this.recordSuccess();
 			return response;
 		} catch (err) {
+			// Re-throw errors already handled above (HTTP errors)
+			if (err instanceof NnnError && err.context.durationMs !== undefined) {
+				throw err;
+			}
 			const durationMs = Date.now() - startTime;
 			this.recordFailure();
 			await this.hooks.onError?.(url, err);
@@ -235,18 +253,15 @@ export class NnnClient {
 	}
 
 	/**
-	 * GET JSON helper — fetch + parse + error handling.
+	 * GET JSON helper — fetch + parse. Error handling is centralized in fetch().
 	 */
 	private async getJson<T>(path: string, ctx: string): Promise<T> {
 		const res = await this.fetch(`${this.baseUrl}${path}`, { headers: this.headers() }, ctx);
-		if (!res.ok) {
-			throw NnnError.fromStatus(res.status, `${ctx} failed (${res.status}): ${await res.text()}`);
-		}
 		return res.json() as Promise<T>;
 	}
 
 	/**
-	 * POST JSON helper — fetch + parse + error handling.
+	 * POST JSON helper — fetch + parse. Error handling is centralized in fetch().
 	 */
 	private async postJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
 		const res = await this.fetch(
@@ -254,14 +269,11 @@ export class NnnClient {
 			{ method: 'POST', headers: this.headers(), body: JSON.stringify(body) },
 			ctx
 		);
-		if (!res.ok) {
-			throw NnnError.fromStatus(res.status, `${ctx} failed (${res.status}): ${await res.text()}`);
-		}
 		return res.json() as Promise<T>;
 	}
 
 	/**
-	 * PUT JSON helper — fetch + parse + error handling.
+	 * PUT JSON helper — fetch + parse. Error handling is centralized in fetch().
 	 */
 	private async putJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
 		const res = await this.fetch(
@@ -269,14 +281,11 @@ export class NnnClient {
 			{ method: 'PUT', headers: this.headers(), body: JSON.stringify(body) },
 			ctx
 		);
-		if (!res.ok) {
-			throw NnnError.fromStatus(res.status, `${ctx} failed (${res.status}): ${await res.text()}`);
-		}
 		return res.json() as Promise<T>;
 	}
 
 	/**
-	 * DELETE JSON helper — fetch + parse + error handling.
+	 * DELETE JSON helper — fetch + parse. Error handling is centralized in fetch().
 	 */
 	private async deleteJson<T>(path: string, ctx: string): Promise<T> {
 		const res = await this.fetch(
@@ -284,14 +293,11 @@ export class NnnClient {
 			{ method: 'DELETE', headers: this.headers() },
 			ctx
 		);
-		if (!res.ok) {
-			throw NnnError.fromStatus(res.status, `${ctx} failed (${res.status}): ${await res.text()}`);
-		}
 		return res.json() as Promise<T>;
 	}
 
 	/**
-	 * PATCH JSON helper — fetch + parse + error handling.
+	 * PATCH JSON helper — fetch + parse. Error handling is centralized in fetch().
 	 */
 	private async patchJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
 		const res = await this.fetch(
@@ -299,9 +305,6 @@ export class NnnClient {
 			{ method: 'PATCH', headers: this.headers(), body: JSON.stringify(body) },
 			ctx
 		);
-		if (!res.ok) {
-			throw NnnError.fromStatus(res.status, `${ctx} failed (${res.status}): ${await res.text()}`);
-		}
 		return res.json() as Promise<T>;
 	}
 
@@ -374,6 +377,17 @@ export class NnnClient {
 	// ── Pagination Iterators ─────────────────────────────────────────
 
 	/**
+	 * Normalize a response that may be a bare array or a PaginatedResponse wrapper.
+	 * Handles both shapes so generators work regardless of backend response format.
+	 */
+	private normalizePage<T>(raw: T[] | PaginatedResponse<T>): PaginatedResponse<T> {
+		if (Array.isArray(raw)) {
+			return { data: raw, hasMore: false, cursor: undefined };
+		}
+		return raw;
+	}
+
+	/**
 	 * Auto-paginating search — yields agents one at a time across all pages.
 	 * Uses cursor-based pagination under the hood.
 	 */
@@ -393,10 +407,11 @@ export class NnnClient {
 			if (cursor) sp.set('cursor', cursor);
 
 			const qs = sp.toString();
-			const page: PaginatedResponse<NnnAgent> = await this.getJson(
+			const raw = await this.getJson<NnnAgent[] | PaginatedResponse<NnnAgent>>(
 				`/search${qs ? `?${qs}` : ''}`,
 				'searchAgentsAll'
 			);
+			const page = this.normalizePage(raw);
 
 			for (const agent of page.data) {
 				yield agent;
@@ -420,10 +435,11 @@ export class NnnClient {
 			if (cursor) sp.set('cursor', cursor);
 
 			const qs = sp.toString();
-			const page: PaginatedResponse<NnnAgent> = await this.getJson(
+			const raw = await this.getJson<NnnAgent[] | PaginatedResponse<NnnAgent>>(
 				`/list${qs ? `?${qs}` : ''}`,
 				'listAgentsAll'
 			);
+			const page = this.normalizePage(raw);
 
 			for (const agent of page.data) {
 				yield agent;
@@ -594,9 +610,6 @@ export class NnnClient {
 			{ method: 'POST', headers, body: JSON.stringify({}) },
 			'syncCrossRegistryTrust'
 		);
-		if (!res.ok) {
-			throw NnnError.fromStatus(res.status, `syncCrossRegistryTrust failed (${res.status}): ${await res.text()}`);
-		}
 		return res.json() as Promise<Record<string, unknown>>;
 	}
 
@@ -741,9 +754,6 @@ export class NnnClient {
 			{ method: 'POST', headers: this.externalHeaders(), body: JSON.stringify(rpcRequest) },
 			'sendA2ARequest'
 		);
-		if (!res.ok) {
-			throw NnnError.fromStatus(res.status, `sendA2ARequest failed (${res.status}): ${await res.text()}`);
-		}
 		return res.json() as Promise<A2AResponse>;
 	}
 
@@ -776,9 +786,6 @@ export class NnnClient {
 			{ method: 'POST', headers, body: JSON.stringify(rpcRequest) },
 			'streamA2ARequest'
 		);
-		if (!res.ok) {
-			throw NnnError.fromStatus(res.status, `streamA2ARequest failed (${res.status}): ${await res.text()}`);
-		}
 
 		if (!res.body) {
 			throw new NnnError(NnnErrorCode.NETWORK_ERROR, 'streamA2ARequest: response body is null');
@@ -880,9 +887,6 @@ export class NnnClient {
 		const headers = { ...this.headers(), Accept: 'text/event-stream' };
 
 		const res = await this.fetch(url, { headers }, 'streamWorkflowEvents');
-		if (!res.ok) {
-			throw NnnError.fromStatus(res.status, `streamWorkflowEvents failed (${res.status}): ${await res.text()}`);
-		}
 
 		if (!res.body) {
 			throw new NnnError(NnnErrorCode.NETWORK_ERROR, 'streamWorkflowEvents: response body is null');
@@ -953,7 +957,7 @@ export class NnnClient {
 					for (const agentId of diff.removed) {
 						await safeCallback(this.logger, callback, {
 							type: 'removed',
-							agent: { agent_id: agentId, agent_url: '' } as NnnAgent,
+							agentId,
 							timestamp: now.toISOString()
 						});
 					}
