@@ -244,9 +244,13 @@ export class NnnClient {
 				throw error;
 			}
 
-			// Note: recordSuccess is deferred to safeParseJson() so that
-			// a JSON parse failure doesn't prematurely reset the failure streak.
-			// For streaming callers that bypass safeParseJson, record here.
+			// Note: recordSuccess is deferred to safeParseJson() for JSON callers
+			// so that a JSON parse failure doesn't prematurely reset the streak.
+			// Streaming callers bypass safeParseJson, so record success here
+			// based on Accept header — SSE streams won't go through safeParseJson.
+			if (!skipBreaker && init.headers && typeof init.headers === 'object' && 'Accept' in init.headers && (init.headers as Record<string, string>).Accept === 'text/event-stream') {
+				this.recordSuccess();
+			}
 			return response;
 		} catch (err) {
 			// Re-throw errors already handled above (HTTP errors)
@@ -260,6 +264,13 @@ export class NnnClient {
 			// so hook consumers can access timing information
 			if (err instanceof NnnError) {
 				err.context.durationMs = durationMs;
+
+				// Fire afterResponse for retried-out 5xx/429 errors that carry
+				// the last HTTP response, honouring the "fires for every response"
+				// contract documented on NnnHooks.afterResponse.
+				if (err.lastResponse) {
+					await this.hooks.afterResponse?.(url, err.lastResponse, durationMs);
+				}
 			}
 			await this.hooks.onError?.(url, err);
 			throw err;

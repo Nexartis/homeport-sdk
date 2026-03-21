@@ -108,6 +108,8 @@ export async function fetchWithRetry(
 			});
 
 			if (response.status >= 500 || response.status === 429) {
+				// Clone before reading body so hooks can still inspect headers/status
+				const responseClone = response.clone();
 				let bodyText = '';
 				try {
 					bodyText = await response.text();
@@ -118,10 +120,14 @@ export async function fetchWithRetry(
 				// On the final attempt, still throw so callers always get
 				// a consistent NnnError — returning a raw Response could let
 				// failures be silently treated as success.
-				throw NnnError.fromStatus(
+				const error = NnnError.fromStatus(
 					response.status,
 					`[${context}] HTTP ${response.status}: ${bodyText || '(no body)'}`
 				);
+				// Attach the cloned response so upstream hooks (e.g. afterResponse)
+				// can inspect it even though fetchWithRetry throws.
+				error.lastResponse = responseClone;
+				throw error;
 			}
 
 			return response;
