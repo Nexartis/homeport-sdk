@@ -6,7 +6,7 @@
  */
 
 // Client
-export { NnnClient } from './client';
+export { NnnClient, SDK_VERSION } from './client';
 
 // Types
 export type {
@@ -30,17 +30,29 @@ export type {
 	WorkflowRunResult,
 	RoutingRequest,
 	RoutingResult,
+	RouteRequestParams,
 	A2ARequest,
-	A2AResponse
+	A2AResponse,
+	SendA2ARequestParams,
+	UpdateAgentRequest,
+	AgentRefreshResult,
+	WorkflowRunStatus,
+	IndexDiffResult,
+	IndexChangeCallback,
+	IndexChangeEvent,
+	NnnHooks,
+	NnnCircuitBreakerConfig,
+	PaginatedResponse
 } from './types';
 
 // Errors
 export { NnnError, NnnErrorCode } from './errors';
+export type { NnnErrorContext } from './errors';
 
 // Logger
 export { createNnnLogger } from './logger';
 export type { NnnLogger } from './logger';
 
 // Retry (standalone utility)
-export { fetchWithRetry, normalizeBaseUrl, calculateBackoffDelay, isTransientError } from './retry';
+export { fetchWithRetry, normalizeBaseUrl, calculateBackoffDelay, isTransientError, DEFAULT_RETRY_CONFIG } from './retry';
 

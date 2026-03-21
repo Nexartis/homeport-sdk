@@ -20,31 +20,48 @@ export enum NnnErrorCode {
 	TIMEOUT = 'TIMEOUT'
 }
 
+/** Structured error context for observability. */
+export interface NnnErrorContext {
+	/** Request ID from response headers (e.g. x-request-id). */
+	requestId?: string;
+	/** Number of retry attempts made before failure. */
+	retryCount?: number;
+	/** Total wall-clock time in milliseconds. */
+	durationMs?: number;
+	/** Target agent ID (for A2A calls). */
+	agentId?: string;
+}
+
 export class NnnError extends Error {
+	/** Structured context for observability. */
+	context: NnnErrorContext;
+
 	constructor(
 		public code: NnnErrorCode,
 		message: string,
 		public statusCode?: number,
-		public originalError?: unknown
+		public originalError?: unknown,
+		context?: NnnErrorContext
 	) {
 		super(message);
 		this.name = 'NnnError';
+		this.context = context ?? {};
 	}
 
 	/**
 	 * Create an NnnError from an HTTP response status code.
 	 */
-	static fromStatus(status: number, message: string): NnnError {
+	static fromStatus(status: number, message: string, context?: NnnErrorContext): NnnError {
 		const code = statusToErrorCode(status);
-		return new NnnError(code, message, status);
+		return new NnnError(code, message, status, undefined, context);
 	}
 
 	/**
 	 * Create an NnnError from a caught network/fetch error.
 	 */
-	static fromNetworkError(err: unknown): NnnError {
+	static fromNetworkError(err: unknown, context?: NnnErrorContext): NnnError {
 		const message = err instanceof Error ? err.message : String(err);
-		return new NnnError(NnnErrorCode.NETWORK_ERROR, `Network error: ${message}`, undefined, err);
+		return new NnnError(NnnErrorCode.NETWORK_ERROR, `Network error: ${message}`, undefined, err, context);
 	}
 }
 
