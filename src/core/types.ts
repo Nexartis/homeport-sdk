@@ -13,7 +13,11 @@
 export interface NnnHooks {
 	/** Called before every request. Can inspect the URL and mutate `init` (e.g. headers). */
 	beforeRequest?: (url: string, init: RequestInit) => void | Promise<void>;
-	/** Called after every response (including 4xx/5xx). Fires before error handling. */
+	/**
+	 * Called after every response (including 4xx/5xx). Fires before error handling.
+	 * The response passed to this hook is a **clone** — reading its body will not
+	 * affect the caller. However, avoid heavy body reads in hot paths.
+	 */
 	afterResponse?: (url: string, response: Response, durationMs: number) => void | Promise<void>;
 	/** Called on request failure (after retries exhausted). */
 	onError?: (url: string, error: unknown) => void | Promise<void>;

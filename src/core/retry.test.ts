@@ -102,19 +102,21 @@ describe('fetchWithRetry', () => {
 		expect(globalThis.fetch).toHaveBeenCalledTimes(2);
 	});
 
-	it('throws NnnError after exhausting retries on 500', async () => {
+	it('returns raw 500 response after exhausting retries so caller can fire hooks', async () => {
 		globalThis.fetch = vi.fn().mockImplementation(() =>
 			Promise.resolve(new Response('server error', { status: 500 }))
 		);
 
-		await expect(
-			fetchWithRetry('https://example.com', {}, 'test', {
-				maxRetries: 1,
-				baseDelayMs: 1,
-				maxDelayMs: 10,
-				timeoutMs: 5000
-			})
-		).rejects.toThrow(NnnError);
+		const res = await fetchWithRetry('https://example.com', {}, 'test', {
+			maxRetries: 1,
+			baseDelayMs: 1,
+			maxDelayMs: 10,
+			timeoutMs: 5000
+		});
+		// On the final attempt, the raw response is returned (not thrown)
+		// so the caller (NnnClient.fetch) can fire afterResponse hooks.
+		expect(res.status).toBe(500);
+		expect(globalThis.fetch).toHaveBeenCalledTimes(2); // 1 initial + 1 retry
 	});
 
 	it('does not retry on 404 (permanent failure)', async () => {

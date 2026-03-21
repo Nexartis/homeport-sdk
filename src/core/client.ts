@@ -828,6 +828,21 @@ export class NnnClient {
 		let buffer = '';
 
 		try {
+			// SSE spec: multiple consecutive `data:` lines form a single event,
+			// joined by '\n'. A blank line signals the end of an event.
+			const dataLines: string[] = [];
+
+			const flushEvent = function* (self: NnnClient) {
+				if (dataLines.length === 0) return;
+				const payload = dataLines.splice(0).join('\n');
+				if (payload === '[DONE]') return;
+				try {
+					yield JSON.parse(payload) as A2AResponse;
+				} catch {
+					self.logger.warn('Failed to parse SSE data', { data: payload });
+				}
+			};
+
 			while (true) {
 				const { done, value } = await reader.read();
 				if (done) break;
@@ -838,19 +853,20 @@ export class NnnClient {
 
 				for (const line of lines) {
 					const trimmed = line.trim();
-					if (!trimmed || trimmed.startsWith(':')) continue;
-					// Accept both "data: " (with space) and "data:" (without space) per SSE spec
+					if (trimmed.startsWith(':')) continue; // SSE comment
+					if (!trimmed) {
+						// Blank line — flush accumulated event
+						yield* flushEvent(this);
+						continue;
+					}
 					if (trimmed.startsWith('data:')) {
 						const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
-						if (data === '[DONE]') return;
-						try {
-							yield JSON.parse(data) as A2AResponse;
-						} catch {
-							this.logger.warn('Failed to parse SSE data', { data });
-						}
+						dataLines.push(data);
 					}
 				}
 			}
+			// Flush any remaining data when stream ends without a trailing blank line
+			yield* flushEvent(this);
 		} finally {
 			reader.cancel().catch(() => {});
 			reader.releaseLock();
@@ -930,6 +946,19 @@ export class NnnClient {
 		let buffer = '';
 
 		try {
+			const dataLines: string[] = [];
+
+			const flushEvent = function* (self: NnnClient) {
+				if (dataLines.length === 0) return;
+				const payload = dataLines.splice(0).join('\n');
+				if (payload === '[DONE]') return;
+				try {
+					yield JSON.parse(payload) as Record<string, unknown>;
+				} catch {
+					self.logger.warn('Failed to parse SSE event', { data: payload });
+				}
+			};
+
 			while (true) {
 				const { done, value } = await reader.read();
 				if (done) break;
@@ -940,19 +969,18 @@ export class NnnClient {
 
 				for (const line of lines) {
 					const trimmed = line.trim();
-					if (!trimmed || trimmed.startsWith(':')) continue;
-					// Accept both "data: " (with space) and "data:" (without space) per SSE spec
+					if (trimmed.startsWith(':')) continue;
+					if (!trimmed) {
+						yield* flushEvent(this);
+						continue;
+					}
 					if (trimmed.startsWith('data:')) {
 						const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
-						if (data === '[DONE]') return;
-						try {
-							yield JSON.parse(data) as Record<string, unknown>;
-						} catch {
-							this.logger.warn('Failed to parse SSE event', { data });
-						}
+						dataLines.push(data);
 					}
 				}
 			}
+			yield* flushEvent(this);
 		} finally {
 			reader.cancel().catch(() => {});
 			reader.releaseLock();
