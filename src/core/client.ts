@@ -819,47 +819,53 @@ export class NnnClient {
 
 	// ── 1.2 Agent Lifecycle Management ──────────────────────────────
 
-	/** PUT /api/agents/:id — Update an existing agent. */
+	/** PUT /agents/:id — Update an existing agent's fields (url, api, facts, capabilities, tags). */
 	async updateAgent(agentId: string, updates: UpdateAgentRequest): Promise<NnnAgent> {
 		this.logger.debug('Updating agent', { agentId });
-		return this.putJson(`/api/agents/${encodeURIComponent(agentId)}`, updates, 'updateAgent');
+		return this.putJson(`/agents/${encodeURIComponent(agentId)}`, updates, 'updateAgent');
 	}
 
-	/** DELETE /api/agents/:id — Delete an agent from the registry. */
-	async deleteAgent(agentId: string): Promise<{ status: string; message: string }> {
+	/** PUT /agents/:id/status — Update an agent's status and capabilities. */
+	async updateAgentStatus(agentId: string, status: string, capabilities?: string[]): Promise<{ status: string }> {
+		this.logger.debug('Updating agent status', { agentId, status });
+		return this.putJson(`/agents/${encodeURIComponent(agentId)}/status`, { status, capabilities }, 'updateAgentStatus');
+	}
+
+	/** DELETE /agents/:id — Delete an agent from the registry. */
+	async deleteAgent(agentId: string): Promise<{ status: string }> {
 		this.logger.debug('Deleting agent', { agentId });
-		return this.deleteJson(`/api/agents/${encodeURIComponent(agentId)}`, 'deleteAgent');
+		return this.deleteJson(`/agents/${encodeURIComponent(agentId)}`, 'deleteAgent');
 	}
 
-	/** POST /api/agents/:id/refresh — Re-crawl an agent's card. */
+	/** POST /agents/:id/refresh — Re-crawl an agent's card and update facts. */
 	async refreshAgent(agentId: string): Promise<AgentRefreshResult> {
 		this.logger.debug('Refreshing agent', { agentId });
-		return this.postJson(`/api/agents/${encodeURIComponent(agentId)}/refresh`, {}, 'refreshAgent');
+		return this.postJson(`/agents/${encodeURIComponent(agentId)}/refresh`, {}, 'refreshAgent');
 	}
 
 	// ── 1.3 Routing Engine ──────────────────────────────────────────
 
-	/** POST /api/routing — Route a request to the best-matching agent. */
+	/** POST /api/orchestration/route — Route a request to the best-matching agent. */
 	async routeRequest(params: RouteRequestParams): Promise<RoutingResult> {
 		this.logger.debug('Routing request', { skill: params.skill, strategy: params.strategy });
-		return this.postJson('/api/routing', params, 'routeRequest');
+		return this.postJson('/api/orchestration/route', params, 'routeRequest');
 	}
 
 	// ── 1.4 Workflow Execution & Monitoring ─────────────────────────
 
-	/** GET /api/orchestration/:workflowId/runs/:runId — Get workflow run status. */
-	async getWorkflowStatus(workflowId: string, runId: string): Promise<WorkflowRunStatus> {
+	/** GET /api/orchestration/runs/:runId — Get workflow run status. */
+	async getWorkflowStatus(runId: string): Promise<WorkflowRunStatus> {
 		return this.getJson(
-			`/api/orchestration/${encodeURIComponent(workflowId)}/runs/${encodeURIComponent(runId)}`,
+			`/api/orchestration/runs/${encodeURIComponent(runId)}`,
 			'getWorkflowStatus'
 		);
 	}
 
-	/** POST /api/orchestration/:workflowId/runs/:runId/cancel — Cancel an in-progress run. */
-	async cancelWorkflowRun(workflowId: string, runId: string): Promise<{ status: string; message: string }> {
-		this.logger.debug('Cancelling workflow run', { workflowId, runId });
+	/** POST /api/orchestration/runs/:runId/cancel — Cancel an in-progress run. */
+	async cancelWorkflowRun(runId: string): Promise<{ status: string; run_id: string }> {
+		this.logger.debug('Cancelling workflow run', { runId });
 		return this.postJson(
-			`/api/orchestration/${encodeURIComponent(workflowId)}/runs/${encodeURIComponent(runId)}/cancel`,
+			`/api/orchestration/runs/${encodeURIComponent(runId)}/cancel`,
 			{},
 			'cancelWorkflowRun'
 		);
@@ -869,8 +875,8 @@ export class NnnClient {
 	 * SSE stream for real-time workflow execution events.
 	 * Yields parsed event objects as they arrive.
 	 */
-	async *streamWorkflowEvents(workflowId: string, runId: string): AsyncGenerator<Record<string, unknown>, void, unknown> {
-		const url = `${this.baseUrl}/api/orchestration/${encodeURIComponent(workflowId)}/runs/${encodeURIComponent(runId)}/events`;
+	async *streamWorkflowEvents(runId: string): AsyncGenerator<Record<string, unknown>, void, unknown> {
+		const url = `${this.baseUrl}/api/orchestration/runs/${encodeURIComponent(runId)}/events`;
 		const headers = { ...this.headers(), Accept: 'text/event-stream' };
 
 		const res = await this.fetch(url, { headers }, 'streamWorkflowEvents');
@@ -917,10 +923,10 @@ export class NnnClient {
 
 	// ── 1.5 NANDA Index Sync ────────────────────────────────────────
 
-	/** GET /api/index/diff?since= — Get agents added/removed/updated since a timestamp. */
+	/** GET /.well-known/nanda-index/diff?since= — Get agents added/removed/updated since a timestamp. */
 	async diffIndex(since: Date): Promise<IndexDiffResult> {
 		const sp = new URLSearchParams({ since: since.toISOString() });
-		return this.getJson(`/api/index/diff?${sp.toString()}`, 'diffIndex');
+		return this.getJson(`/.well-known/nanda-index/diff?${sp.toString()}`, 'diffIndex');
 	}
 
 	/**

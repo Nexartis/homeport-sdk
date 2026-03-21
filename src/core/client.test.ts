@@ -964,21 +964,35 @@ describe('NnnClient', () => {
 			expect(result.capabilities).toEqual(['a2a', 'mcp']);
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-			expect(fetchCall[0]).toContain('/api/agents/agent-1');
+			expect(fetchCall[0]).toContain('/agents/agent-1');
+			expect(fetchCall[1].method).toBe('PUT');
+		});
+	});
+
+	describe('updateAgentStatus()', () => {
+		it('sends PUT request to update agent status', async () => {
+			mockFetch({ status: 200, body: { status: 'updated' } });
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.updateAgentStatus('agent-1', 'alive', ['a2a']);
+			expect(result.status).toBe('updated');
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/agents/agent-1/status');
 			expect(fetchCall[1].method).toBe('PUT');
 		});
 	});
 
 	describe('deleteAgent()', () => {
 		it('sends DELETE request', async () => {
-			mockFetch({ status: 200, body: { status: 'deleted', message: 'Agent removed' } });
+			mockFetch({ status: 200, body: { status: 'deleted' } });
 
 			const client = new NnnClient(BASE_CONFIG);
 			const result = await client.deleteAgent('agent-1');
 			expect(result.status).toBe('deleted');
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-			expect(fetchCall[0]).toContain('/api/agents/agent-1');
+			expect(fetchCall[0]).toContain('/agents/agent-1');
 			expect(fetchCall[1].method).toBe('DELETE');
 		});
 	});
@@ -992,7 +1006,7 @@ describe('NnnClient', () => {
 			expect(result.status).toBe('refreshed');
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-			expect(fetchCall[0]).toContain('/api/agents/agent-1/refresh');
+			expect(fetchCall[0]).toContain('/agents/agent-1/refresh');
 			expect(fetchCall[1].method).toBe('POST');
 		});
 	});
@@ -1018,7 +1032,7 @@ describe('NnnClient', () => {
 			expect(result.score).toBe(0.95);
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-			expect(fetchCall[0]).toContain('/api/routing');
+			expect(fetchCall[0]).toContain('/api/orchestration/route');
 			expect(fetchCall[1].method).toBe('POST');
 		});
 	});
@@ -1029,25 +1043,25 @@ describe('NnnClient', () => {
 			mockFetch({ status: 200, body: status });
 
 			const client = new NnnClient(BASE_CONFIG);
-			const result = await client.getWorkflowStatus('wf-1', 'run-1');
+			const result = await client.getWorkflowStatus('run-1');
 			expect(result.status).toBe('running');
 			expect(result.runId).toBe('run-1');
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-			expect(fetchCall[0]).toContain('/api/orchestration/wf-1/runs/run-1');
+			expect(fetchCall[0]).toContain('/api/orchestration/runs/run-1');
 		});
 	});
 
 	describe('cancelWorkflowRun()', () => {
 		it('cancels an in-progress workflow run', async () => {
-			mockFetch({ status: 200, body: { status: 'cancelled', message: 'Run aborted' } });
+			mockFetch({ status: 200, body: { status: 'cancelled', run_id: 'run-1' } });
 
 			const client = new NnnClient(BASE_CONFIG);
-			const result = await client.cancelWorkflowRun('wf-1', 'run-1');
+			const result = await client.cancelWorkflowRun('run-1');
 			expect(result.status).toBe('cancelled');
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-			expect(fetchCall[0]).toContain('/api/orchestration/wf-1/runs/run-1/cancel');
+			expect(fetchCall[0]).toContain('/api/orchestration/runs/run-1/cancel');
 			expect(fetchCall[1].method).toBe('POST');
 		});
 	});
@@ -1068,7 +1082,7 @@ describe('NnnClient', () => {
 			expect(result.removed).toEqual(['old-agent']);
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-			expect(fetchCall[0]).toContain('/api/index/diff');
+			expect(fetchCall[0]).toContain('/.well-known/nanda-index/diff');
 			expect(fetchCall[0]).toContain('since=');
 		});
 	});
