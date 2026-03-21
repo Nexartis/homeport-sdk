@@ -18,7 +18,7 @@ const client = new NnnClient({
 
 async function main() {
 	// 1. Route a request to the best-matching agent
-	const route = await client.routeRequest({
+	const route = await client.orchestration.routeRequest({
 		skill: 'code-review',
 		min_trust: 0.85,
 		strategy: 'best-match'
@@ -28,7 +28,7 @@ async function main() {
 	console.log('   Protocol:', route.protocol);
 
 	// 2. Send an A2A JSON-RPC request (auto-discovers agent URL)
-	const response = await client.sendA2ARequest({
+	const response = await client.federation.sendA2ARequest({
 		target_agent_id: route.targetAgent.agent_id,
 		method: 'tasks/send',
 		params: {
@@ -41,7 +41,7 @@ async function main() {
 	console.log('📨 A2A Response:', JSON.stringify(response.result, null, 2));
 
 	// 3. Send A2A request directly to a known URL (skips discovery)
-	const directResponse = await client.sendA2ARequest({
+	const directResponse = await client.federation.sendA2ARequest({
 		target_agent_id: 'known-agent',
 		target_url: 'https://agent.example.com/a2a',
 		method: 'tasks/get',

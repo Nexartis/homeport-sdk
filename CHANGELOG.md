@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+#### Sprint D — Namespace Refactor & Clean API
+- **Namespaced API** — all methods are now accessed through 7 namespace accessors:
+  `client.agents`, `client.orchestration`, `client.trust`, `client.federation`,
+  `client.webhooks`, `client.developers`, `client.billing`.
+- Namespace classes extend `BaseNamespace` and use `NnnClientInternals` bridge for
+  shared infrastructure (circuit breaker, caching, request dedup, idempotency).
+- Lazy-initialized singleton pattern — namespaces are created on first access.
+- Only `health()`, `isHealthy()`, and `deepHealth()` remain as direct methods on `NnnClient`.
+
+#### Sprint C — Missing Endpoint Coverage
+- `listWorkflowRuns()`, `listDeveloperKeys()`, `createDeveloperKey()`, `revokeDeveloperKey()`.
+- `deprecateAgent()`, `tombstoneAgent()`, `listAgentVersions()`, `createAgentVersion()`.
+- `scanCompliance()`, `getTrustGraph()`, `getTrustPath()`, `getBehaviorAnalytics()`.
+- `verifyNpPayment()`.
+
+#### Sprint B — Convention Alignment
+- Standardized all query params and payloads to `snake_case`.
+- `Idempotency-Key` header on all mutating requests.
+- In-flight GET request deduplication.
+- Opt-in `ResponseCache` with TTL and pattern invalidation.
+- Standalone `CircuitBreaker` module.
+- Standardized `User-Agent` format with `SDK_VERSION` from `version.ts`.
+
 #### Phase 0 — Immediate Hardening
 - Centralized `SDK_VERSION` constant — no more hardcoded version strings.
 - `runWorkflow()` method for executing DAG workflows.

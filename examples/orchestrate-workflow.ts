@@ -14,7 +14,7 @@ const client = new NnnClient({
 
 async function main() {
 	// 1. Define a DAG workflow
-	const workflow = await client.createWorkflow({
+	const workflow = await client.orchestration.createWorkflow({
 		name: 'Code Review Pipeline',
 		description: 'Automated code review with security scan',
 		dag: {
@@ -32,19 +32,19 @@ async function main() {
 	console.log('✅ Workflow created:', workflow.id);
 
 	// 2. Execute the workflow
-	const run = await client.runWorkflow(workflow.id, {
+	const run = await client.orchestration.runWorkflow(workflow.id, {
 		repository: 'https://github.com/example/repo',
 		branch: 'feature/new-api'
 	});
 	console.log('🚀 Workflow run started:', run);
 
 	// 3. Check workflow status
-	const status = await client.getWorkflowStatus(run.runId);
+	const status = await client.orchestration.getWorkflowStatus(run.runId);
 	console.log('📊 Status:', status.status);
 
 	// 4. List all workflows
-	const workflows = await client.listWorkflows();
-	console.log(`\n📋 Total workflows: ${workflows.length}`);
+	const workflows = await client.orchestration.listWorkflows();
+	console.log(`\n📋 Total workflows: ${workflows.workflows.length}`);
 }
 
 main().catch(console.error);

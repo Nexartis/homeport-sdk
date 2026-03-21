@@ -49,19 +49,15 @@ async function main() {
 		console.log('   ⚠️  Degraded:', deep.degradedChecks.join(', '));
 	}
 
-	// 3. Get platform stats
-	const stats = await client.stats();
-	console.log('\n📊 Stats:', JSON.stringify(stats, null, 2));
-
-	// 4. Monitor index changes
-	const diff = await client.diffIndex(new Date(Date.now() - 24 * 60 * 60 * 1000));
+	// 3. Monitor index changes
+	const diff = await client.orchestration.diffIndex(new Date(Date.now() - 24 * 60 * 60 * 1000));
 	console.log('\n📈 Index changes (last 24h):');
 	console.log('   Added:', diff.added.length);
 	console.log('   Removed:', diff.removed.length);
 	console.log('   Updated:', diff.updated.length);
 
-	// 5. Subscribe to real-time index changes
-	const unsubscribe = client.subscribeToIndex((event) => {
+	// 4. Subscribe to real-time index changes
+	const unsubscribe = client.orchestration.subscribeToIndex((event) => {
 		console.log('🔔 Index change:', event.type, event.agentId);
 	}, 30_000);
 
