@@ -328,7 +328,7 @@ export interface IndexDiffResult {
 	updated: NnnAgent[];
 }
 
-export type IndexChangeCallback = (event: IndexChangeEvent) => void;
+export type IndexChangeCallback = (event: IndexChangeEvent) => void | Promise<void>;
 
 export interface IndexChangeEvent {
 	type: 'added' | 'removed' | 'updated';

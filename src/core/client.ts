@@ -82,6 +82,19 @@ function generateRequestId(): string {
 	return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+/** Safely invoke a callback that may be sync or async, swallowing errors. */
+async function safeCallback(
+	logger: NnnLogger,
+	cb: IndexChangeCallback,
+	event: IndexChangeEvent
+): Promise<void> {
+	try {
+		await cb(event);
+	} catch (err) {
+		logger.warn('Index callback error', { error: err instanceof Error ? err.message : String(err) });
+	}
+}
+
 // ── Circuit Breaker ─────────────────────────────────────────────
 
 interface CircuitBreakerState {
@@ -799,6 +812,7 @@ export class NnnClient {
 				}
 			}
 		} finally {
+			reader.cancel().catch(() => {});
 			reader.releaseLock();
 		}
 	}
@@ -896,6 +910,7 @@ export class NnnClient {
 				}
 			}
 		} finally {
+			reader.cancel().catch(() => {});
 			reader.releaseLock();
 		}
 	}
@@ -924,21 +939,17 @@ export class NnnClient {
 					const now = new Date();
 
 					for (const agent of diff.added) {
-						try { callback({ type: 'added', agent, timestamp: now.toISOString() }); }
-						catch (cbErr) { this.logger.warn('Index callback error', { error: cbErr instanceof Error ? cbErr.message : String(cbErr) }); }
+						await safeCallback(this.logger, callback, { type: 'added', agent, timestamp: now.toISOString() });
 					}
 					for (const agent of diff.updated) {
-						try { callback({ type: 'updated', agent, timestamp: now.toISOString() }); }
-						catch (cbErr) { this.logger.warn('Index callback error', { error: cbErr instanceof Error ? cbErr.message : String(cbErr) }); }
+						await safeCallback(this.logger, callback, { type: 'updated', agent, timestamp: now.toISOString() });
 					}
 					for (const agentId of diff.removed) {
-						try {
-							callback({
-								type: 'removed',
-								agent: { agent_id: agentId, agent_url: '' } as NnnAgent,
-								timestamp: now.toISOString()
-							});
-						} catch (cbErr) { this.logger.warn('Index callback error', { error: cbErr instanceof Error ? cbErr.message : String(cbErr) }); }
+						await safeCallback(this.logger, callback, {
+							type: 'removed',
+							agent: { agent_id: agentId, agent_url: '' } as NnnAgent,
+							timestamp: now.toISOString()
+						});
 					}
 
 					// Always advance lastCheck so diffs aren't re-emitted
