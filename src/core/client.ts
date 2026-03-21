@@ -78,7 +78,7 @@ function generateRequestId(): string {
 		if (typeof globalThis !== 'undefined' && globalThis.crypto?.randomUUID) {
 			return globalThis.crypto.randomUUID();
 		}
-	} catch { /* fallback below */ }
+	} catch { /* crypto.randomUUID unavailable — fall back to timestamp+random */ }
 	return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
@@ -894,7 +894,7 @@ export class NnnClient {
 			// Flush any remaining data when stream ends without a trailing blank line
 			if (!streamDone) yield* flushEvent(this);
 		} finally {
-			reader.cancel().catch(() => {});
+			reader.cancel().catch((e) => this.logger.warn('streamA2ARequest: reader cancel failed', { error: e instanceof Error ? e.message : String(e) }));
 			reader.releaseLock();
 		}
 	}
@@ -1013,7 +1013,7 @@ export class NnnClient {
 			}
 			if (!streamDone) yield* flushEvent(this);
 		} finally {
-			reader.cancel().catch(() => {});
+			reader.cancel().catch((e) => this.logger.warn('streamWorkflowEvents: reader cancel failed', { error: e instanceof Error ? e.message : String(e) }));
 			reader.releaseLock();
 		}
 	}

@@ -114,7 +114,7 @@ export async function fetchWithRetry(
 				try {
 					bodyText = await response.text();
 				} catch {
-					/* drain best-effort */
+					/* body drain best-effort — non-critical, response clone is preserved */
 				}
 
 				// On the final attempt, still throw so callers always get
