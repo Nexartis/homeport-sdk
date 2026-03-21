@@ -440,6 +440,8 @@ export class NnnClient {
 				yield agent;
 			}
 
+			// Guard: break if cursor didn't advance (prevents infinite loops)
+			if (page.hasMore && page.cursor === cursor) break;
 			cursor = page.cursor;
 			hasMore = page.hasMore;
 		}
@@ -468,6 +470,8 @@ export class NnnClient {
 				yield agent;
 			}
 
+			// Guard: break if cursor didn't advance (prevents infinite loops)
+			if (page.hasMore && page.cursor === cursor) break;
 			cursor = page.cursor;
 			hasMore = page.hasMore;
 		}
