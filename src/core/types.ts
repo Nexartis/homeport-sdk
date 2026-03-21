@@ -36,6 +36,12 @@ export interface NnnCircuitBreakerConfig {
 	cooldownMs?: number;
 }
 
+/** Response cache configuration. */
+export interface NnnCacheConfig {
+	/** Default TTL in milliseconds. Default: 60000 (1 minute). */
+	defaultTtlMs?: number;
+}
+
 export interface NnnConfig {
 	/** NNN base URL (e.g. 'https://nanda.nexartis.com') */
 	baseUrl: string;
@@ -51,6 +57,8 @@ export interface NnnConfig {
 	circuitBreaker?: NnnCircuitBreakerConfig | false;
 	/** OpenTelemetry trace context to propagate. */
 	traceContext?: { traceparent?: string; tracestate?: string };
+	/** Opt-in response caching for GET requests. */
+	cache?: NnnCacheConfig;
 }
 
 export interface NnnRetryConfig {
@@ -213,26 +221,19 @@ export interface WorkflowRecord {
 	id: string;
 	name: string;
 	description?: string;
-	ownerId: string;
+	owner_id: string;
 	status: string;
-	dagJson?: string;
-	templateId?: string;
+	dag_json?: string;
+	template_id?: string;
 	metadata?: string;
-	createdAt: string;
-	updatedAt: string;
+	created_at: string;
+	updated_at: string;
 }
 
+/** Response from POST /api/orchestration/:id/runs (201). */
 export interface WorkflowRunResult {
-	runId: string;
 	status: string;
-	output?: Record<string, unknown>;
-	stepResults: Array<{
-		stepId: string;
-		status: string;
-		output?: string | null;
-		error?: string | null;
-		durationMs?: number | null;
-	}>;
+	run_id: string;
 }
 
 // ── Routing ─────────────────────────────────────────────────────────
@@ -313,19 +314,37 @@ export interface AgentRefreshResult {
 
 // ── Workflow Execution & Monitoring ─────────────────────────────
 
+/** Response from GET /api/orchestration/runs/:runId. */
 export interface WorkflowRunStatus {
-	workflowId: string;
-	runId: string;
+	run: WorkflowRun;
+	stepRuns: StepRun[];
+}
+
+/** A single workflow run record as returned by the backend. */
+export interface WorkflowRun {
+	id: string;
+	workflow_id: string;
 	status: string;
-	startedAt?: string;
-	completedAt?: string;
-	stepResults?: Array<{
-		stepId: string;
-		status: string;
-		output?: string | null;
-		error?: string | null;
-		durationMs?: number | null;
-	}>;
+	trigger_type?: string;
+	input?: Record<string, unknown>;
+	output?: Record<string, unknown> | null;
+	started_at?: string;
+	completed_at?: string | null;
+	created_at?: string;
+}
+
+/** A single step run within a workflow run. */
+export interface StepRun {
+	id: string;
+	run_id: string;
+	step_id: string;
+	status: string;
+	input?: Record<string, unknown> | null;
+	output?: Record<string, unknown> | null;
+	error?: string | null;
+	started_at?: string | null;
+	completed_at?: string | null;
+	duration_ms?: number | null;
 }
 
 // ── NANDA Index Sync ────────────────────────────────────────────
@@ -625,4 +644,165 @@ export interface EarningsActionRequest {
 	agentId?: string;
 	splitPct?: number;
 	periodId?: string;
+}
+
+
+// ── Sprint C: Missing Endpoint Types ────────────────────────────────
+
+/** Developer API key as returned by the backend. */
+export interface DeveloperApiKey {
+	id: string;
+	key_prefix: string;
+	name: string;
+	status: string;
+	tier: string;
+	rate_limit_monthly?: number;
+	usage_count_monthly?: number;
+	last_used_at?: string | null;
+	created_at: string;
+	revoked_at?: string | null;
+	expires_at?: string | null;
+}
+
+/** Response from POST /api/developers/keys (201). */
+export interface CreateDeveloperKeyResponse {
+	message: string;
+	key: {
+		id: string;
+		raw_key: string;
+		key_prefix: string;
+		name: string;
+		tier: string;
+		rate_limit_monthly: number;
+		created_at: string;
+	};
+}
+
+/** Response from DELETE /api/developers/keys/:id. */
+export interface RevokeDeveloperKeyResponse {
+	message: string;
+	key: {
+		id: string;
+		key_prefix: string;
+		name: string;
+		status: string;
+		revoked_at: string;
+	};
+}
+
+/** Request body for POST /api/developers/keys. */
+export interface CreateDeveloperKeyRequest {
+	name: string;
+	tier?: 'free' | 'pro' | 'enterprise';
+}
+
+/** Request body for POST /api/agents/:agentId/deprecate. */
+export interface DeprecateAgentRequest {
+	reason: string;
+	grace_period_days?: number;
+	notify_consumers?: boolean;
+}
+
+/** Response from POST /api/agents/:agentId/deprecate. */
+export interface DeprecateAgentResponse {
+	agent_id: string;
+	deprecated_at: string;
+	sunset_at: string;
+	notified: boolean;
+}
+
+/** Response from POST /api/agents/:agentId/tombstone. */
+export interface TombstoneAgentResponse {
+	agent_id: string;
+	tombstoned: boolean;
+}
+
+/** Request body for POST /api/agents/:agentId/versions. */
+export interface CreateAgentVersionRequest {
+	version: string;
+	agent_url: string;
+	api_url?: string | null;
+	facts_url?: string | null;
+	changelog?: string | null;
+	capabilities?: string[];
+}
+
+/** A single agent version record. */
+export interface AgentVersion {
+	id: string;
+	agent_id: string;
+	version: string;
+	agent_url: string;
+	api_url?: string | null;
+	facts_url?: string | null;
+	capabilities?: string | null;
+	changelog?: string | null;
+	created_at: string;
+}
+
+/** Response from compliance scan. */
+export interface ComplianceScanResult {
+	ok: boolean;
+	scanned: number;
+	results: unknown[];
+}
+
+/** Trust graph edge. */
+export interface TrustEdge {
+	from_did: string;
+	to_did: string;
+	trust_type: string;
+	score: number;
+	created_at: string;
+}
+
+/** Response from GET /api/trust/framework/graph?did=. */
+export interface TrustGraphResponse {
+	did: string;
+	incoming: TrustEdge[];
+	outgoing: TrustEdge[];
+	totalEdges: number;
+	fetchedAt: string;
+}
+
+/** Response from GET /api/trust/framework/graph?from=&to=. */
+export interface TrustPathResponse {
+	path: unknown | null;
+	message?: string;
+	fetchedAt: string;
+}
+
+/** Behavior analytics metric record. */
+export interface BehaviorMetric {
+	period: string;
+	reputationScore?: number | null;
+	uptimePct?: number | null;
+	[key: string]: unknown;
+}
+
+/** Response from GET /api/analytics/behavior. */
+export interface BehaviorAnalyticsResponse {
+	agent: string;
+	period: string;
+	metrics: BehaviorMetric[];
+	trends: Record<string, unknown>;
+	anomalies: Record<string, unknown>;
+	fetchedAt: string;
+}
+
+/** Request body for POST /api/payments/verify-np. */
+export interface VerifyNpPaymentRequest {
+	agent: string;
+	tx_id: string;
+	amount: number;
+	timestamp: number;
+	signature: string;
+	payee?: string;
+}
+
+/** Response from POST /api/payments/verify-np. */
+export interface VerifyNpPaymentResponse {
+	verified: boolean;
+	settlement_id?: string;
+	recon?: unknown | null;
 }

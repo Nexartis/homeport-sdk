@@ -201,7 +201,7 @@ describe('NnnClient', () => {
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
 			const url = fetchCall[0] as string;
-			expect(url).toContain('ownerId=owner-1');
+			expect(url).toContain('owner_id=owner-1');
 			expect(url).toContain('status=active');
 		});
 	});

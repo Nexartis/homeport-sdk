@@ -32,6 +32,7 @@ import type {
 	RouteRequestParams,
 	RoutingResult,
 	WorkflowRunStatus,
+	WorkflowRun,
 	IndexDiffResult,
 	IndexChangeCallback,
 	IndexChangeEvent,
@@ -62,15 +63,32 @@ import type {
 	CreateWebhookRequest,
 	CreateWebhookResponse,
 	WebhookSubscription,
-	EarningsActionRequest
+	EarningsActionRequest,
+	// Sprint C types
+	DeveloperApiKey,
+	CreateDeveloperKeyRequest,
+	CreateDeveloperKeyResponse,
+	RevokeDeveloperKeyResponse,
+	DeprecateAgentRequest,
+	DeprecateAgentResponse,
+	TombstoneAgentResponse,
+	CreateAgentVersionRequest,
+	AgentVersion,
+	ComplianceScanResult,
+	TrustGraphResponse,
+	TrustPathResponse,
+	BehaviorAnalyticsResponse,
+	VerifyNpPaymentRequest,
+	VerifyNpPaymentResponse
 } from './types';
 
 import { fetchWithRetry } from './retry';
 import { createNnnLogger, type NnnLogger } from './logger';
 import { NnnError, NnnErrorCode } from './errors';
+import { SDK_VERSION } from './version';
+import { CircuitBreaker } from './circuit-breaker';
 
-/** SDK version constant. Keep in sync with package.json `version`. */
-export const SDK_VERSION = '1.0.0';
+export { SDK_VERSION } from './version';
 
 /** Generate a unique request ID, safe across all JS runtimes. */
 function generateRequestId(): string {
@@ -118,18 +136,46 @@ function isStreamingRequest(init: RequestInit): boolean {
 	return accept.toLowerCase().includes('text/event-stream');
 }
 
-// ── Circuit Breaker ─────────────────────────────────────────────
+// ── Response Cache (B-4) ─────────────────────────────────────────────
 
-interface CircuitBreakerState {
-	failures: number;
-	lastFailureTime: number;
-	state: 'closed' | 'open' | 'half-open';
+/** Simple TTL-based response cache with pattern invalidation. */
+class ResponseCache {
+	private cache = new Map<string, { data: unknown; expiresAt: number }>();
+	private defaultTtlMs: number;
+
+	constructor(defaultTtlMs: number) {
+		this.defaultTtlMs = defaultTtlMs;
+	}
+
+	get<T>(key: string): T | undefined {
+		const entry = this.cache.get(key);
+		if (!entry) return undefined;
+		if (Date.now() > entry.expiresAt) {
+			this.cache.delete(key);
+			return undefined;
+		}
+		return entry.data as T;
+	}
+
+	set(key: string, data: unknown, ttlMs?: number): void {
+		this.cache.set(key, {
+			data,
+			expiresAt: Date.now() + (ttlMs ?? this.defaultTtlMs)
+		});
+	}
+
+	/** Invalidate entries matching a pattern, or clear all if no pattern given. */
+	invalidate(pattern?: string | RegExp): void {
+		if (!pattern) {
+			this.cache.clear();
+			return;
+		}
+		const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
+		for (const key of this.cache.keys()) {
+			if (regex.test(key)) this.cache.delete(key);
+		}
+	}
 }
-
-const DEFAULT_CIRCUIT_BREAKER: Required<NnnCircuitBreakerConfig> = {
-	failureThreshold: 5,
-	cooldownMs: 30_000
-};
 
 export class NnnClient {
 	readonly baseUrl: string;
@@ -138,8 +184,13 @@ export class NnnClient {
 	private retryConfig: NnnConfig['retryConfig'];
 	private hooks: NnnHooks;
 	private traceContext: { traceparent?: string; tracestate?: string };
-	private circuitBreakerConfig: Required<NnnCircuitBreakerConfig> | null;
-	private circuitBreaker: CircuitBreakerState;
+	private circuitBreaker: CircuitBreaker;
+
+	/** In-flight GET request deduplication map (B-3). */
+	private inflightGets = new Map<string, Promise<Response>>();
+
+	/** Opt-in response cache (B-4). */
+	private responseCache: ResponseCache | null;
 
 	constructor(config: NnnConfig) {
 		if (!config.baseUrl) {
@@ -151,13 +202,14 @@ export class NnnClient {
 		this.retryConfig = config.retryConfig;
 		this.hooks = config.hooks ?? {};
 		this.traceContext = config.traceContext ?? {};
+		this.circuitBreaker = new CircuitBreaker(config.circuitBreaker, this.logger);
 
-		if (config.circuitBreaker === false) {
-			this.circuitBreakerConfig = null;
+		// Response cache — disabled by default
+		if (config.cache) {
+			this.responseCache = new ResponseCache(config.cache.defaultTtlMs ?? 60_000);
 		} else {
-			this.circuitBreakerConfig = { ...DEFAULT_CIRCUIT_BREAKER, ...config.circuitBreaker };
+			this.responseCache = null;
 		}
-		this.circuitBreaker = { failures: 0, lastFailureTime: 0, state: 'closed' };
 	}
 
 	// ── HTTP helpers ──────────────────────────────────────────────────
@@ -166,7 +218,7 @@ export class NnnClient {
 		const h: Record<string, string> = {
 			Accept: 'application/json',
 			'Content-Type': 'application/json',
-			'User-Agent': `NNN-SDK/${SDK_VERSION}`
+			'User-Agent': `@nexartis/nexartis-nanda-node-sdk/${SDK_VERSION}`
 		};
 		if (this.apiKey) h['Authorization'] = `Bearer ${this.apiKey}`;
 		// OpenTelemetry trace context propagation (2.2)
@@ -190,53 +242,18 @@ export class NnnClient {
 		this.traceContext = ctx;
 	}
 
-	// ── Circuit Breaker Logic ───────────────────────────────────────
-
-	private checkCircuitBreaker(): void {
-		if (!this.circuitBreakerConfig) return;
-		const cb = this.circuitBreaker;
-		const cfg = this.circuitBreakerConfig;
-
-		if (cb.state === 'open') {
-			const elapsed = Date.now() - cb.lastFailureTime;
-			if (elapsed >= cfg.cooldownMs) {
-				cb.state = 'half-open';
-				this.logger.debug('Circuit breaker half-open, allowing probe request');
-			} else {
-				throw new NnnError(
-					NnnErrorCode.NETWORK_ERROR,
-					`Circuit breaker is open. ${cfg.cooldownMs - elapsed}ms remaining in cooldown.`
-				);
-			}
-		}
-	}
-
-	private recordSuccess(): void {
-		if (!this.circuitBreakerConfig) return;
-		this.circuitBreaker.failures = 0;
-		this.circuitBreaker.state = 'closed';
-	}
-
-	private recordFailure(): void {
-		if (!this.circuitBreakerConfig) return;
-		const cb = this.circuitBreaker;
-		const cfg = this.circuitBreakerConfig;
-		cb.failures++;
-		cb.lastFailureTime = Date.now();
-
-		if (cb.failures >= cfg.failureThreshold) {
-			cb.state = 'open';
-			this.logger.warn('Circuit breaker tripped', { failures: cb.failures, cooldownMs: cfg.cooldownMs });
-		}
+	/** Invalidate cache entries matching the given pattern. */
+	invalidateCache(pattern?: string | RegExp): void {
+		this.responseCache?.invalidate(pattern);
 	}
 
 	/**
-	 * Internal fetch with circuit breaker, hooks, and retry logic.
+	 * Internal fetch with circuit breaker, hooks, idempotency, and retry logic.
 	 * Set `skipBreaker` to true for external (A2A) calls that should not
 	 * affect the registry circuit breaker state.
 	 */
 	private async fetch(url: string, init: RequestInit, context: string, skipBreaker = false): Promise<Response> {
-		if (!skipBreaker) this.checkCircuitBreaker();
+		if (!skipBreaker) this.circuitBreaker.check();
 
 		const startTime = Date.now();
 
@@ -268,7 +285,7 @@ export class NnnClient {
 					`${context} failed (${response.status}): ${bodyText}`
 				);
 				error.context.durationMs = durationMs;
-				if (!skipBreaker && response.status >= 500) this.recordFailure();
+				if (!skipBreaker && response.status >= 500) this.circuitBreaker.recordFailure();
 				await this.hooks.onError?.(url, error);
 				throw error;
 			}
@@ -277,7 +294,7 @@ export class NnnClient {
 			// so that a JSON parse failure doesn't prematurely reset the streak.
 			// Streaming callers bypass safeParseJson, so record success here.
 			if (!skipBreaker && isSSE) {
-				this.recordSuccess();
+				this.circuitBreaker.recordSuccess();
 			}
 			return response;
 		} catch (err) {
@@ -290,7 +307,7 @@ export class NnnClient {
 			// 429 (rate-limit) is a client-side throttle, not a server failure —
 			// don't let it trip the circuit breaker.
 			const is429 = err instanceof NnnError && err.statusCode === 429;
-			if (!skipBreaker && !is429) this.recordFailure();
+			if (!skipBreaker && !is429) this.circuitBreaker.recordFailure();
 
 			// Enrich NnnError with duration context before firing onError
 			// so hook consumers can access timing information
@@ -311,57 +328,92 @@ export class NnnClient {
 		}
 	}
 
-	/**
-	 * GET JSON helper — fetch + parse. Error handling is centralized in fetch().
-	 */
-	private async getJson<T>(path: string, ctx: string): Promise<T> {
-		const res = await this.fetch(`${this.baseUrl}${path}`, { headers: this.headers() }, ctx);
-		return this.safeParseJson<T>(res, ctx);
+	/** Attach Idempotency-Key header for mutating requests (B-2). */
+	private mutatingHeaders(): Record<string, string> {
+		const h = this.headers();
+		h['Idempotency-Key'] = generateRequestId();
+		return h;
 	}
 
 	/**
-	 * POST JSON helper — fetch + parse with safe JSON handling.
+	 * GET JSON helper with deduplication and optional caching.
+	 * Concurrent identical GETs share a single in-flight request (B-3).
+	 * Results are optionally cached (B-4).
+	 */
+	private async getJson<T>(path: string, ctx: string, skipCache = false): Promise<T> {
+		const url = `${this.baseUrl}${path}`;
+
+		// Check cache first (B-4)
+		if (!skipCache && this.responseCache) {
+			const cached = this.responseCache.get<T>(url);
+			if (cached !== undefined) return cached;
+		}
+
+		// Dedup concurrent GETs (B-3)
+		let inflight = this.inflightGets.get(url);
+		if (!inflight) {
+			inflight = this.fetch(url, { headers: this.headers() }, ctx);
+			this.inflightGets.set(url, inflight);
+		}
+
+		try {
+			const res = await inflight;
+			const data = await this.safeParseJson<T>(res, ctx);
+
+			// Store in cache (B-4)
+			if (!skipCache && this.responseCache) {
+				this.responseCache.set(url, data);
+			}
+
+			return data;
+		} finally {
+			this.inflightGets.delete(url);
+		}
+	}
+
+	/**
+	 * POST JSON helper with idempotency key.
 	 */
 	private async postJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
 		const res = await this.fetch(
 			`${this.baseUrl}${path}`,
-			{ method: 'POST', headers: this.headers(), body: JSON.stringify(body) },
+			{ method: 'POST', headers: this.mutatingHeaders(), body: JSON.stringify(body) },
 			ctx
 		);
 		return this.safeParseJson<T>(res, ctx);
 	}
 
 	/**
-	 * PUT JSON helper — fetch + parse with safe JSON handling.
+	 * PUT JSON helper with idempotency key.
 	 */
 	private async putJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
 		const res = await this.fetch(
 			`${this.baseUrl}${path}`,
-			{ method: 'PUT', headers: this.headers(), body: JSON.stringify(body) },
+			{ method: 'PUT', headers: this.mutatingHeaders(), body: JSON.stringify(body) },
 			ctx
 		);
 		return this.safeParseJson<T>(res, ctx);
 	}
 
 	/**
-	 * DELETE JSON helper — fetch + parse with safe JSON handling.
+	 * DELETE JSON helper with idempotency key.
 	 */
 	private async deleteJson<T>(path: string, ctx: string): Promise<T> {
 		const res = await this.fetch(
 			`${this.baseUrl}${path}`,
-			{ method: 'DELETE', headers: this.headers() },
+			{ method: 'DELETE', headers: this.mutatingHeaders() },
 			ctx
 		);
 		return this.safeParseJson<T>(res, ctx);
 	}
 
 	/**
-	 * PATCH JSON helper — fetch + parse with safe JSON handling.
+	 * PATCH JSON helper with idempotency key.
 	 */
 	private async patchJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
 		const res = await this.fetch(
 			`${this.baseUrl}${path}`,
-			{ method: 'PATCH', headers: this.headers(), body: JSON.stringify(body) },
+			{ method: 'PATCH', headers: this.mutatingHeaders(), body: JSON.stringify(body) },
 			ctx
 		);
 		return this.safeParseJson<T>(res, ctx);
@@ -376,10 +428,10 @@ export class NnnClient {
 	private async safeParseJson<T>(res: Response, ctx: string, skipBreaker = false): Promise<T> {
 		try {
 			const data = await res.json() as T;
-			if (!skipBreaker) this.recordSuccess();
+			if (!skipBreaker) this.circuitBreaker.recordSuccess();
 			return data;
 		} catch (err) {
-			if (!skipBreaker) this.recordFailure();
+			if (!skipBreaker) this.circuitBreaker.recordFailure();
 			const parseError = new NnnError(
 				NnnErrorCode.SERVER_ERROR,
 				`${ctx}: failed to parse response body as JSON`
@@ -567,20 +619,20 @@ export class NnnClient {
 		return this.postJson('/api/orchestration', req, 'createWorkflow');
 	}
 
-	/** GET /api/orchestration?ownerId=&status= — List workflows. */
+	/** GET /api/orchestration?owner_id=&status= — List workflows. */
 	async listWorkflows(params: { ownerId?: string; status?: string } = {}): Promise<{ workflows: WorkflowRecord[] }> {
 		const sp = new URLSearchParams();
-		if (params.ownerId) sp.set('ownerId', params.ownerId);
+		if (params.ownerId) sp.set('owner_id', params.ownerId);
 		if (params.status) sp.set('status', params.status);
 		const qs = sp.toString();
 		return this.getJson(`/api/orchestration${qs ? `?${qs}` : ''}`, 'listWorkflows');
 	}
 
-	/** POST /api/orchestration/:id/run — Run a workflow by ID. */
+	/** POST /api/orchestration/:id/runs — Start a new workflow run. */
 	async runWorkflow(workflowId: string, input?: Record<string, unknown>): Promise<WorkflowRunResult> {
 		this.logger.debug('Running workflow', { workflowId });
 		return this.postJson(
-			`/api/orchestration/${encodeURIComponent(workflowId)}/run`,
+			`/api/orchestration/${encodeURIComponent(workflowId)}/runs`,
 			input ?? {},
 			'runWorkflow'
 		);
@@ -1106,6 +1158,124 @@ export class NnnClient {
 		return () => {
 			stopped = true;
 		};
+	}
+
+	// ── Sprint C: Missing Endpoint Coverage ──────────────────────────
+
+	// C-1: Workflow Runs
+
+	/** GET /api/orchestration/:id/runs — List runs for a workflow. */
+	async listWorkflowRuns(workflowId: string, limit = 20): Promise<{ runs: WorkflowRun[] }> {
+		const sp = new URLSearchParams({ limit: String(Math.min(limit, 100)) });
+		return this.getJson(
+			`/api/orchestration/${encodeURIComponent(workflowId)}/runs?${sp.toString()}`,
+			'listWorkflowRuns'
+		);
+	}
+
+	// C-2: Developer Key Management
+
+	/** GET /api/developers/keys — List all API keys for the authenticated user. */
+	async listDeveloperKeys(): Promise<{ keys: DeveloperApiKey[] }> {
+		return this.getJson('/api/developers/keys', 'listDeveloperKeys');
+	}
+
+	/** POST /api/developers/keys — Generate a new developer API key. */
+	async createDeveloperKey(req: CreateDeveloperKeyRequest): Promise<CreateDeveloperKeyResponse> {
+		this.logger.debug('Creating developer key', { name: req.name });
+		return this.postJson('/api/developers/keys', req, 'createDeveloperKey');
+	}
+
+	/** DELETE /api/developers/keys/:id — Revoke a developer API key. */
+	async revokeDeveloperKey(keyId: string): Promise<RevokeDeveloperKeyResponse> {
+		this.logger.debug('Revoking developer key', { keyId });
+		return this.deleteJson(
+			`/api/developers/keys/${encodeURIComponent(keyId)}`,
+			'revokeDeveloperKey'
+		);
+	}
+
+	// C-3: Agent Lifecycle (deprecate / tombstone / versions)
+
+	/** POST /api/agents/:agentId/deprecate — Deprecate an agent with a grace period. */
+	async deprecateAgent(agentId: string, req: DeprecateAgentRequest): Promise<DeprecateAgentResponse> {
+		this.logger.debug('Deprecating agent', { agentId, reason: req.reason });
+		return this.postJson(
+			`/api/agents/${encodeURIComponent(agentId)}/deprecate`,
+			req,
+			'deprecateAgent'
+		);
+	}
+
+	/** POST /api/agents/:agentId/tombstone — Permanently tombstone an agent. */
+	async tombstoneAgent(agentId: string): Promise<TombstoneAgentResponse> {
+		this.logger.debug('Tombstoning agent', { agentId });
+		return this.postJson(
+			`/api/agents/${encodeURIComponent(agentId)}/tombstone`,
+			{},
+			'tombstoneAgent'
+		);
+	}
+
+	/** GET /api/agents/:agentId/versions — List all versions for an agent. */
+	async listAgentVersions(agentId: string): Promise<{ agent_id: string; count: number; versions: AgentVersion[] }> {
+		return this.getJson(
+			`/api/agents/${encodeURIComponent(agentId)}/versions`,
+			'listAgentVersions'
+		);
+	}
+
+	/** POST /api/agents/:agentId/versions — Create a new agent version. */
+	async createAgentVersion(agentId: string, req: CreateAgentVersionRequest): Promise<{ status: string; version: AgentVersion }> {
+		this.logger.debug('Creating agent version', { agentId, version: req.version });
+		return this.postJson(
+			`/api/agents/${encodeURIComponent(agentId)}/versions`,
+			req,
+			'createAgentVersion'
+		);
+	}
+
+	// C-4: Compliance Scan
+
+	/** POST /api/compliance/scan — Run a compliance scan for all agents. */
+	async scanCompliance(): Promise<ComplianceScanResult> {
+		this.logger.debug('Running compliance scan');
+		return this.postJson('/api/compliance/scan', {}, 'scanCompliance');
+	}
+
+	// C-5: Trust Graph
+
+	/** GET /api/trust/framework/graph?did= — Get trust graph edges for a DID. */
+	async getTrustGraph(did: string): Promise<TrustGraphResponse> {
+		const sp = new URLSearchParams({ did });
+		return this.getJson(`/api/trust/framework/graph?${sp.toString()}`, 'getTrustGraph');
+	}
+
+	/** GET /api/trust/framework/graph?from=&to= — Compute trust path between two DIDs. */
+	async getTrustPath(fromDid: string, toDid: string): Promise<TrustPathResponse> {
+		const sp = new URLSearchParams({ from: fromDid, to: toDid });
+		return this.getJson(`/api/trust/framework/graph?${sp.toString()}`, 'getTrustPath');
+	}
+
+	// C-6: Behavior Analytics
+
+	/** GET /api/analytics/behavior — Get agent behavior analytics. */
+	async getBehaviorAnalytics(
+		agentId: string,
+		options: { period?: 'daily' | 'weekly'; limit?: number } = {}
+	): Promise<BehaviorAnalyticsResponse> {
+		const sp = new URLSearchParams({ agent: agentId });
+		if (options.period) sp.set('period', options.period);
+		if (options.limit) sp.set('limit', String(options.limit));
+		return this.getJson(`/api/analytics/behavior?${sp.toString()}`, 'getBehaviorAnalytics');
+	}
+
+	// C-7: NP Payment Verification
+
+	/** POST /api/payments/verify-np — Verify a Nanda Point payment. */
+	async verifyNpPayment(req: VerifyNpPaymentRequest): Promise<VerifyNpPaymentResponse> {
+		this.logger.debug('Verifying NP payment', { agent: req.agent, tx_id: req.tx_id });
+		return this.postJson('/api/payments/verify-np', req, 'verifyNpPayment');
 	}
 }
 
