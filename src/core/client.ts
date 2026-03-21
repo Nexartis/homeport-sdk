@@ -72,6 +72,16 @@ import { NnnError, NnnErrorCode } from './errors';
 /** SDK version constant — derived from package.json at build time. */
 export const SDK_VERSION = '1.0.0';
 
+/** Generate a unique request ID, safe across all JS runtimes. */
+function generateRequestId(): string {
+	try {
+		if (typeof globalThis !== 'undefined' && globalThis.crypto?.randomUUID) {
+			return globalThis.crypto.randomUUID();
+		}
+	} catch { /* fallback below */ }
+	return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 // ── Circuit Breaker ─────────────────────────────────────────────
 
 interface CircuitBreakerState {
@@ -126,6 +136,16 @@ export class NnnClient {
 		// OpenTelemetry trace context propagation (2.2)
 		if (this.traceContext.traceparent) h['traceparent'] = this.traceContext.traceparent;
 		if (this.traceContext.tracestate) h['tracestate'] = this.traceContext.tracestate;
+		return h;
+	}
+
+	/**
+	 * Return headers safe for third-party (off-domain) requests.
+	 * Strips the registry Authorization token to prevent credential leakage.
+	 */
+	private externalHeaders(): Record<string, string> {
+		const h = this.headers();
+		delete h['Authorization'];
 		return h;
 	}
 
@@ -327,6 +347,8 @@ export class NnnClient {
 		if (params.min_trust !== undefined) sp.set('min_trust', String(params.min_trust));
 		if (params.jurisdiction) sp.set('jurisdiction', params.jurisdiction);
 		if (params.protocol) sp.set('protocol', params.protocol);
+		if (params.limit !== undefined) sp.set('limit', String(params.limit));
+		if (params.cursor) sp.set('cursor', params.cursor);
 		const qs = sp.toString();
 		return this.getJson(`/search${qs ? `?${qs}` : ''}`, 'searchAgents');
 	}
@@ -522,6 +544,7 @@ export class NnnClient {
 
 	/** POST /resolve — Adaptive resolution with context-aware ranking. */
 	async adaptiveResolve(agentId: string, context?: ResolutionContext): Promise<ResolutionResult> {
+		this.logger.debug('Adaptive resolve', { agentId });
 		return this.postJson('/resolve', { agent_id: agentId, context }, 'adaptiveResolve');
 	}
 
@@ -550,6 +573,7 @@ export class NnnClient {
 
 	/** POST /api/trust/cross-registry — Sync trust scores across federated registries. */
 	async syncCrossRegistryTrust(adminKey?: string): Promise<Record<string, unknown>> {
+		this.logger.debug('Syncing cross-registry trust');
 		const headers: Record<string, string> = { ...this.headers() };
 		if (adminKey) headers['Authorization'] = `Bearer ${adminKey}`;
 		const res = await this.fetch(
@@ -572,6 +596,7 @@ export class NnnClient {
 
 	/** POST /api/subscriptions — Create a new subscription. */
 	async createSubscription(params: CreateSubscriptionRequest): Promise<Record<string, unknown>> {
+		this.logger.debug('Creating subscription', { keyId: params.key_id, plan: params.plan });
 		return this.postJson('/api/subscriptions', params, 'createSubscription');
 	}
 
@@ -582,6 +607,7 @@ export class NnnClient {
 
 	/** POST /api/invoices — Create a new invoice. */
 	async createInvoice(params: CreateInvoiceRequest): Promise<Record<string, unknown>> {
+		this.logger.debug('Creating invoice', { keyId: params.key_id });
 		return this.postJson('/api/invoices', params, 'createInvoice');
 	}
 
@@ -589,6 +615,7 @@ export class NnnClient {
 
 	/** POST /api/ucp/checkout-sessions — Create a checkout session. */
 	async createCheckoutSession(params: CreateCheckoutRequest): Promise<CheckoutSession> {
+		this.logger.debug('Creating checkout session', { capabilities: params.capabilities.length });
 		return this.postJson('/api/ucp/checkout-sessions', params, 'createCheckoutSession');
 	}
 
@@ -599,11 +626,13 @@ export class NnnClient {
 
 	/** PATCH /api/ucp/checkout-sessions/:id — Submit payment for a checkout session. */
 	async submitCheckoutPayment(sessionId: string, payment: Record<string, unknown>): Promise<Record<string, unknown>> {
+		this.logger.debug('Submitting checkout payment', { sessionId });
 		return this.patchJson(`/api/ucp/checkout-sessions/${encodeURIComponent(sessionId)}`, { payment }, 'submitCheckoutPayment');
 	}
 
 	/** DELETE /api/ucp/checkout-sessions/:id — Cancel a checkout session. */
 	async cancelCheckoutSession(sessionId: string): Promise<{ id: string; status: string }> {
+		this.logger.debug('Cancelling checkout session', { sessionId });
 		return this.deleteJson(`/api/ucp/checkout-sessions/${encodeURIComponent(sessionId)}`, 'cancelCheckoutSession');
 	}
 
@@ -616,6 +645,7 @@ export class NnnClient {
 
 	/** POST /api/webhooks — Create a webhook subscription. */
 	async createWebhook(params: CreateWebhookRequest): Promise<CreateWebhookResponse> {
+		this.logger.debug('Creating webhook', { callbackUrl: params.callback_url, events: params.events });
 		return this.postJson('/api/webhooks', params, 'createWebhook');
 	}
 
@@ -626,11 +656,13 @@ export class NnnClient {
 
 	/** PATCH /api/webhooks/:id — Update a webhook (pause/resume). */
 	async updateWebhook(webhookId: string, action: 'pause' | 'resume'): Promise<Record<string, unknown>> {
+		this.logger.debug('Updating webhook', { webhookId, action });
 		return this.patchJson(`/api/webhooks/${encodeURIComponent(webhookId)}`, { action }, 'updateWebhook');
 	}
 
 	/** DELETE /api/webhooks/:id — Delete a webhook subscription. */
 	async deleteWebhook(webhookId: string): Promise<{ ok: boolean; deleted: string }> {
+		this.logger.debug('Deleting webhook', { webhookId });
 		return this.deleteJson(`/api/webhooks/${encodeURIComponent(webhookId)}`, 'deleteWebhook');
 	}
 
@@ -645,6 +677,7 @@ export class NnnClient {
 
 	/** POST /api/developer/earnings — Perform an earnings action. */
 	async earningsAction(params: EarningsActionRequest): Promise<Record<string, unknown>> {
+		this.logger.debug('Earnings action', { action: params.action });
 		return this.postJson('/api/developer/earnings', params, 'earningsAction');
 	}
 
@@ -680,7 +713,7 @@ export class NnnClient {
 
 		const rpcRequest: A2ARequest = {
 			jsonrpc: '2.0',
-			id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+			id: generateRequestId(),
 			method: params.method,
 			params: params.params
 		};
@@ -692,7 +725,7 @@ export class NnnClient {
 
 		const res = await this.fetch(
 			targetUrl,
-			{ method: 'POST', headers: this.headers(), body: JSON.stringify(rpcRequest) },
+			{ method: 'POST', headers: this.externalHeaders(), body: JSON.stringify(rpcRequest) },
 			'sendA2ARequest'
 		);
 		if (!res.ok) {
@@ -714,7 +747,7 @@ export class NnnClient {
 
 		const rpcRequest: A2ARequest = {
 			jsonrpc: '2.0',
-			id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+			id: generateRequestId(),
 			method: params.method,
 			params: params.params
 		};
@@ -724,7 +757,7 @@ export class NnnClient {
 			method: params.method
 		});
 
-		const headers = { ...this.headers(), Accept: 'text/event-stream' };
+		const headers = { ...this.externalHeaders(), Accept: 'text/event-stream' };
 		const res = await this.fetch(
 			targetUrl,
 			{ method: 'POST', headers, body: JSON.stringify(rpcRequest) },
@@ -891,19 +924,24 @@ export class NnnClient {
 					const now = new Date();
 
 					for (const agent of diff.added) {
-						callback({ type: 'added', agent, timestamp: now.toISOString() });
+						try { callback({ type: 'added', agent, timestamp: now.toISOString() }); }
+						catch (cbErr) { this.logger.warn('Index callback error', { error: cbErr instanceof Error ? cbErr.message : String(cbErr) }); }
 					}
 					for (const agent of diff.updated) {
-						callback({ type: 'updated', agent, timestamp: now.toISOString() });
+						try { callback({ type: 'updated', agent, timestamp: now.toISOString() }); }
+						catch (cbErr) { this.logger.warn('Index callback error', { error: cbErr instanceof Error ? cbErr.message : String(cbErr) }); }
 					}
 					for (const agentId of diff.removed) {
-						callback({
-							type: 'removed',
-							agent: { agent_id: agentId, agent_url: '' } as NnnAgent,
-							timestamp: now.toISOString()
-						});
+						try {
+							callback({
+								type: 'removed',
+								agent: { agent_id: agentId, agent_url: '' } as NnnAgent,
+								timestamp: now.toISOString()
+							});
+						} catch (cbErr) { this.logger.warn('Index callback error', { error: cbErr instanceof Error ? cbErr.message : String(cbErr) }); }
 					}
 
+					// Always advance lastCheck so diffs aren't re-emitted
 					lastCheck = now;
 				} catch (err) {
 					this.logger.warn('Index sync poll failed', {
