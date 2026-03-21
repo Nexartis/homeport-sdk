@@ -108,17 +108,16 @@ export async function fetchWithRetry(
 			});
 
 			if (response.status >= 500 || response.status === 429) {
-				// On the final attempt, return the raw response so the caller
-				// can fire afterResponse hooks before handling the error.
-				if (attempt >= maxRetries) {
-					return response;
-				}
 				let bodyText = '';
 				try {
 					bodyText = await response.text();
 				} catch {
 					/* drain best-effort */
 				}
+
+				// On the final attempt, still throw so callers always get
+				// a consistent NnnError — returning a raw Response could let
+				// failures be silently treated as success.
 				throw NnnError.fromStatus(
 					response.status,
 					`[${context}] HTTP ${response.status}: ${bodyText || '(no body)'}`

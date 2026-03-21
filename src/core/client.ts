@@ -215,10 +215,13 @@ export class NnnClient {
 	private async fetch(url: string, init: RequestInit, context: string, skipBreaker = false): Promise<Response> {
 		if (!skipBreaker) this.checkCircuitBreaker();
 
-		await this.hooks.beforeRequest?.(url, init);
 		const startTime = Date.now();
 
 		try {
+			// Run beforeRequest inside try so hook failures are handled
+			// consistently with request failures (onError, circuit breaker).
+			await this.hooks.beforeRequest?.(url, init);
+
 			const response = await fetchWithRetry(url, init, context, this.retryConfig);
 			const durationMs = Date.now() - startTime;
 
@@ -227,19 +230,23 @@ export class NnnClient {
 			await this.hooks.afterResponse?.(url, response.clone(), durationMs);
 
 			if (!response.ok) {
-				// HTTP error — record failure, call onError, throw with durationMs
+				// HTTP error — record failure only for server errors (5xx),
+				// not client errors (4xx) which indicate caller issues, not
+				// service degradation.
 				const bodyText = await response.text();
 				const error = NnnError.fromStatus(
 					response.status,
 					`${context} failed (${response.status}): ${bodyText}`
 				);
 				error.context.durationMs = durationMs;
-				if (!skipBreaker) this.recordFailure();
+				if (!skipBreaker && response.status >= 500) this.recordFailure();
 				await this.hooks.onError?.(url, error);
 				throw error;
 			}
 
-			if (!skipBreaker) this.recordSuccess();
+			// Note: recordSuccess is deferred to safeParseJson() so that
+			// a JSON parse failure doesn't prematurely reset the failure streak.
+			// For streaming callers that bypass safeParseJson, record here.
 			return response;
 		} catch (err) {
 			// Re-throw errors already handled above (HTTP errors)
@@ -317,12 +324,15 @@ export class NnnClient {
 
 	/**
 	 * Parse JSON from a response, recording failure and firing onError if parsing throws.
-	 * This ensures circuit breaker and hooks stay consistent with actual caller-visible success.
-	 * Pass `skipBreaker` to avoid recording failures for external (A2A) calls.
+	 * Records success only after the body is successfully parsed, so that a JSON parse
+	 * failure doesn't prematurely reset a circuit breaker failure streak.
+	 * Pass `skipBreaker` to avoid recording state for external (A2A) calls.
 	 */
 	private async safeParseJson<T>(res: Response, ctx: string, skipBreaker = false): Promise<T> {
 		try {
-			return await res.json() as T;
+			const data = await res.json() as T;
+			if (!skipBreaker) this.recordSuccess();
+			return data;
 		} catch (err) {
 			if (!skipBreaker) this.recordFailure();
 			const parseError = new NnnError(
@@ -362,7 +372,7 @@ export class NnnClient {
 			.map(([k]) => k);
 		return {
 			...h,
-			healthy: h.status === 'ok',
+			healthy: h.status === 'ok' && degradedChecks.length === 0,
 			degradedChecks
 		};
 	}
