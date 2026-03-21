@@ -323,7 +323,7 @@ export class NnnClient {
 		} catch (err) {
 			this.recordFailure();
 			const parseError = new NnnError(
-				NnnErrorCode.UNKNOWN,
+				NnnErrorCode.SERVER_ERROR,
 				`${ctx}: failed to parse response body as JSON`
 			);
 			await this.hooks.onError?.(res.url, parseError);
@@ -633,7 +633,7 @@ export class NnnClient {
 			{ method: 'POST', headers, body: JSON.stringify({}) },
 			'syncCrossRegistryTrust'
 		);
-		return res.json() as Promise<Record<string, unknown>>;
+		return this.safeParseJson<Record<string, unknown>>(res, 'syncCrossRegistryTrust');
 	}
 
 	// ── Billing & Subscriptions ─────────────────────────────────────
@@ -778,7 +778,7 @@ export class NnnClient {
 			'sendA2ARequest',
 			true // skip circuit breaker — external A2A failures must not trip registry breaker
 		);
-		return res.json() as Promise<A2AResponse>;
+		return this.safeParseJson<A2AResponse>(res, 'sendA2ARequest');
 	}
 
 	/**
