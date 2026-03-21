@@ -69,7 +69,7 @@ import { fetchWithRetry } from './retry';
 import { createNnnLogger, type NnnLogger } from './logger';
 import { NnnError, NnnErrorCode } from './errors';
 
-/** SDK version constant — derived from package.json at build time. */
+/** SDK version constant. Keep in sync with package.json `version`. */
 export const SDK_VERSION = '1.0.0';
 
 /** Generate a unique request ID, safe across all JS runtimes. */
