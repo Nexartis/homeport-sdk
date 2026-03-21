@@ -247,12 +247,13 @@ export class NnnClient {
 			}
 			const durationMs = Date.now() - startTime;
 			if (!skipBreaker) this.recordFailure();
-			await this.hooks.onError?.(url, err);
 
-			// Enrich NnnError with duration context
+			// Enrich NnnError with duration context before firing onError
+			// so hook consumers can access timing information
 			if (err instanceof NnnError) {
 				err.context.durationMs = durationMs;
 			}
+			await this.hooks.onError?.(url, err);
 			throw err;
 		}
 	}
@@ -316,12 +317,13 @@ export class NnnClient {
 	/**
 	 * Parse JSON from a response, recording failure and firing onError if parsing throws.
 	 * This ensures circuit breaker and hooks stay consistent with actual caller-visible success.
+	 * Pass `skipBreaker` to avoid recording failures for external (A2A) calls.
 	 */
-	private async safeParseJson<T>(res: Response, ctx: string): Promise<T> {
+	private async safeParseJson<T>(res: Response, ctx: string, skipBreaker = false): Promise<T> {
 		try {
 			return await res.json() as T;
 		} catch (err) {
-			this.recordFailure();
+			if (!skipBreaker) this.recordFailure();
 			const parseError = new NnnError(
 				NnnErrorCode.SERVER_ERROR,
 				`${ctx}: failed to parse response body as JSON`
@@ -782,7 +784,7 @@ export class NnnClient {
 			'sendA2ARequest',
 			true // skip circuit breaker — external A2A failures must not trip registry breaker
 		);
-		return this.safeParseJson<A2AResponse>(res, 'sendA2ARequest');
+		return this.safeParseJson<A2AResponse>(res, 'sendA2ARequest', true);
 	}
 
 	/**
