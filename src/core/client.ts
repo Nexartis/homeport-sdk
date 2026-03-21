@@ -105,6 +105,9 @@ class ResponseCache {
 		}
 		const regex = typeof pattern === 'string' ? new RegExp(pattern) : pattern;
 		for (const key of this.cache.keys()) {
+			// Reset lastIndex before each test() call so RegExps with g/y
+			// flags don't skip matches due to stateful lastIndex.
+			regex.lastIndex = 0;
 			if (regex.test(key)) this.cache.delete(key);
 		}
 	}
@@ -119,8 +122,8 @@ export class NnnClient {
 	private traceContext: { traceparent?: string; tracestate?: string };
 	private circuitBreaker: CircuitBreaker;
 
-	/** In-flight GET request deduplication map (B-3). */
-	private inflightGets = new Map<string, Promise<Response>>();
+	/** In-flight GET request deduplication map (B-3). Stores parsed results, not Response objects, so multiple callers don't fight over consuming the body. */
+	private inflightGets = new Map<string, Promise<unknown>>();
 
 	/** Opt-in response cache (B-4). */
 	private responseCache: ResponseCache | null;
@@ -353,16 +356,21 @@ export class NnnClient {
 			if (cached !== undefined) return cached;
 		}
 
-		// Dedup concurrent GETs (B-3)
+		// Dedup concurrent GETs (B-3).
+		// The map stores Promise<unknown> (parsed JSON), not Promise<Response>,
+		// so multiple concurrent callers share the parsed result without
+		// hitting a "body already used" error.
 		let inflight = this.inflightGets.get(url);
 		if (!inflight) {
-			inflight = this.fetch(url, { headers: this.headers() }, ctx);
+			inflight = (async () => {
+				const res = await this.fetch(url, { headers: this.headers() }, ctx);
+				return this.safeParseJson<T>(res, ctx);
+			})();
 			this.inflightGets.set(url, inflight);
 		}
 
 		try {
-			const res = await inflight;
-			const data = await this.safeParseJson<T>(res, ctx);
+			const data = (await inflight) as T;
 
 			// Store in cache (B-4)
 			if (!skipCache && this.responseCache) {
@@ -452,11 +460,15 @@ export class NnnClient {
 		return this.getJson('/health', 'health');
 	}
 
-	/** Convenience: is NNN healthy? Never throws. */
+	/**
+	 * Convenience: is NNN healthy? Never throws.
+	 * Uses deepHealth() so the result is consistent — a service with degraded
+	 * subsystems is not considered healthy.
+	 */
 	async isHealthy(): Promise<boolean> {
 		try {
-			const h = await this.health();
-			return h.status === 'ok';
+			const dh = await this.deepHealth();
+			return dh.healthy;
 		} catch {
 			return false;
 		}

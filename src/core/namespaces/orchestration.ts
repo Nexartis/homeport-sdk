@@ -89,7 +89,7 @@ export class OrchestrationNamespace {
 
 	/** GET /api/orchestration/:id/runs — List runs for a workflow. */
 	async listWorkflowRuns(workflowId: string, limit = 20): Promise<{ runs: WorkflowRun[] }> {
-		const sp = new URLSearchParams({ limit: String(Math.min(limit, 100)) });
+		const sp = new URLSearchParams({ limit: String(Math.max(1, Math.min(limit, 100))) });
 		return this._client.getJson(
 			`/api/orchestration/${encodeURIComponent(workflowId)}/runs?${sp.toString()}`, 'orchestration.listWorkflowRuns'
 		);

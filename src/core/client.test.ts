@@ -59,13 +59,13 @@ describe('NnnClient', () => {
 
 	describe('isHealthy()', () => {
 		it('returns true when healthy', async () => {
-			mockFetch({ status: 200, body: { status: 'ok' } });
+			mockFetch({ status: 200, body: { status: 'ok', checks: { db: 'ok', redis: 'ok' } } });
 			const client = new NnnClient(BASE_CONFIG);
 			expect(await client.isHealthy()).toBe(true);
 		});
 
 		it('returns false when degraded', async () => {
-			mockFetch({ status: 200, body: { status: 'degraded' } });
+			mockFetch({ status: 200, body: { status: 'degraded', checks: { db: 'ok', redis: 'degraded' } } });
 			const client = new NnnClient(BASE_CONFIG);
 			expect(await client.isHealthy()).toBe(false);
 		});
