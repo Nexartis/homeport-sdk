@@ -92,7 +92,7 @@ await nnn.createWorkflow({
 const result = await nnn.runWorkflow('workflow-123', { prompt: 'Analyze this PR' });
 
 // Stream workflow events (SSE)
-for await (const event of nnn.streamWorkflowEvents(result.run_id)) {
+for await (const event of nnn.streamWorkflowEvents(result.runId)) {
   console.log(event.type, event.data);
 }
 
@@ -150,7 +150,7 @@ const healthy = await nnn.isHealthy(); // never throws
 | | `runWorkflow(workflowId, input?)` | Execute a workflow and return run result |
 | | `getWorkflowStatus(runId)` | Get run status + step details |
 | | `cancelWorkflowRun(runId)` | Cancel a running workflow |
-| | `streamWorkflowEvents(runId)` | `AsyncGenerator<WorkflowEvent>` — SSE stream |
+| | `streamWorkflowEvents(runId)` | `AsyncGenerator<Record<string, unknown>>` — SSE stream |
 | **Routing & Delegation** | `routeRequest(params)` | Intelligent agent routing |
 | | `delegateTask(params)` | Delegate a sub-task to an agent |
 | | `listDelegations(workflowId)` | List delegations for a workflow |

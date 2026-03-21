@@ -39,7 +39,7 @@ async function main() {
 	console.log('🚀 Workflow run started:', run);
 
 	// 3. Check workflow status
-	const status = await client.getWorkflowStatus(workflow.id, run.runId);
+	const status = await client.getWorkflowStatus(run.runId);
 	console.log('📊 Status:', status.status);
 
 	// 4. List all workflows

@@ -831,11 +831,15 @@ export class NnnClient {
 			// SSE spec: multiple consecutive `data:` lines form a single event,
 			// joined by '\n'. A blank line signals the end of an event.
 			const dataLines: string[] = [];
+			let streamDone = false;
 
 			const flushEvent = function* (self: NnnClient) {
 				if (dataLines.length === 0) return;
 				const payload = dataLines.splice(0).join('\n');
-				if (payload === '[DONE]') return;
+				if (payload === '[DONE]') {
+					streamDone = true;
+					return;
+				}
 				try {
 					yield JSON.parse(payload) as A2AResponse;
 				} catch {
@@ -843,7 +847,7 @@ export class NnnClient {
 				}
 			};
 
-			while (true) {
+			while (!streamDone) {
 				const { done, value } = await reader.read();
 				if (done) break;
 
@@ -857,6 +861,7 @@ export class NnnClient {
 					if (!trimmed) {
 						// Blank line — flush accumulated event
 						yield* flushEvent(this);
+						if (streamDone) break;
 						continue;
 					}
 					if (trimmed.startsWith('data:')) {
@@ -866,7 +871,7 @@ export class NnnClient {
 				}
 			}
 			// Flush any remaining data when stream ends without a trailing blank line
-			yield* flushEvent(this);
+			if (!streamDone) yield* flushEvent(this);
 		} finally {
 			reader.cancel().catch(() => {});
 			reader.releaseLock();
@@ -947,11 +952,15 @@ export class NnnClient {
 
 		try {
 			const dataLines: string[] = [];
+			let streamDone = false;
 
 			const flushEvent = function* (self: NnnClient) {
 				if (dataLines.length === 0) return;
 				const payload = dataLines.splice(0).join('\n');
-				if (payload === '[DONE]') return;
+				if (payload === '[DONE]') {
+					streamDone = true;
+					return;
+				}
 				try {
 					yield JSON.parse(payload) as Record<string, unknown>;
 				} catch {
@@ -959,7 +968,7 @@ export class NnnClient {
 				}
 			};
 
-			while (true) {
+			while (!streamDone) {
 				const { done, value } = await reader.read();
 				if (done) break;
 
@@ -972,6 +981,7 @@ export class NnnClient {
 					if (trimmed.startsWith(':')) continue;
 					if (!trimmed) {
 						yield* flushEvent(this);
+						if (streamDone) break;
 						continue;
 					}
 					if (trimmed.startsWith('data:')) {
@@ -980,7 +990,7 @@ export class NnnClient {
 					}
 				}
 			}
-			yield* flushEvent(this);
+			if (!streamDone) yield* flushEvent(this);
 		} finally {
 			reader.cancel().catch(() => {});
 			reader.releaseLock();

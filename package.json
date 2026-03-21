@@ -36,10 +36,7 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.ts": [
-      "bash -c 'tsc --noEmit'",
-      "bash -c 'vitest run'"
-    ]
+    "*.ts": "tsc --noEmit && vitest run"
   },
   "keywords": [
     "nanda",
