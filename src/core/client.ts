@@ -222,8 +222,9 @@ export class NnnClient {
 			const response = await fetchWithRetry(url, init, context, this.retryConfig);
 			const durationMs = Date.now() - startTime;
 
-			// Always call afterResponse for observability (logging, metrics)
-			await this.hooks.afterResponse?.(url, response, durationMs);
+			// Clone the response before passing to hooks so hook consumers
+			// cannot accidentally consume the body needed by the caller.
+			await this.hooks.afterResponse?.(url, response.clone(), durationMs);
 
 			if (!response.ok) {
 				// HTTP error — record failure, call onError, throw with durationMs
@@ -838,8 +839,9 @@ export class NnnClient {
 				for (const line of lines) {
 					const trimmed = line.trim();
 					if (!trimmed || trimmed.startsWith(':')) continue;
-					if (trimmed.startsWith('data: ')) {
-						const data = trimmed.slice(6);
+					// Accept both "data: " (with space) and "data:" (without space) per SSE spec
+					if (trimmed.startsWith('data:')) {
+						const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
 						if (data === '[DONE]') return;
 						try {
 							yield JSON.parse(data) as A2AResponse;
@@ -939,8 +941,9 @@ export class NnnClient {
 				for (const line of lines) {
 					const trimmed = line.trim();
 					if (!trimmed || trimmed.startsWith(':')) continue;
-					if (trimmed.startsWith('data: ')) {
-						const data = trimmed.slice(6);
+					// Accept both "data: " (with space) and "data:" (without space) per SSE spec
+					if (trimmed.startsWith('data:')) {
+						const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
 						if (data === '[DONE]') return;
 						try {
 							yield JSON.parse(data) as Record<string, unknown>;
