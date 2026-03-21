@@ -8,6 +8,17 @@
 // Client
 export { NnnClient, SDK_VERSION } from './client';
 
+// Namespace classes
+export {
+	AgentsNamespace,
+	OrchestrationNamespace,
+	TrustNamespace,
+	FederationNamespace,
+	WebhooksNamespace,
+	DevelopersNamespace,
+	BillingNamespace
+} from './namespaces';
+
 // Circuit Breaker (standalone utility)
 export { CircuitBreaker } from './circuit-breaker';
 export type { CircuitBreakerState } from './circuit-breaker';
