@@ -207,8 +207,13 @@ export class NnnClient {
 		}
 	}
 
-	private async fetch(url: string, init: RequestInit, context: string): Promise<Response> {
-		this.checkCircuitBreaker();
+	/**
+	 * Internal fetch with circuit breaker, hooks, and retry logic.
+	 * Set `skipBreaker` to true for external (A2A) calls that should not
+	 * affect the registry circuit breaker state.
+	 */
+	private async fetch(url: string, init: RequestInit, context: string, skipBreaker = false): Promise<Response> {
+		if (!skipBreaker) this.checkCircuitBreaker();
 
 		await this.hooks.beforeRequest?.(url, init);
 		const startTime = Date.now();
@@ -228,12 +233,12 @@ export class NnnClient {
 					`${context} failed (${response.status}): ${bodyText}`
 				);
 				error.context.durationMs = durationMs;
-				this.recordFailure();
+				if (!skipBreaker) this.recordFailure();
 				await this.hooks.onError?.(url, error);
 				throw error;
 			}
 
-			this.recordSuccess();
+			if (!skipBreaker) this.recordSuccess();
 			return response;
 		} catch (err) {
 			// Re-throw errors already handled above (HTTP errors)
@@ -241,7 +246,7 @@ export class NnnClient {
 				throw err;
 			}
 			const durationMs = Date.now() - startTime;
-			this.recordFailure();
+			if (!skipBreaker) this.recordFailure();
 			await this.hooks.onError?.(url, err);
 
 			// Enrich NnnError with duration context
@@ -257,11 +262,11 @@ export class NnnClient {
 	 */
 	private async getJson<T>(path: string, ctx: string): Promise<T> {
 		const res = await this.fetch(`${this.baseUrl}${path}`, { headers: this.headers() }, ctx);
-		return res.json() as Promise<T>;
+		return this.safeParseJson<T>(res, ctx);
 	}
 
 	/**
-	 * POST JSON helper — fetch + parse. Error handling is centralized in fetch().
+	 * POST JSON helper — fetch + parse with safe JSON handling.
 	 */
 	private async postJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
 		const res = await this.fetch(
@@ -269,11 +274,11 @@ export class NnnClient {
 			{ method: 'POST', headers: this.headers(), body: JSON.stringify(body) },
 			ctx
 		);
-		return res.json() as Promise<T>;
+		return this.safeParseJson<T>(res, ctx);
 	}
 
 	/**
-	 * PUT JSON helper — fetch + parse. Error handling is centralized in fetch().
+	 * PUT JSON helper — fetch + parse with safe JSON handling.
 	 */
 	private async putJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
 		const res = await this.fetch(
@@ -281,11 +286,11 @@ export class NnnClient {
 			{ method: 'PUT', headers: this.headers(), body: JSON.stringify(body) },
 			ctx
 		);
-		return res.json() as Promise<T>;
+		return this.safeParseJson<T>(res, ctx);
 	}
 
 	/**
-	 * DELETE JSON helper — fetch + parse. Error handling is centralized in fetch().
+	 * DELETE JSON helper — fetch + parse with safe JSON handling.
 	 */
 	private async deleteJson<T>(path: string, ctx: string): Promise<T> {
 		const res = await this.fetch(
@@ -293,11 +298,11 @@ export class NnnClient {
 			{ method: 'DELETE', headers: this.headers() },
 			ctx
 		);
-		return res.json() as Promise<T>;
+		return this.safeParseJson<T>(res, ctx);
 	}
 
 	/**
-	 * PATCH JSON helper — fetch + parse. Error handling is centralized in fetch().
+	 * PATCH JSON helper — fetch + parse with safe JSON handling.
 	 */
 	private async patchJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
 		const res = await this.fetch(
@@ -305,7 +310,25 @@ export class NnnClient {
 			{ method: 'PATCH', headers: this.headers(), body: JSON.stringify(body) },
 			ctx
 		);
-		return res.json() as Promise<T>;
+		return this.safeParseJson<T>(res, ctx);
+	}
+
+	/**
+	 * Parse JSON from a response, recording failure and firing onError if parsing throws.
+	 * This ensures circuit breaker and hooks stay consistent with actual caller-visible success.
+	 */
+	private async safeParseJson<T>(res: Response, ctx: string): Promise<T> {
+		try {
+			return await res.json() as T;
+		} catch (err) {
+			this.recordFailure();
+			const parseError = new NnnError(
+				NnnErrorCode.UNKNOWN,
+				`${ctx}: failed to parse response body as JSON`
+			);
+			await this.hooks.onError?.(res.url, parseError);
+			throw parseError;
+		}
 	}
 
 	// ── Health ────────────────────────────────────────────────────────
@@ -752,7 +775,8 @@ export class NnnClient {
 		const res = await this.fetch(
 			targetUrl,
 			{ method: 'POST', headers: this.externalHeaders(), body: JSON.stringify(rpcRequest) },
-			'sendA2ARequest'
+			'sendA2ARequest',
+			true // skip circuit breaker — external A2A failures must not trip registry breaker
 		);
 		return res.json() as Promise<A2AResponse>;
 	}
@@ -784,7 +808,8 @@ export class NnnClient {
 		const res = await this.fetch(
 			targetUrl,
 			{ method: 'POST', headers, body: JSON.stringify(rpcRequest) },
-			'streamA2ARequest'
+			'streamA2ARequest',
+			true // skip circuit breaker — external A2A failures must not trip registry breaker
 		);
 
 		if (!res.body) {

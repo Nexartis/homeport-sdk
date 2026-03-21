@@ -27,7 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Request/Response Hooks** — `beforeRequest`, `afterResponse`, `onError` lifecycle hooks on `NnnConfig`.
 - **OpenTelemetry Tracing** — `traceparent`/`tracestate` header propagation via config and `setTraceContext()`.
 - **Circuit Breaker** — Auto-trip after N consecutive failures with configurable cooldown.
-- **Structured Error Context** — `NnnError.context` carries `requestId`, `retryCount`, `durationMs`, `agentId`.
+- **Structured Error Context** — `NnnError.context` carries `durationMs` on all errors.
 - **Deep Health** — `deepHealth()` returns per-subsystem check status and a `degradedChecks` array.
 
 #### Phase 3 — Developer Experience
