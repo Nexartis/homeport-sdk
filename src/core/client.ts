@@ -87,6 +87,16 @@ import { createNnnLogger, type NnnLogger } from './logger';
 import { NnnError, NnnErrorCode } from './errors';
 import { SDK_VERSION } from './version';
 import { CircuitBreaker } from './circuit-breaker';
+import type { NnnClientInternals } from './namespace-helpers';
+import {
+	AgentsNamespace,
+	OrchestrationNamespace,
+	TrustNamespace,
+	FederationNamespace,
+	WebhooksNamespace,
+	DevelopersNamespace,
+	BillingNamespace
+} from './namespaces';
 
 export { SDK_VERSION } from './version';
 
@@ -192,6 +202,18 @@ export class NnnClient {
 	/** Opt-in response cache (B-4). */
 	private responseCache: ResponseCache | null;
 
+	// ── Namespace instances (D-1) ────────────────────────────────────
+	private _agents: AgentsNamespace | null = null;
+	private _orchestration: OrchestrationNamespace | null = null;
+	private _trust: TrustNamespace | null = null;
+	private _federation: FederationNamespace | null = null;
+	private _webhooksNs: WebhooksNamespace | null = null;
+	private _developers: DevelopersNamespace | null = null;
+	private _billing: BillingNamespace | null = null;
+
+	/** Internal bridge object shared with namespace classes. */
+	private _internals: NnnClientInternals | null = null;
+
 	constructor(config: NnnConfig) {
 		if (!config.baseUrl) {
 			throw new NnnError(NnnErrorCode.CONFIGURATION_ERROR, 'NnnClient requires config.baseUrl');
@@ -210,6 +232,65 @@ export class NnnClient {
 		} else {
 			this.responseCache = null;
 		}
+	}
+
+	// ── Namespace accessors (Sprint D) ────────────────────────────────
+
+	/** @internal — Lazily build the internals bridge. */
+	private internals(): NnnClientInternals {
+		if (!this._internals) {
+			this._internals = {
+				getJson: this.getJson.bind(this),
+				postJson: this.postJson.bind(this),
+				putJson: this.putJson.bind(this),
+				deleteJson: this.deleteJson.bind(this),
+				patchJson: this.patchJson.bind(this),
+				fetch: this.fetch.bind(this),
+				get baseUrl() { return ''; }, // replaced below
+				logger: this.logger,
+				headers: this.headers.bind(this),
+				externalHeaders: this.externalHeaders.bind(this),
+				safeParseJson: this.safeParseJson.bind(this)
+			};
+			// Use Object.defineProperty so baseUrl reflects the actual value
+			Object.defineProperty(this._internals, 'baseUrl', { get: () => this.baseUrl });
+		}
+		return this._internals;
+	}
+
+	/** Agent registration, lookup, search, lifecycle, facts, and versioning. */
+	get agents(): AgentsNamespace {
+		return (this._agents ??= new AgentsNamespace(this.internals()));
+	}
+
+	/** Workflows, runs, delegation, patterns, conflicts, routing, and index sync. */
+	get orchestration(): OrchestrationNamespace {
+		return (this._orchestration ??= new OrchestrationNamespace(this.internals()));
+	}
+
+	/** Resolution, reputation, trust scores/frameworks/graph, compliance, and analytics. */
+	get trust(): TrustNamespace {
+		return (this._trust ??= new TrustNamespace(this.internals()));
+	}
+
+	/** Federation peers, status, agents, and A2A communication. */
+	get federation(): FederationNamespace {
+		return (this._federation ??= new FederationNamespace(this.internals()));
+	}
+
+	/** Webhook subscription management. */
+	get webhooksNs(): WebhooksNamespace {
+		return (this._webhooksNs ??= new WebhooksNamespace(this.internals()));
+	}
+
+	/** Developer key management and earnings. */
+	get developers(): DevelopersNamespace {
+		return (this._developers ??= new DevelopersNamespace(this.internals()));
+	}
+
+	/** Subscriptions, invoices, checkout sessions, and NP payment verification. */
+	get billing(): BillingNamespace {
+		return (this._billing ??= new BillingNamespace(this.internals()));
 	}
 
 	// ── HTTP helpers ──────────────────────────────────────────────────
@@ -476,43 +557,29 @@ export class NnnClient {
 
 	// ── Registry ─────────────────────────────────────────────────────
 
-	/** POST /register — Register an agent on the NANDA network. */
+	/** @deprecated Use `client.agents.register()` instead. */
 	async registerAgent(req: RegisterAgentRequest): Promise<RegisterAgentResponse> {
-		this.logger.debug('Registering agent', { agentId: req.agent_id });
-		return this.postJson('/register', req, 'registerAgent');
+		return this.agents.register(req);
 	}
 
-	/** GET /lookup/:id — Lookup a single agent by ID. */
+	/** @deprecated Use `client.agents.lookup()` instead. */
 	async lookupAgent(agentId: string): Promise<NnnAgent> {
-		return this.getJson(`/lookup/${encodeURIComponent(agentId)}`, 'lookupAgent');
+		return this.agents.lookup(agentId);
 	}
 
-	/** GET /search?q=&capabilities=&tags= — Search agents. */
+	/** @deprecated Use `client.agents.search()` instead. */
 	async searchAgents(params: SearchAgentsParams = {}): Promise<NnnAgent[]> {
-		const sp = new URLSearchParams();
-		if (params.q) sp.set('q', params.q);
-		if (params.capabilities?.length) sp.set('capabilities', params.capabilities.join(','));
-		if (params.tags?.length) sp.set('tags', params.tags.join(','));
-		if (params.min_trust !== undefined) sp.set('min_trust', String(params.min_trust));
-		if (params.jurisdiction) sp.set('jurisdiction', params.jurisdiction);
-		if (params.protocol) sp.set('protocol', params.protocol);
-		if (params.limit !== undefined) sp.set('limit', String(params.limit));
-		if (params.cursor) sp.set('cursor', params.cursor);
-		const qs = sp.toString();
-		return this.getJson(`/search${qs ? `?${qs}` : ''}`, 'searchAgents');
+		return this.agents.search(params);
 	}
 
-	/** GET /list — List all registered agents. */
+	/** @deprecated Use `client.agents.list()` instead. */
 	async listAgents(): Promise<NnnAgent[]> {
-		return this.getJson('/list', 'listAgents');
+		return this.agents.list();
 	}
 
 	// ── Pagination Iterators ─────────────────────────────────────────
 
-	/**
-	 * Normalize a response that may be a bare array or a PaginatedResponse wrapper.
-	 * Handles both shapes so generators work regardless of backend response format.
-	 */
+	/** @internal — kept for backward compat; namespace classes have their own. */
 	private normalizePage<T>(raw: T[] | PaginatedResponse<T>): PaginatedResponse<T> {
 		if (Array.isArray(raw)) {
 			return { data: raw, hasMore: false, cursor: undefined };
@@ -520,762 +587,372 @@ export class NnnClient {
 		return raw;
 	}
 
-	/**
-	 * Auto-paginating search — yields agents one at a time across all pages.
-	 * Uses cursor-based pagination under the hood.
-	 */
+	/** @deprecated Use `client.agents.searchAll()` instead. */
 	async *searchAgentsAll(params: SearchAgentsParams = {}): AsyncGenerator<NnnAgent> {
-		let cursor: string | undefined = params.cursor;
-		let hasMore = true;
-
-		while (hasMore) {
-			const sp = new URLSearchParams();
-			if (params.q) sp.set('q', params.q);
-			if (params.capabilities?.length) sp.set('capabilities', params.capabilities.join(','));
-			if (params.tags?.length) sp.set('tags', params.tags.join(','));
-			if (params.min_trust !== undefined) sp.set('min_trust', String(params.min_trust));
-			if (params.jurisdiction) sp.set('jurisdiction', params.jurisdiction);
-			if (params.protocol) sp.set('protocol', params.protocol);
-			if (params.limit !== undefined) sp.set('limit', String(params.limit));
-			if (cursor) sp.set('cursor', cursor);
-
-			const qs = sp.toString();
-			const raw = await this.getJson<NnnAgent[] | PaginatedResponse<NnnAgent>>(
-				`/search${qs ? `?${qs}` : ''}`,
-				'searchAgentsAll'
-			);
-			const page = this.normalizePage(raw);
-
-			for (const agent of page.data) {
-				yield agent;
-			}
-
-			// Guard: break if cursor didn't advance (prevents infinite loops)
-			if (page.hasMore && page.cursor === cursor) break;
-			cursor = page.cursor;
-			hasMore = page.hasMore;
-		}
+		yield* this.agents.searchAll(params);
 	}
 
-	/**
-	 * Auto-paginating list — yields all registered agents across pages.
-	 */
+	/** @deprecated Use `client.agents.listAll()` instead. */
 	async *listAgentsAll(params: { limit?: number; cursor?: string } = {}): AsyncGenerator<NnnAgent> {
-		let cursor: string | undefined = params.cursor;
-		let hasMore = true;
-
-		while (hasMore) {
-			const sp = new URLSearchParams();
-			if (params.limit !== undefined) sp.set('limit', String(params.limit));
-			if (cursor) sp.set('cursor', cursor);
-
-			const qs = sp.toString();
-			const raw = await this.getJson<NnnAgent[] | PaginatedResponse<NnnAgent>>(
-				`/list${qs ? `?${qs}` : ''}`,
-				'listAgentsAll'
-			);
-			const page = this.normalizePage(raw);
-
-			for (const agent of page.data) {
-				yield agent;
-			}
-
-			// Guard: break if cursor didn't advance (prevents infinite loops)
-			if (page.hasMore && page.cursor === cursor) break;
-			cursor = page.cursor;
-			hasMore = page.hasMore;
-		}
+		yield* this.agents.listAll(params);
 	}
 
 	// ── Agent Facts & Card ───────────────────────────────────────────
 
-	/** GET /agentfacts/:id — Get agent facts (AgentFacts v1/v2). */
+	/** @deprecated Use `client.agents.getFacts()` instead. */
 	async getAgentFacts(agentId: string): Promise<AgentFacts> {
-		return this.getJson(`/agentfacts/${encodeURIComponent(agentId)}`, 'getAgentFacts');
+		return this.agents.getFacts(agentId);
 	}
 
-	/** GET /.well-known/agent-card.json — Get the node's own A2A agent card. */
+	/** @deprecated Use `client.agents.getCard()` instead. */
 	async getAgentCard(): Promise<AgentCard> {
-		return this.getJson('/.well-known/agent-card.json', 'getAgentCard');
+		return this.agents.getCard();
 	}
 
-	/** GET /.well-known/nanda-index — Get the NANDA index descriptor. */
+	/** @deprecated Use `client.agents.getNandaIndex()` instead. */
 	async getNandaIndex(): Promise<NandaIndex> {
-		return this.getJson('/.well-known/nanda-index', 'getNandaIndex');
+		return this.agents.getNandaIndex();
 	}
 
 	// ── Stats ────────────────────────────────────────────────────────
 
-	/** GET /stats — Get registry statistics. */
-	async stats(): Promise<NnnStats> {
-		return this.getJson('/stats', 'stats');
+	/** @deprecated Use `client.orchestration.stats()` instead. */
+	async getStats(): Promise<NnnStats> {
+		return this.orchestration.stats();
 	}
 
 	// ── Orchestration ────────────────────────────────────────────────
 
-	/** POST /api/orchestration — Create a workflow with a DAG. */
+	/** @deprecated Use `client.orchestration.createWorkflow()` instead. */
 	async createWorkflow(req: CreateWorkflowRequest): Promise<{ status: string; workflow: WorkflowRecord }> {
-		this.logger.debug('Creating workflow', { name: req.name });
-		return this.postJson('/api/orchestration', req, 'createWorkflow');
+		return this.orchestration.createWorkflow(req);
 	}
 
-	/** GET /api/orchestration?owner_id=&status= — List workflows. */
+	/** @deprecated Use `client.orchestration.listWorkflows()` instead. */
 	async listWorkflows(params: { ownerId?: string; status?: string } = {}): Promise<{ workflows: WorkflowRecord[] }> {
-		const sp = new URLSearchParams();
-		if (params.ownerId) sp.set('owner_id', params.ownerId);
-		if (params.status) sp.set('status', params.status);
-		const qs = sp.toString();
-		return this.getJson(`/api/orchestration${qs ? `?${qs}` : ''}`, 'listWorkflows');
+		return this.orchestration.listWorkflows(params);
 	}
 
-	/** POST /api/orchestration/:id/runs — Start a new workflow run. */
+	/** @deprecated Use `client.orchestration.runWorkflow()` instead. */
 	async runWorkflow(workflowId: string, input?: Record<string, unknown>): Promise<WorkflowRunResult> {
-		this.logger.debug('Running workflow', { workflowId });
-		return this.postJson(
-			`/api/orchestration/${encodeURIComponent(workflowId)}/runs`,
-			input ?? {},
-			'runWorkflow'
-		);
+		return this.orchestration.runWorkflow(workflowId, input);
 	}
 
-	/** GET /api/orchestration/:id — Get a single workflow by ID. */
+	/** @deprecated Use `client.orchestration.getWorkflow()` instead. */
 	async getWorkflow(workflowId: string): Promise<WorkflowDetail> {
-		return this.getJson(`/api/orchestration/${encodeURIComponent(workflowId)}`, 'getWorkflow');
+		return this.orchestration.getWorkflow(workflowId);
 	}
 
-	/** PATCH /api/orchestration/:id — Update a workflow. */
-	async updateWorkflow(
-		workflowId: string,
-		updates: UpdateWorkflowRequest
-	): Promise<{ ok: boolean; workflow: WorkflowRecord }> {
-		this.logger.debug('Updating workflow', { workflowId });
-		return this.patchJson(`/api/orchestration/${encodeURIComponent(workflowId)}`, updates, 'updateWorkflow');
+	/** @deprecated Use `client.orchestration.updateWorkflow()` instead. */
+	async updateWorkflow(workflowId: string, updates: UpdateWorkflowRequest): Promise<{ ok: boolean; workflow: WorkflowRecord }> {
+		return this.orchestration.updateWorkflow(workflowId, updates);
 	}
 
-	/** DELETE /api/orchestration/:id — Delete a workflow. */
+	/** @deprecated Use `client.orchestration.deleteWorkflow()` instead. */
 	async deleteWorkflow(workflowId: string): Promise<{ ok: boolean; deleted: string }> {
-		this.logger.debug('Deleting workflow', { workflowId });
-		return this.deleteJson(`/api/orchestration/${encodeURIComponent(workflowId)}`, 'deleteWorkflow');
+		return this.orchestration.deleteWorkflow(workflowId);
 	}
 
-	/** POST /api/orchestration/delegate — Delegate a task to an agent. */
+	/** @deprecated Use `client.orchestration.delegateTask()` instead. */
 	async delegateTask(params: DelegateTaskRequest): Promise<DelegationResult> {
-		this.logger.debug('Delegating task', { action: params.action, delegator: params.delegator_id });
-		return this.postJson('/api/orchestration/delegate', params, 'delegateTask');
+		return this.orchestration.delegateTask(params);
 	}
 
-	/** GET /api/orchestration/delegate?workflow_id= — List delegations for a workflow. */
+	/** @deprecated Use `client.orchestration.listDelegations()` instead. */
 	async listDelegations(workflowId: string): Promise<{ delegations: DelegationResult[] }> {
-		const sp = new URLSearchParams({ workflow_id: workflowId });
-		return this.getJson(`/api/orchestration/delegate?${sp.toString()}`, 'listDelegations');
+		return this.orchestration.listDelegations(workflowId);
 	}
 
-	/** GET /api/orchestration/patterns — List orchestration patterns. */
+	/** @deprecated Use `client.orchestration.listPatterns()` instead. */
 	async listPatterns(options: ListPatternsOptions = {}): Promise<{ patterns: OrchestratorPattern[] }> {
-		const sp = new URLSearchParams();
-		if (options.category) sp.set('category', options.category);
-		if (options.builtin !== undefined) sp.set('builtin', String(options.builtin));
-		const qs = sp.toString();
-		return this.getJson(`/api/orchestration/patterns${qs ? `?${qs}` : ''}`, 'listPatterns');
+		return this.orchestration.listPatterns(options);
 	}
 
-	/** POST /api/orchestration/patterns — Create a new orchestration pattern. */
+	/** @deprecated Use `client.orchestration.createPattern()` instead. */
 	async createPattern(params: CreatePatternRequest): Promise<{ status: string; pattern: OrchestratorPattern }> {
-		this.logger.debug('Creating pattern', { name: params.name });
-		return this.postJson('/api/orchestration/patterns', params, 'createPattern');
+		return this.orchestration.createPattern(params);
 	}
 
-	/** GET /api/orchestration/conflicts — List orchestration conflicts. */
+	/** @deprecated Use `client.orchestration.listConflicts()` instead. */
 	async listConflicts(params: ListConflictsParams = {}): Promise<{ conflicts: OrchestrationConflict[]; total: number }> {
-		const sp = new URLSearchParams();
-		if (params.workflow_id) sp.set('workflow_id', params.workflow_id);
-		if (params.run_id) sp.set('run_id', params.run_id);
-		if (params.pending_only !== undefined) sp.set('pending_only', String(params.pending_only));
-		const qs = sp.toString();
-		return this.getJson(`/api/orchestration/conflicts${qs ? `?${qs}` : ''}`, 'listConflicts');
+		return this.orchestration.listConflicts(params);
 	}
 
-	/** POST /api/orchestration/conflicts — Raise and resolve a conflict. */
+	/** @deprecated Use `client.orchestration.raiseConflict()` instead. */
 	async raiseConflict(params: RaiseConflictRequest): Promise<ConflictOutcome> {
-		this.logger.debug('Raising conflict', { workflowId: params.workflow_id });
-		return this.postJson('/api/orchestration/conflicts', params, 'raiseConflict');
+		return this.orchestration.raiseConflict(params);
 	}
 
 	// ── Resolution & Trust ──────────────────────────────────────────
 
-	/** GET /resolve/:agent_id — Resolve an agent to its address record. */
+	/** @deprecated Use `client.trust.resolveAgent()` instead. */
 	async resolveAgent(agentId: string): Promise<AgentAddr> {
-		return this.getJson(`/resolve/${encodeURIComponent(agentId)}`, 'resolveAgent');
+		return this.trust.resolveAgent(agentId);
 	}
 
-	/** POST /resolve — Adaptive resolution with context-aware ranking. */
+	/** @deprecated Use `client.trust.adaptiveResolve()` instead. */
 	async adaptiveResolve(agentId: string, context?: ResolutionContext): Promise<ResolutionResult> {
-		this.logger.debug('Adaptive resolve', { agentId });
-		return this.postJson('/resolve', { agent_id: agentId, context }, 'adaptiveResolve');
+		return this.trust.adaptiveResolve(agentId, context);
 	}
 
-	/** GET /reputation — Get reputation scores for all agents. */
+	/** @deprecated Use `client.trust.getReputation()` instead. */
 	async getReputation(): Promise<{ agents: ReputationEntry[]; total: number; fetchedAt: string }> {
-		return this.getJson('/reputation', 'getReputation');
+		return this.trust.getReputation();
 	}
 
-	/** GET /api/trust/scores — Get trust scores (optionally for a single agent). */
+	/** @deprecated Use `client.trust.getScores()` instead. */
 	async getTrustScores(options: TrustScoresOptions = {}): Promise<Record<string, unknown>> {
-		const sp = new URLSearchParams();
-		if (options.agent) sp.set('agent', options.agent);
-		if (options.offset !== undefined) sp.set('offset', String(options.offset));
-		if (options.limit !== undefined) sp.set('limit', String(options.limit));
-		const qs = sp.toString();
-		return this.getJson(`/api/trust/scores${qs ? `?${qs}` : ''}`, 'getTrustScores');
+		return this.trust.getScores(options);
 	}
 
-	/** GET /api/trust/framework — Get trust frameworks (optionally a single one). */
+	/** @deprecated Use `client.trust.getFrameworks()` instead. */
 	async getTrustFrameworks(options: TrustFrameworksOptions = {}): Promise<Record<string, unknown>> {
-		const sp = new URLSearchParams();
-		if (options.id) sp.set('id', options.id);
-		const qs = sp.toString();
-		return this.getJson(`/api/trust/framework${qs ? `?${qs}` : ''}`, 'getTrustFrameworks');
+		return this.trust.getFrameworks(options);
 	}
 
-	/** POST /api/trust/cross-registry — Sync trust scores across federated registries. */
+	/** @deprecated Use `client.trust.syncCrossRegistry()` instead. */
 	async syncCrossRegistryTrust(adminKey?: string): Promise<Record<string, unknown>> {
-		this.logger.debug('Syncing cross-registry trust');
-		const headers: Record<string, string> = { ...this.headers() };
-		if (adminKey) headers['Authorization'] = `Bearer ${adminKey}`;
-		const res = await this.fetch(
-			`${this.baseUrl}/api/trust/cross-registry`,
-			{ method: 'POST', headers, body: JSON.stringify({}) },
-			'syncCrossRegistryTrust'
-		);
-		return this.safeParseJson<Record<string, unknown>>(res, 'syncCrossRegistryTrust');
+		return this.trust.syncCrossRegistry(adminKey);
 	}
 
 	// ── Billing & Subscriptions ─────────────────────────────────────
 
-	/** GET /api/subscriptions?keyId= — Get subscription for a key. */
+	/** @deprecated Use `client.billing.getSubscription()` instead. */
 	async getSubscription(keyId: string): Promise<Record<string, unknown>> {
-		return this.getJson(`/api/subscriptions?keyId=${encodeURIComponent(keyId)}`, 'getSubscription');
+		return this.billing.getSubscription(keyId);
 	}
 
-	/** POST /api/subscriptions — Create a new subscription. */
+	/** @deprecated Use `client.billing.createSubscription()` instead. */
 	async createSubscription(params: CreateSubscriptionRequest): Promise<Record<string, unknown>> {
-		this.logger.debug('Creating subscription', { keyId: params.key_id, plan: params.plan });
-		return this.postJson('/api/subscriptions', params, 'createSubscription');
+		return this.billing.createSubscription(params);
 	}
 
-	/** GET /api/invoices?keyId= — List invoices for a key. */
+	/** @deprecated Use `client.billing.listInvoices()` instead. */
 	async listInvoices(keyId: string): Promise<Record<string, unknown>> {
-		return this.getJson(`/api/invoices?keyId=${encodeURIComponent(keyId)}`, 'listInvoices');
+		return this.billing.listInvoices(keyId);
 	}
 
-	/** POST /api/invoices — Create a new invoice. */
+	/** @deprecated Use `client.billing.createInvoice()` instead. */
 	async createInvoice(params: CreateInvoiceRequest): Promise<Record<string, unknown>> {
-		this.logger.debug('Creating invoice', { keyId: params.key_id });
-		return this.postJson('/api/invoices', params, 'createInvoice');
+		return this.billing.createInvoice(params);
 	}
 
 	// ── Checkout Sessions ───────────────────────────────────────────
 
-	/** POST /api/ucp/checkout-sessions — Create a checkout session. */
+	/** @deprecated Use `client.billing.createCheckoutSession()` instead. */
 	async createCheckoutSession(params: CreateCheckoutRequest): Promise<CheckoutSession> {
-		this.logger.debug('Creating checkout session', { capabilities: params.capabilities.length });
-		return this.postJson('/api/ucp/checkout-sessions', params, 'createCheckoutSession');
+		return this.billing.createCheckoutSession(params);
 	}
 
-	/** GET /api/ucp/checkout-sessions?id= — Get a checkout session. */
+	/** @deprecated Use `client.billing.getCheckoutSession()` instead. */
 	async getCheckoutSession(sessionId: string): Promise<CheckoutSession> {
-		return this.getJson(`/api/ucp/checkout-sessions?id=${encodeURIComponent(sessionId)}`, 'getCheckoutSession');
+		return this.billing.getCheckoutSession(sessionId);
 	}
 
-	/** PATCH /api/ucp/checkout-sessions/:id — Submit payment for a checkout session. */
+	/** @deprecated Use `client.billing.submitCheckoutPayment()` instead. */
 	async submitCheckoutPayment(sessionId: string, payment: Record<string, unknown>): Promise<Record<string, unknown>> {
-		this.logger.debug('Submitting checkout payment', { sessionId });
-		return this.patchJson(`/api/ucp/checkout-sessions/${encodeURIComponent(sessionId)}`, { payment }, 'submitCheckoutPayment');
+		return this.billing.submitCheckoutPayment(sessionId, payment);
 	}
 
-	/** DELETE /api/ucp/checkout-sessions/:id — Cancel a checkout session. */
+	/** @deprecated Use `client.billing.cancelCheckoutSession()` instead. */
 	async cancelCheckoutSession(sessionId: string): Promise<{ id: string; status: string }> {
-		this.logger.debug('Cancelling checkout session', { sessionId });
-		return this.deleteJson(`/api/ucp/checkout-sessions/${encodeURIComponent(sessionId)}`, 'cancelCheckoutSession');
+		return this.billing.cancelCheckoutSession(sessionId);
 	}
 
 	// ── Webhooks ────────────────────────────────────────────────────
 
-	/** GET /api/webhooks — List webhook subscriptions. */
+	/** @deprecated Use `client.webhooksNs.list()` instead. */
 	async listWebhooks(): Promise<{ subscriptions: WebhookSubscription[] }> {
-		return this.getJson('/api/webhooks', 'listWebhooks');
+		return this.webhooksNs.list();
 	}
 
-	/** POST /api/webhooks — Create a webhook subscription. */
+	/** @deprecated Use `client.webhooksNs.create()` instead. */
 	async createWebhook(params: CreateWebhookRequest): Promise<CreateWebhookResponse> {
-		this.logger.debug('Creating webhook', { callbackUrl: params.callback_url, events: params.events });
-		return this.postJson('/api/webhooks', params, 'createWebhook');
+		return this.webhooksNs.create(params);
 	}
 
-	/** GET /api/webhooks/:id — Get a single webhook subscription. */
+	/** @deprecated Use `client.webhooksNs.get()` instead. */
 	async getWebhook(webhookId: string): Promise<{ subscription: WebhookSubscription }> {
-		return this.getJson(`/api/webhooks/${encodeURIComponent(webhookId)}`, 'getWebhook');
+		return this.webhooksNs.get(webhookId);
 	}
 
-	/** PATCH /api/webhooks/:id — Update a webhook (pause/resume). */
+	/** @deprecated Use `client.webhooksNs.update()` instead. */
 	async updateWebhook(webhookId: string, action: 'pause' | 'resume'): Promise<Record<string, unknown>> {
-		this.logger.debug('Updating webhook', { webhookId, action });
-		return this.patchJson(`/api/webhooks/${encodeURIComponent(webhookId)}`, { action }, 'updateWebhook');
+		return this.webhooksNs.update(webhookId, action);
 	}
 
-	/** DELETE /api/webhooks/:id — Delete a webhook subscription. */
+	/** @deprecated Use `client.webhooksNs.delete()` instead. */
 	async deleteWebhook(webhookId: string): Promise<{ ok: boolean; deleted: string }> {
-		this.logger.debug('Deleting webhook', { webhookId });
-		return this.deleteJson(`/api/webhooks/${encodeURIComponent(webhookId)}`, 'deleteWebhook');
+		return this.webhooksNs.delete(webhookId);
 	}
 
 	// ── Earnings ────────────────────────────────────────────────────
 
-	/** GET /api/developer/earnings — Get developer earnings. */
+	/** @deprecated Use `client.developers.getEarnings()` instead. */
 	async getEarnings(developerId: string, view?: string): Promise<Record<string, unknown>> {
-		const sp = new URLSearchParams({ developerId });
-		if (view) sp.set('view', view);
-		return this.getJson(`/api/developer/earnings?${sp.toString()}`, 'getEarnings');
+		return this.developers.getEarnings(developerId, view);
 	}
 
-	/** POST /api/developer/earnings — Perform an earnings action. */
+	/** @deprecated Use `client.developers.earningsAction()` instead. */
 	async earningsAction(params: EarningsActionRequest): Promise<Record<string, unknown>> {
-		this.logger.debug('Earnings action', { action: params.action });
-		return this.postJson('/api/developer/earnings', params, 'earningsAction');
+		return this.developers.earningsAction(params);
 	}
 
 	// ── Federation ──────────────────────────────────────────────────
 
-	/** GET /federation/peers — Get federation peer list. */
+	/** @deprecated Use `client.federation.getPeers()` instead. */
 	async getFederationPeers(): Promise<Record<string, unknown>> {
-		return this.getJson('/federation/peers', 'getFederationPeers');
+		return this.federation.getPeers();
 	}
 
-	/** GET /federation/status — Get federation status. */
+	/** @deprecated Use `client.federation.getStatus()` instead. */
 	async getFederationStatus(): Promise<Record<string, unknown>> {
-		return this.getJson('/federation/status', 'getFederationStatus');
+		return this.federation.getStatus();
 	}
 
-	/** GET /federation/agents — Get federated agents. */
+	/** @deprecated Use `client.federation.getAgents()` instead. */
 	async getFederatedAgents(): Promise<Record<string, unknown>> {
-		return this.getJson('/federation/agents', 'getFederatedAgents');
+		return this.federation.getAgents();
 	}
 
 	// ── 1.1 A2A JSON-RPC Client ─────────────────────────────────────
 
-	/**
-	 * Send an A2A JSON-RPC request to a target agent.
-	 * Auto-discovers the agent URL via lookupAgent() if target_url is not provided.
-	 */
+	/** @deprecated Use `client.federation.sendA2ARequest()` instead. */
 	async sendA2ARequest(params: SendA2ARequestParams): Promise<A2AResponse> {
-		let targetUrl = params.target_url;
-		if (!targetUrl) {
-			const agent = await this.lookupAgent(params.target_agent_id);
-			targetUrl = agent.api_url ?? agent.agent_url;
-		}
-
-		const rpcRequest: A2ARequest = {
-			jsonrpc: '2.0',
-			id: generateRequestId(),
-			method: params.method,
-			params: params.params
-		};
-
-		this.logger.debug('Sending A2A request', {
-			targetAgentId: params.target_agent_id,
-			method: params.method
-		});
-
-		const res = await this.fetch(
-			targetUrl,
-			{ method: 'POST', headers: this.externalHeaders(), body: JSON.stringify(rpcRequest) },
-			'sendA2ARequest',
-			true // skip circuit breaker — external A2A failures must not trip registry breaker
-		);
-		return this.safeParseJson<A2AResponse>(res, 'sendA2ARequest', true);
+		return this.federation.sendA2ARequest(params);
 	}
 
-	/**
-	 * Send an A2A streaming request (tasks/sendSubscribe) and yield SSE events.
-	 * Returns an AsyncGenerator that yields parsed JSON-RPC responses from the SSE stream.
-	 */
+	/** @deprecated Use `client.federation.streamA2ARequest()` instead. */
 	async *streamA2ARequest(params: SendA2ARequestParams): AsyncGenerator<A2AResponse, void, unknown> {
-		let targetUrl = params.target_url;
-		if (!targetUrl) {
-			const agent = await this.lookupAgent(params.target_agent_id);
-			targetUrl = agent.api_url ?? agent.agent_url;
-		}
-
-		const rpcRequest: A2ARequest = {
-			jsonrpc: '2.0',
-			id: generateRequestId(),
-			method: params.method,
-			params: params.params
-		};
-
-		this.logger.debug('Streaming A2A request', {
-			targetAgentId: params.target_agent_id,
-			method: params.method
-		});
-
-		const headers = { ...this.externalHeaders(), Accept: 'text/event-stream' };
-		const res = await this.fetch(
-			targetUrl,
-			{ method: 'POST', headers, body: JSON.stringify(rpcRequest) },
-			'streamA2ARequest',
-			true // skip circuit breaker — external A2A failures must not trip registry breaker
-		);
-
-		if (!res.body) {
-			throw new NnnError(NnnErrorCode.NETWORK_ERROR, 'streamA2ARequest: response body is null');
-		}
-
-		const reader = res.body.getReader();
-		const decoder = new TextDecoder();
-		let buffer = '';
-
-		try {
-			// SSE spec: multiple consecutive `data:` lines form a single event,
-			// joined by '\n'. A blank line signals the end of an event.
-			const dataLines: string[] = [];
-			let streamDone = false;
-
-			const flushEvent = function* (self: NnnClient) {
-				if (dataLines.length === 0) return;
-				const payload = dataLines.splice(0).join('\n');
-				if (payload === '[DONE]') {
-					streamDone = true;
-					return;
-				}
-				try {
-					yield JSON.parse(payload) as A2AResponse;
-				} catch {
-					self.logger.warn('Failed to parse SSE data', { data: payload });
-				}
-			};
-
-			while (!streamDone) {
-				const { done, value } = await reader.read();
-				if (done) break;
-
-				buffer += decoder.decode(value, { stream: true });
-				const lines = buffer.split('\n');
-				buffer = lines.pop() ?? '';
-
-				for (const line of lines) {
-					const trimmed = line.trim();
-					if (trimmed.startsWith(':')) continue; // SSE comment
-					if (!trimmed) {
-						// Blank line — flush accumulated event
-						yield* flushEvent(this);
-						if (streamDone) break;
-						continue;
-					}
-					if (trimmed.startsWith('data:')) {
-						const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
-						dataLines.push(data);
-					}
-				}
-			}
-			// Flush any remaining data when stream ends without a trailing blank line
-			if (!streamDone) yield* flushEvent(this);
-		} finally {
-			reader.cancel().catch((e) => this.logger.warn('streamA2ARequest: reader cancel failed', { error: e instanceof Error ? e.message : String(e) }));
-			reader.releaseLock();
-		}
+		yield* this.federation.streamA2ARequest(params);
 	}
 
 	// ── 1.2 Agent Lifecycle Management ──────────────────────────────
 
-	/** PUT /agents/:id — Update an existing agent's fields (url, api, facts, capabilities, tags). */
+	/** @deprecated Use `client.agents.update()` instead. */
 	async updateAgent(agentId: string, updates: UpdateAgentRequest): Promise<NnnAgent> {
-		this.logger.debug('Updating agent', { agentId });
-		return this.putJson(`/agents/${encodeURIComponent(agentId)}`, updates, 'updateAgent');
+		return this.agents.update(agentId, updates);
 	}
 
-	/** PUT /agents/:id/status — Update an agent's status and capabilities. */
+	/** @deprecated Use `client.agents.updateStatus()` instead. */
 	async updateAgentStatus(agentId: string, status: string, capabilities?: string[]): Promise<{ status: string }> {
-		this.logger.debug('Updating agent status', { agentId, status });
-		return this.putJson(`/agents/${encodeURIComponent(agentId)}/status`, { status, capabilities }, 'updateAgentStatus');
+		return this.agents.updateStatus(agentId, status, capabilities);
 	}
 
-	/** DELETE /agents/:id — Delete an agent from the registry. */
+	/** @deprecated Use `client.agents.delete()` instead. */
 	async deleteAgent(agentId: string): Promise<{ status: string }> {
-		this.logger.debug('Deleting agent', { agentId });
-		return this.deleteJson(`/agents/${encodeURIComponent(agentId)}`, 'deleteAgent');
+		return this.agents.delete(agentId);
 	}
 
-	/** POST /agents/:id/refresh — Re-crawl an agent's card and update facts. */
+	/** @deprecated Use `client.agents.refresh()` instead. */
 	async refreshAgent(agentId: string): Promise<AgentRefreshResult> {
-		this.logger.debug('Refreshing agent', { agentId });
-		return this.postJson(`/agents/${encodeURIComponent(agentId)}/refresh`, {}, 'refreshAgent');
+		return this.agents.refresh(agentId);
 	}
 
 	// ── 1.3 Routing Engine ──────────────────────────────────────────
 
-	/** POST /api/orchestration/route — Route a request to the best-matching agent. */
+	/** @deprecated Use `client.orchestration.routeRequest()` instead. */
 	async routeRequest(params: RouteRequestParams): Promise<RoutingResult> {
-		this.logger.debug('Routing request', { skill: params.skill, strategy: params.strategy });
-		return this.postJson('/api/orchestration/route', params, 'routeRequest');
+		return this.orchestration.routeRequest(params);
 	}
 
 	// ── 1.4 Workflow Execution & Monitoring ─────────────────────────
 
-	/** GET /api/orchestration/runs/:runId — Get workflow run status. */
+	/** @deprecated Use `client.orchestration.getWorkflowStatus()` instead. */
 	async getWorkflowStatus(runId: string): Promise<WorkflowRunStatus> {
-		return this.getJson(
-			`/api/orchestration/runs/${encodeURIComponent(runId)}`,
-			'getWorkflowStatus'
-		);
+		return this.orchestration.getWorkflowStatus(runId);
 	}
 
-	/** POST /api/orchestration/runs/:runId/cancel — Cancel an in-progress run. */
+	/** @deprecated Use `client.orchestration.cancelWorkflowRun()` instead. */
 	async cancelWorkflowRun(runId: string): Promise<{ status: string; run_id: string }> {
-		this.logger.debug('Cancelling workflow run', { runId });
-		return this.postJson(
-			`/api/orchestration/runs/${encodeURIComponent(runId)}/cancel`,
-			{},
-			'cancelWorkflowRun'
-		);
+		return this.orchestration.cancelWorkflowRun(runId);
 	}
 
-	/**
-	 * SSE stream for real-time workflow execution events.
-	 * Yields parsed event objects as they arrive.
-	 */
+	/** @deprecated Use `client.orchestration.streamWorkflowEvents()` instead. */
 	async *streamWorkflowEvents(runId: string): AsyncGenerator<Record<string, unknown>, void, unknown> {
-		const url = `${this.baseUrl}/api/orchestration/runs/${encodeURIComponent(runId)}/events`;
-		const headers = { ...this.headers(), Accept: 'text/event-stream' };
-
-		const res = await this.fetch(url, { headers }, 'streamWorkflowEvents');
-
-		if (!res.body) {
-			throw new NnnError(NnnErrorCode.NETWORK_ERROR, 'streamWorkflowEvents: response body is null');
-		}
-
-		const reader = res.body.getReader();
-		const decoder = new TextDecoder();
-		let buffer = '';
-
-		try {
-			const dataLines: string[] = [];
-			let streamDone = false;
-
-			const flushEvent = function* (self: NnnClient) {
-				if (dataLines.length === 0) return;
-				const payload = dataLines.splice(0).join('\n');
-				if (payload === '[DONE]') {
-					streamDone = true;
-					return;
-				}
-				try {
-					yield JSON.parse(payload) as Record<string, unknown>;
-				} catch {
-					self.logger.warn('Failed to parse SSE event', { data: payload });
-				}
-			};
-
-			while (!streamDone) {
-				const { done, value } = await reader.read();
-				if (done) break;
-
-				buffer += decoder.decode(value, { stream: true });
-				const lines = buffer.split('\n');
-				buffer = lines.pop() ?? '';
-
-				for (const line of lines) {
-					const trimmed = line.trim();
-					if (trimmed.startsWith(':')) continue;
-					if (!trimmed) {
-						yield* flushEvent(this);
-						if (streamDone) break;
-						continue;
-					}
-					if (trimmed.startsWith('data:')) {
-						const data = trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5);
-						dataLines.push(data);
-					}
-				}
-			}
-			if (!streamDone) yield* flushEvent(this);
-		} finally {
-			reader.cancel().catch((e) => this.logger.warn('streamWorkflowEvents: reader cancel failed', { error: e instanceof Error ? e.message : String(e) }));
-			reader.releaseLock();
-		}
+		yield* this.orchestration.streamWorkflowEvents(runId);
 	}
 
 	// ── 1.5 NANDA Index Sync ────────────────────────────────────────
 
-	/** GET /.well-known/nanda-index/diff?since= — Get agents added/removed/updated since a timestamp. */
+	/** @deprecated Use `client.orchestration.diffIndex()` instead. */
 	async diffIndex(since: Date): Promise<IndexDiffResult> {
-		const sp = new URLSearchParams({ since: since.toISOString() });
-		return this.getJson(`/.well-known/nanda-index/diff?${sp.toString()}`, 'diffIndex');
+		return this.orchestration.diffIndex(since);
 	}
 
-	/**
-	 * Poll-based index change subscription.
-	 * Polls diffIndex at the given interval and invokes the callback for each change.
-	 * Returns an abort function to stop polling.
-	 */
+	/** @deprecated Use `client.orchestration.subscribeToIndex()` instead. */
 	subscribeToIndex(callback: IndexChangeCallback, intervalMs = 30_000): () => void {
-		let lastCheck = new Date();
-		let stopped = false;
-
-		const poll = async () => {
-			while (!stopped) {
-				try {
-					const diff = await this.diffIndex(lastCheck);
-					const now = new Date();
-
-					for (const agent of diff.added) {
-						await safeCallback(this.logger, callback, { type: 'added', agent, timestamp: now.toISOString() });
-					}
-					for (const agent of diff.updated) {
-						await safeCallback(this.logger, callback, { type: 'updated', agent, timestamp: now.toISOString() });
-					}
-					for (const agentId of diff.removed) {
-						await safeCallback(this.logger, callback, {
-							type: 'removed',
-							agentId,
-							timestamp: now.toISOString()
-						});
-					}
-
-					// Always advance lastCheck so diffs aren't re-emitted
-					lastCheck = now;
-				} catch (err) {
-					this.logger.warn('Index sync poll failed', {
-						error: err instanceof Error ? err.message : String(err)
-					});
-				}
-
-				await new Promise((resolve) => setTimeout(resolve, intervalMs));
-			}
-		};
-
-		poll();
-
-		return () => {
-			stopped = true;
-		};
+		return this.orchestration.subscribeToIndex(callback, intervalMs);
 	}
 
 	// ── Sprint C: Missing Endpoint Coverage ──────────────────────────
 
-	// C-1: Workflow Runs
-
-	/** GET /api/orchestration/:id/runs — List runs for a workflow. */
+	/** @deprecated Use `client.orchestration.listWorkflowRuns()` instead. */
 	async listWorkflowRuns(workflowId: string, limit = 20): Promise<{ runs: WorkflowRun[] }> {
-		const sp = new URLSearchParams({ limit: String(Math.min(limit, 100)) });
-		return this.getJson(
-			`/api/orchestration/${encodeURIComponent(workflowId)}/runs?${sp.toString()}`,
-			'listWorkflowRuns'
-		);
+		return this.orchestration.listWorkflowRuns(workflowId, limit);
 	}
 
-	// C-2: Developer Key Management
-
-	/** GET /api/developers/keys — List all API keys for the authenticated user. */
+	/** @deprecated Use `client.developers.listKeys()` instead. */
 	async listDeveloperKeys(): Promise<{ keys: DeveloperApiKey[] }> {
-		return this.getJson('/api/developers/keys', 'listDeveloperKeys');
+		return this.developers.listKeys();
 	}
 
-	/** POST /api/developers/keys — Generate a new developer API key. */
+	/** @deprecated Use `client.developers.createKey()` instead. */
 	async createDeveloperKey(req: CreateDeveloperKeyRequest): Promise<CreateDeveloperKeyResponse> {
-		this.logger.debug('Creating developer key', { name: req.name });
-		return this.postJson('/api/developers/keys', req, 'createDeveloperKey');
+		return this.developers.createKey(req);
 	}
 
-	/** DELETE /api/developers/keys/:id — Revoke a developer API key. */
+	/** @deprecated Use `client.developers.revokeKey()` instead. */
 	async revokeDeveloperKey(keyId: string): Promise<RevokeDeveloperKeyResponse> {
-		this.logger.debug('Revoking developer key', { keyId });
-		return this.deleteJson(
-			`/api/developers/keys/${encodeURIComponent(keyId)}`,
-			'revokeDeveloperKey'
-		);
+		return this.developers.revokeKey(keyId);
 	}
 
-	// C-3: Agent Lifecycle (deprecate / tombstone / versions)
-
-	/** POST /api/agents/:agentId/deprecate — Deprecate an agent with a grace period. */
+	/** @deprecated Use `client.agents.deprecate()` instead. */
 	async deprecateAgent(agentId: string, req: DeprecateAgentRequest): Promise<DeprecateAgentResponse> {
-		this.logger.debug('Deprecating agent', { agentId, reason: req.reason });
-		return this.postJson(
-			`/api/agents/${encodeURIComponent(agentId)}/deprecate`,
-			req,
-			'deprecateAgent'
-		);
+		return this.agents.deprecate(agentId, req);
 	}
 
-	/** POST /api/agents/:agentId/tombstone — Permanently tombstone an agent. */
+	/** @deprecated Use `client.agents.tombstone()` instead. */
 	async tombstoneAgent(agentId: string): Promise<TombstoneAgentResponse> {
-		this.logger.debug('Tombstoning agent', { agentId });
-		return this.postJson(
-			`/api/agents/${encodeURIComponent(agentId)}/tombstone`,
-			{},
-			'tombstoneAgent'
-		);
+		return this.agents.tombstone(agentId);
 	}
 
-	/** GET /api/agents/:agentId/versions — List all versions for an agent. */
+	/** @deprecated Use `client.agents.listVersions()` instead. */
 	async listAgentVersions(agentId: string): Promise<{ agent_id: string; count: number; versions: AgentVersion[] }> {
-		return this.getJson(
-			`/api/agents/${encodeURIComponent(agentId)}/versions`,
-			'listAgentVersions'
-		);
+		return this.agents.listVersions(agentId);
 	}
 
-	/** POST /api/agents/:agentId/versions — Create a new agent version. */
+	/** @deprecated Use `client.agents.createVersion()` instead. */
 	async createAgentVersion(agentId: string, req: CreateAgentVersionRequest): Promise<{ status: string; version: AgentVersion }> {
-		this.logger.debug('Creating agent version', { agentId, version: req.version });
-		return this.postJson(
-			`/api/agents/${encodeURIComponent(agentId)}/versions`,
-			req,
-			'createAgentVersion'
-		);
+		return this.agents.createVersion(agentId, req);
 	}
 
-	// C-4: Compliance Scan
-
-	/** POST /api/compliance/scan — Run a compliance scan for all agents. */
+	/** @deprecated Use `client.trust.scanCompliance()` instead. */
 	async scanCompliance(): Promise<ComplianceScanResult> {
-		this.logger.debug('Running compliance scan');
-		return this.postJson('/api/compliance/scan', {}, 'scanCompliance');
+		return this.trust.scanCompliance();
 	}
 
-	// C-5: Trust Graph
-
-	/** GET /api/trust/framework/graph?did= — Get trust graph edges for a DID. */
+	/** @deprecated Use `client.trust.getGraph()` instead. */
 	async getTrustGraph(did: string): Promise<TrustGraphResponse> {
-		const sp = new URLSearchParams({ did });
-		return this.getJson(`/api/trust/framework/graph?${sp.toString()}`, 'getTrustGraph');
+		return this.trust.getGraph(did);
 	}
 
-	/** GET /api/trust/framework/graph?from=&to= — Compute trust path between two DIDs. */
+	/** @deprecated Use `client.trust.getPath()` instead. */
 	async getTrustPath(fromDid: string, toDid: string): Promise<TrustPathResponse> {
-		const sp = new URLSearchParams({ from: fromDid, to: toDid });
-		return this.getJson(`/api/trust/framework/graph?${sp.toString()}`, 'getTrustPath');
+		return this.trust.getPath(fromDid, toDid);
 	}
 
-	// C-6: Behavior Analytics
-
-	/** GET /api/analytics/behavior — Get agent behavior analytics. */
+	/** @deprecated Use `client.trust.getBehaviorAnalytics()` instead. */
 	async getBehaviorAnalytics(
 		agentId: string,
 		options: { period?: 'daily' | 'weekly'; limit?: number } = {}
 	): Promise<BehaviorAnalyticsResponse> {
-		const sp = new URLSearchParams({ agent: agentId });
-		if (options.period) sp.set('period', options.period);
-		if (options.limit) sp.set('limit', String(options.limit));
-		return this.getJson(`/api/analytics/behavior?${sp.toString()}`, 'getBehaviorAnalytics');
+		return this.trust.getBehaviorAnalytics(agentId, options);
 	}
 
-	// C-7: NP Payment Verification
-
-	/** POST /api/payments/verify-np — Verify a Nanda Point payment. */
+	/** @deprecated Use `client.billing.verifyNpPayment()` instead. */
 	async verifyNpPayment(req: VerifyNpPaymentRequest): Promise<VerifyNpPaymentResponse> {
-		this.logger.debug('Verifying NP payment', { agent: req.agent, tx_id: req.tx_id });
-		return this.postJson('/api/payments/verify-np', req, 'verifyNpPayment');
+		return this.billing.verifyNpPayment(req);
 	}
 }
 

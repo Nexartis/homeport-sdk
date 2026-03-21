@@ -1295,5 +1295,123 @@ describe('NnnClient', () => {
 			expect(agents.map(a => a.agent_id)).toEqual(['x1', 'x2']);
 		});
 	});
+
+	// ── Sprint D: Namespace Access Tests ──────────────────────────
+
+	describe('namespace getters', () => {
+		it('exposes agents namespace', () => {
+			const client = new NnnClient(BASE_CONFIG);
+			expect(client.agents).toBeDefined();
+			expect(client.agents).toBe(client.agents); // lazy singleton
+		});
+
+		it('exposes orchestration namespace', () => {
+			const client = new NnnClient(BASE_CONFIG);
+			expect(client.orchestration).toBeDefined();
+			expect(client.orchestration).toBe(client.orchestration);
+		});
+
+		it('exposes trust namespace', () => {
+			const client = new NnnClient(BASE_CONFIG);
+			expect(client.trust).toBeDefined();
+			expect(client.trust).toBe(client.trust);
+		});
+
+		it('exposes federation namespace', () => {
+			const client = new NnnClient(BASE_CONFIG);
+			expect(client.federation).toBeDefined();
+			expect(client.federation).toBe(client.federation);
+		});
+
+		it('exposes webhooks namespace', () => {
+			const client = new NnnClient(BASE_CONFIG);
+			expect(client.webhooksNs).toBeDefined();
+			expect(client.webhooksNs).toBe(client.webhooksNs);
+		});
+
+		it('exposes developers namespace', () => {
+			const client = new NnnClient(BASE_CONFIG);
+			expect(client.developers).toBeDefined();
+			expect(client.developers).toBe(client.developers);
+		});
+
+		it('exposes billing namespace', () => {
+			const client = new NnnClient(BASE_CONFIG);
+			expect(client.billing).toBeDefined();
+			expect(client.billing).toBe(client.billing);
+		});
+	});
+
+	describe('namespace method delegation', () => {
+		it('client.agents.register() works like client.registerAgent()', async () => {
+			mockFetch({ status: 200, body: { agent_id: 'a1', status: 'registered' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.agents.register({ name: 'TestAgent', url: 'https://agent.test', capabilities: ['search'] });
+			expect(result).toEqual({ agent_id: 'a1', status: 'registered' });
+		});
+
+		it('client.orchestration.createWorkflow() works', async () => {
+			mockFetch({ status: 201, body: { id: 'wf1', status: 'created' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.orchestration.createWorkflow({ name: 'test', dag_json: '{}', owner_id: 'o1' });
+			expect(result).toEqual({ id: 'wf1', status: 'created' });
+		});
+
+		it('client.trust.getScores() works', async () => {
+			mockFetch({ status: 200, body: { scores: [] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.trust.getScores();
+			expect(result).toEqual({ scores: [] });
+		});
+
+		it('client.webhooksNs.list() works', async () => {
+			mockFetch({ status: 200, body: { subscriptions: [] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.webhooksNs.list();
+			expect(result).toEqual({ subscriptions: [] });
+		});
+
+		it('client.developers.listKeys() works', async () => {
+			mockFetch({ status: 200, body: { keys: [] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.developers.listKeys();
+			expect(result).toEqual({ keys: [] });
+		});
+
+		it('client.billing.getSubscription() works', async () => {
+			mockFetch({ status: 200, body: { subscription: { id: 's1' } } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.billing.getSubscription('key1');
+			expect(result).toEqual({ subscription: { id: 's1' } });
+		});
+
+		it('client.federation.getPeers() works', async () => {
+			mockFetch({ status: 200, body: { peers: [] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.federation.getPeers();
+			expect(result).toEqual({ peers: [] });
+		});
+
+		it('client.agents.deprecate() works', async () => {
+			mockFetch({ status: 200, body: { status: 'deprecated', agent_id: 'a1' } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.agents.deprecate('a1', { reason: 'EOL', sunset_date: '2026-06-01' });
+			expect(result).toEqual({ status: 'deprecated', agent_id: 'a1' });
+		});
+
+		it('client.orchestration.listWorkflowRuns() works', async () => {
+			mockFetch({ status: 200, body: { runs: [{ id: 'r1' }] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.orchestration.listWorkflowRuns('wf1');
+			expect(result).toEqual({ runs: [{ id: 'r1' }] });
+		});
+
+		it('client.trust.scanCompliance() works', async () => {
+			mockFetch({ status: 200, body: { scan_id: 's1', violations: [] } });
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.trust.scanCompliance();
+			expect(result).toEqual({ scan_id: 's1', violations: [] });
+		});
+	});
 });
 
