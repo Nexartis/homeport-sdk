@@ -97,10 +97,9 @@ const healthy = await nnn.isHealthy(); // never throws
 ```
 @nexartis/nexartis-nanda-node-sdk
 └── src/core/
-    ├── client.ts      NnnClient — unified client class
+    ├── client.ts      NnnClient — unified client class (includes health)
     ├── errors.ts      NnnError + NnnErrorCode enum
     ├── retry.ts       fetchWithRetry, exponential backoff + jitter
-    ├── health.ts      Health check helpers
     ├── logger.ts      Portable logger (no-op when disabled)
     └── types.ts       All TypeScript interfaces
 ```
@@ -126,10 +125,10 @@ const healthy = await nnn.isHealthy(); // never throws
 
 ### Standalone Functions
 
-Every client method is also available as a standalone function:
+Retry utilities are available as standalone functions for consumers who need lower-level control:
 
 ```typescript
-import { checkHealth, isHealthy } from '@nexartis/nexartis-nanda-node-sdk';
+import { fetchWithRetry, normalizeBaseUrl, calculateBackoffDelay, isTransientError } from '@nexartis/nexartis-nanda-node-sdk';
 ```
 
 ### Error Handling
@@ -169,7 +168,7 @@ const nnn = new NnnClient({
     maxRetries: 5,       // default: 3
     baseDelayMs: 500,    // default: 1000
     maxDelayMs: 15000,   // default: 10000
-    timeoutMs: 10000,    // default: 5000
+    timeoutMs: 10000,    // default: 8000
   },
 });
 ```
@@ -185,4 +184,3 @@ const nnn = new NnnClient({
 ## License
 
 Proprietary — Nexartis LLC. All rights reserved.
-
