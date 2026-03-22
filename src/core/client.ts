@@ -93,8 +93,11 @@ class ResponseCache {
 	}
 
 	set(key: string, data: unknown, ttlMs?: number): void {
-		// Evict oldest entry if at capacity
-		if (this.cache.size >= this.maxEntries && !this.cache.has(key)) {
+		// Refresh LRU position if key already exists
+		if (this.cache.has(key)) {
+			this.cache.delete(key);
+		} else if (this.cache.size >= this.maxEntries) {
+			// Evict oldest entry if at capacity
 			const oldestKey = this.cache.keys().next().value;
 			if (oldestKey !== undefined) {
 				this.cache.delete(oldestKey);
@@ -381,7 +384,7 @@ export class NnnClient {
 		if (!inflight) {
 			inflight = (async () => {
 				const res = await this.fetch(url, { headers: this.headers() }, ctx);
-				return this.safeParseJson<T>(res, ctx);
+				return this.safeParseJson<T>(res, ctx, false, url);
 			})();
 			this.inflightGets.set(url, inflight);
 		}
@@ -404,48 +407,52 @@ export class NnnClient {
 	 * POST JSON helper with idempotency key.
 	 */
 	private async postJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
+		const requestUrl = `${this.baseUrl}${path}`;
 		const res = await this.fetch(
-			`${this.baseUrl}${path}`,
+			requestUrl,
 			{ method: 'POST', headers: this.mutatingHeaders(), body: JSON.stringify(body) },
 			ctx
 		);
-		return this.safeParseJson<T>(res, ctx);
+		return this.safeParseJson<T>(res, ctx, false, requestUrl);
 	}
 
 	/**
 	 * PUT JSON helper with idempotency key.
 	 */
 	private async putJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
+		const requestUrl = `${this.baseUrl}${path}`;
 		const res = await this.fetch(
-			`${this.baseUrl}${path}`,
+			requestUrl,
 			{ method: 'PUT', headers: this.mutatingHeaders(), body: JSON.stringify(body) },
 			ctx
 		);
-		return this.safeParseJson<T>(res, ctx);
+		return this.safeParseJson<T>(res, ctx, false, requestUrl);
 	}
 
 	/**
 	 * DELETE JSON helper with idempotency key.
 	 */
 	private async deleteJson<T>(path: string, ctx: string): Promise<T> {
+		const requestUrl = `${this.baseUrl}${path}`;
 		const res = await this.fetch(
-			`${this.baseUrl}${path}`,
+			requestUrl,
 			{ method: 'DELETE', headers: this.mutatingHeaders() },
 			ctx
 		);
-		return this.safeParseJson<T>(res, ctx);
+		return this.safeParseJson<T>(res, ctx, false, requestUrl);
 	}
 
 	/**
 	 * PATCH JSON helper with idempotency key.
 	 */
 	private async patchJson<T>(path: string, body: unknown, ctx: string): Promise<T> {
+		const requestUrl = `${this.baseUrl}${path}`;
 		const res = await this.fetch(
-			`${this.baseUrl}${path}`,
+			requestUrl,
 			{ method: 'PATCH', headers: this.mutatingHeaders(), body: JSON.stringify(body) },
 			ctx
 		);
-		return this.safeParseJson<T>(res, ctx);
+		return this.safeParseJson<T>(res, ctx, false, requestUrl);
 	}
 
 	/**
@@ -454,18 +461,21 @@ export class NnnClient {
 	 * failure doesn't prematurely reset a circuit breaker failure streak.
 	 * Pass `skipBreaker` to avoid recording state for external (A2A) calls.
 	 */
-	private async safeParseJson<T>(res: Response, ctx: string, skipBreaker = false): Promise<T> {
+	private async safeParseJson<T>(res: Response, ctx: string, skipBreaker = false, requestUrl?: string): Promise<T> {
+		// Use the original request URL for circuit breaker keying so redirects
+		// don't update a different circuit than the one that was checked.
+		const cbUrl = requestUrl ?? res.url;
 		try {
 			const data = await res.json() as T;
-			if (!skipBreaker) this.circuitBreaker.recordSuccess(res.url);
+			if (!skipBreaker) this.circuitBreaker.recordSuccess(cbUrl);
 			return data;
 		} catch (err) {
-			if (!skipBreaker) this.circuitBreaker.recordFailure(res.url);
+			if (!skipBreaker) this.circuitBreaker.recordFailure(cbUrl);
 			const parseError = new NnnError(
 				NnnErrorCode.SERVER_ERROR,
 				`${ctx}: failed to parse response body as JSON`
 			);
-			await this.hooks.onError?.(res.url, parseError);
+			await this.hooks.onError?.(cbUrl, parseError);
 			throw parseError;
 		}
 	}

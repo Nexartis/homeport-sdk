@@ -22,13 +22,19 @@ export interface CircuitBreakerState {
 export const DEFAULT_CIRCUIT_BREAKER: Required<NnnCircuitBreakerConfig> = {
 	failureThreshold: 5,
 	cooldownMs: 30_000,
-	groupingDepth: 2
+	groupingDepth: 2,
+	maxEndpoints: 256
 };
 
 export class CircuitBreaker {
 	private endpoints = new Map<string, CircuitBreakerState>();
 	private config: Required<NnnCircuitBreakerConfig> | null;
 	private logger: NnnLogger;
+	/**
+	 * Maximum number of endpoint keys tracked simultaneously.
+	 * When exceeded, the oldest (least-recently-created) entries are evicted.
+	 */
+	private readonly maxEndpoints: number;
 
 	constructor(
 		config: NnnCircuitBreakerConfig | false | undefined,
@@ -40,6 +46,7 @@ export class CircuitBreaker {
 			this.config = { ...DEFAULT_CIRCUIT_BREAKER, ...config };
 		}
 		this.logger = logger;
+		this.maxEndpoints = this.config?.maxEndpoints ?? 256;
 	}
 
 	/**
@@ -59,6 +66,14 @@ export class CircuitBreaker {
 
 	private getState(key: string): CircuitBreakerState {
 		if (!this.endpoints.has(key)) {
+			// Evict the oldest entry when at capacity
+			if (this.endpoints.size >= this.maxEndpoints) {
+				const oldestKey = this.endpoints.keys().next().value;
+				if (oldestKey !== undefined) {
+					this.logger.debug('Circuit breaker evicting oldest endpoint key', { key: oldestKey });
+					this.endpoints.delete(oldestKey);
+				}
+			}
 			this.endpoints.set(key, { failures: 0, lastFailureTime: 0, state: 'closed' });
 		}
 		return this.endpoints.get(key)!;
@@ -114,7 +129,18 @@ export class CircuitBreaker {
 		return this.config !== null;
 	}
 
-	/** Current state for a specific URL or the first endpoint (diagnostics). */
+	/**
+	 * Backward-compatible getter — returns the state of the first tracked endpoint,
+	 * or a default closed state if no endpoints have been recorded yet.
+	 * @deprecated Prefer `currentStateFor(url)` for per-endpoint diagnostics.
+	 */
+	get currentState(): CircuitBreakerState {
+		if (!this.config) return { failures: 0, lastFailureTime: 0, state: 'closed' };
+		const first = this.endpoints.values().next().value;
+		return first ? { ...first } : { failures: 0, lastFailureTime: 0, state: 'closed' };
+	}
+
+	/** Current circuit breaker state for the endpoint group that `url` belongs to. */
 	currentStateFor(url: string): CircuitBreakerState {
 		if (!this.config) return { failures: 0, lastFailureTime: 0, state: 'closed' };
 		const key = this.keyFor(url);

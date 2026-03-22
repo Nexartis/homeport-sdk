@@ -40,9 +40,17 @@ export interface NnnCircuitBreakerConfig {
 	 *
 	 * A lower depth groups more sub-paths together. A higher depth isolates
 	 * sub-paths but increases the number of independent circuits.
+	 *
+	 * @default 2
 	 * Set to `Infinity` to give every unique pathname its own circuit.
 	 */
 	groupingDepth?: number;
+	/**
+	 * Maximum number of endpoint keys tracked simultaneously.
+	 * When exceeded, the oldest (least-recently-created) entry is evicted.
+	 * @default 256
+	 */
+	maxEndpoints?: number;
 }
 
 /** Response cache configuration. */

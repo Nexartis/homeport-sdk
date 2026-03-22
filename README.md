@@ -293,6 +293,14 @@ const nnn = new NnnClient({
   circuitBreaker: {
     failureThreshold: 5,   // consecutive failures to trip
     cooldownMs: 30_000,    // ms before a probe request is allowed
+    groupingDepth: 2,      // URL path segments for per-endpoint grouping (default: 2)
+    maxEndpoints: 256,     // max tracked endpoint keys before eviction (default: 256)
+  },
+
+  // Response cache for GET requests
+  cache: {
+    defaultTtlMs: 60_000, // TTL per entry (default: 60 000)
+    maxEntries: 256,       // max cached entries with LRU eviction (default: 256)
   },
 
   // OpenTelemetry trace context propagation
