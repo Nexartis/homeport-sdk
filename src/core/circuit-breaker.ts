@@ -46,7 +46,8 @@ export class CircuitBreaker {
 			this.config = { ...DEFAULT_CIRCUIT_BREAKER, ...config };
 		}
 		this.logger = logger;
-		this.maxEndpoints = Math.max(1, this.config?.maxEndpoints ?? 256);
+		const rawMax = this.config?.maxEndpoints ?? 256;
+		this.maxEndpoints = Number.isFinite(rawMax) ? Math.max(1, rawMax) : 256;
 	}
 
 	/**
@@ -57,7 +58,10 @@ export class CircuitBreaker {
 	private keyFor(url: string): string {
 		try {
 			const u = new URL(url);
-			const segments = u.pathname.split('/').filter(Boolean).slice(0, this.config!.groupingDepth);
+			const depth = Number.isFinite(this.config!.groupingDepth) && this.config!.groupingDepth! >= 0
+				? this.config!.groupingDepth!
+				: 2;
+			const segments = u.pathname.split('/').filter(Boolean).slice(0, depth);
 			return `${u.origin}/${segments.join('/')}`;
 		} catch {
 			return url;

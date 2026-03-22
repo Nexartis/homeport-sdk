@@ -1214,6 +1214,25 @@ describe('NnnClient', () => {
 			expect(result).toEqual([{ agent_id: 'a1' }]);
 		});
 
+		it('groups endpoints with the same prefix into a shared circuit', async () => {
+			globalThis.fetch = vi.fn().mockRejectedValue(new Error('server down'));
+
+			// With groupingDepth: 1, /lookup/a1 and /lookup/a2 share key origin/lookup
+			const client = new NnnClient({
+				...BASE_CONFIG,
+				circuitBreaker: { failureThreshold: 2, cooldownMs: 60_000, groupingDepth: 1 }
+			});
+
+			// Trip the circuit via /lookup/a1
+			await expect(client.agents.lookup('a1')).rejects.toThrow();
+			await expect(client.agents.lookup('a1')).rejects.toThrow();
+
+			// /lookup/a2 shares the same group → should be fast-failed
+			await expect(client.agents.lookup('a2')).rejects.toThrow(/Circuit breaker is open for/);
+			// fetch should only have been called twice (the two a1 calls)
+			expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+		});
+
 		it('can be disabled', async () => {
 			globalThis.fetch = vi.fn().mockRejectedValue(new Error('server down'));
 
