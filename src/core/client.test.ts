@@ -209,31 +209,28 @@ describe('NnnClient', () => {
 	describe('orchestration.runWorkflow()', () => {
 		it('runs a workflow by ID', async () => {
 			const runResult = {
-				runId: 'run-1',
-				status: 'completed',
-				output: { result: 'success' },
-				stepResults: [{ stepId: 'step-1', status: 'completed', output: 'done', durationMs: 150 }]
+				run_id: 'run-1',
+				status: 'completed'
 			};
 			mockFetch({ status: 200, body: runResult });
 
 			const client = new NnnClient(BASE_CONFIG);
 			const result = await client.orchestration.runWorkflow('wf-1', { prompt: 'hello' });
-			expect(result.runId).toBe('run-1');
+			expect(result.run_id).toBe('run-1');
 			expect(result.status).toBe('completed');
-			expect(result.stepResults).toHaveLength(1);
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
-			expect(fetchCall[0]).toContain('/api/orchestration/wf-1/run');
+			expect(fetchCall[0]).toContain('/api/orchestration/wf-1/runs');
 			expect(fetchCall[1].method).toBe('POST');
 			expect(JSON.parse(fetchCall[1].body)).toEqual({ prompt: 'hello' });
 		});
 
 		it('runs with no input', async () => {
-			mockFetch({ status: 200, body: { runId: 'run-2', status: 'running', stepResults: [] } });
+			mockFetch({ status: 200, body: { run_id: 'run-2', status: 'running' } });
 
 			const client = new NnnClient(BASE_CONFIG);
 			const result = await client.orchestration.runWorkflow('wf-2');
-			expect(result.runId).toBe('run-2');
+			expect(result.run_id).toBe('run-2');
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
 			expect(JSON.parse(fetchCall[1].body)).toEqual({});
@@ -1039,13 +1036,17 @@ describe('NnnClient', () => {
 
 	describe('orchestration.getWorkflowStatus()', () => {
 		it('fetches workflow run status', async () => {
-			const status = { workflowId: 'wf-1', runId: 'run-1', status: 'running', startedAt: '2026-01-01' };
-			mockFetch({ status: 200, body: status });
+			const statusBody = {
+				run: { id: 'run-1', workflow_id: 'wf-1', status: 'running', started_at: '2026-01-01' },
+				stepRuns: [{ id: 'sr-1', run_id: 'run-1', step_id: 'step-1', status: 'pending' }]
+			};
+			mockFetch({ status: 200, body: statusBody });
 
 			const client = new NnnClient(BASE_CONFIG);
 			const result = await client.orchestration.getWorkflowStatus('run-1');
-			expect(result.status).toBe('running');
-			expect(result.runId).toBe('run-1');
+			expect(result.run.status).toBe('running');
+			expect(result.run.id).toBe('run-1');
+			expect(result.stepRuns).toHaveLength(1);
 
 			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
 			expect(fetchCall[0]).toContain('/api/orchestration/runs/run-1');

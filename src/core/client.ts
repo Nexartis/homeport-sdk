@@ -49,6 +49,12 @@ function isStreamingRequest(init: RequestInit): boolean {
 	let accept: string | null | undefined;
 	if (init.headers instanceof Headers) {
 		accept = init.headers.get('Accept');
+	} else if (Array.isArray(init.headers)) {
+		// Tuple array form: [['Accept', 'text/event-stream'], ...]
+		const entry = (init.headers as string[][]).find(
+			([k]) => k.toLowerCase() === 'accept'
+		);
+		accept = entry?.[1];
 	} else if (typeof init.headers === 'object') {
 		// Plain object — try common casings
 		const h = init.headers as Record<string, string>;

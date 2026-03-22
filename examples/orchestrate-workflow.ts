@@ -14,18 +14,19 @@ const client = new NnnClient({
 
 async function main() {
 	// 1. Define a DAG workflow
-	const workflow = await client.orchestration.createWorkflow({
+	const { workflow } = await client.orchestration.createWorkflow({
 		name: 'Code Review Pipeline',
 		description: 'Automated code review with security scan',
+		owner_id: 'orchestrator-1',
 		dag: {
 			nodes: [
-				{ id: 'lint', agentId: 'linter-agent', config: { rules: 'strict' } },
-				{ id: 'security', agentId: 'security-scanner', config: { level: 'high' } },
-				{ id: 'review', agentId: 'review-agent', config: { depth: 'thorough' } }
+				{ id: 'lint', type: 'agent', data: { agent_id: 'linter-agent', rules: 'strict' } },
+				{ id: 'security', type: 'agent', data: { agent_id: 'security-scanner', level: 'high' } },
+				{ id: 'review', type: 'agent', data: { agent_id: 'review-agent', depth: 'thorough' } }
 			],
 			edges: [
-				{ from: 'lint', to: 'review' },
-				{ from: 'security', to: 'review' }
+				{ source: 'lint', target: 'review' },
+				{ source: 'security', target: 'review' }
 			]
 		}
 	});
@@ -38,9 +39,9 @@ async function main() {
 	});
 	console.log('🚀 Workflow run started:', run);
 
-	// 3. Check workflow status
-	const status = await client.orchestration.getWorkflowStatus(run.runId);
-	console.log('📊 Status:', status.status);
+	// 3. Check workflow status (returns { run, stepRuns })
+	const status = await client.orchestration.getWorkflowStatus(run.run_id);
+	console.log('📊 Status:', status.run.status);
 
 	// 4. List all workflows
 	const workflows = await client.orchestration.listWorkflows();

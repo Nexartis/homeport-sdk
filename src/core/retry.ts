@@ -108,25 +108,26 @@ export async function fetchWithRetry(
 			});
 
 			if (response.status >= 500 || response.status === 429) {
-				// Clone before reading body so hooks can still inspect headers/status
-				const responseClone = response.clone();
+				// Only clone on the final attempt — intermediate clones add
+				// unnecessary buffering overhead for transient failures.
+				const isFinalAttempt = attempt >= maxRetries;
+				const responseClone = isFinalAttempt ? response.clone() : undefined;
 				let bodyText = '';
 				try {
 					bodyText = await response.text();
 				} catch {
-					/* body drain best-effort — non-critical, response clone is preserved */
+					/* body drain best-effort — non-critical */
 				}
 
-				// On the final attempt, still throw so callers always get
-				// a consistent NnnError — returning a raw Response could let
-				// failures be silently treated as success.
 				const error = NnnError.fromStatus(
 					response.status,
 					`[${context}] HTTP ${response.status}: ${bodyText || '(no body)'}`
 				);
-				// Attach the cloned response so upstream hooks (e.g. afterResponse)
-				// can inspect it even though fetchWithRetry throws.
-				error.lastResponse = responseClone;
+				// Attach the cloned response on the final attempt so upstream
+				// hooks (e.g. afterResponse) can inspect it.
+				if (responseClone) {
+					error.lastResponse = responseClone;
+				}
 				throw error;
 			}
 
