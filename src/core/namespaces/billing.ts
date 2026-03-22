@@ -7,7 +7,7 @@
  * @module core/namespaces/billing
  */
 
-import type { NnnClientInternals } from '../namespace-helpers';
+import type { NnnClientInternals } from '../namespace-helpers.js';
 import type {
 	CreateSubscriptionRequest,
 	CreateInvoiceRequest,
@@ -15,7 +15,7 @@ import type {
 	CheckoutSession,
 	VerifyNpPaymentRequest,
 	VerifyNpPaymentResponse
-} from '../types';
+} from '../types.js';
 
 export class BillingNamespace {
 	/** @internal */

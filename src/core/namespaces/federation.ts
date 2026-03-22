@@ -7,14 +7,14 @@
  * @module core/namespaces/federation
  */
 
-import type { NnnClientInternals } from '../namespace-helpers';
+import type { NnnClientInternals } from '../namespace-helpers.js';
 import type {
 	SendA2ARequestParams,
 	A2ARequest,
 	A2AResponse
-} from '../types';
-import { NnnError, NnnErrorCode } from '../errors';
-import { generateRequestId, parseSSEStream } from '../sse';
+} from '../types.js';
+import { NnnError, NnnErrorCode } from '../errors.js';
+import { generateRequestId, parseSSEStream } from '../sse.js';
 
 export class FederationNamespace {
 	/** @internal */

@@ -7,14 +7,14 @@
  * @module core/namespaces/developers
  */
 
-import type { NnnClientInternals } from '../namespace-helpers';
+import type { NnnClientInternals } from '../namespace-helpers.js';
 import type {
 	DeveloperApiKey,
 	CreateDeveloperKeyRequest,
 	CreateDeveloperKeyResponse,
 	RevokeDeveloperKeyResponse,
 	EarningsActionRequest
-} from '../types';
+} from '../types.js';
 
 export class DevelopersNamespace {
 	/** @internal */

@@ -9,9 +9,9 @@
  * @module core/circuit-breaker
  */
 
-import type { NnnCircuitBreakerConfig } from './types';
-import { NnnError, NnnErrorCode } from './errors';
-import type { NnnLogger } from './logger';
+import type { NnnCircuitBreakerConfig } from './types.js';
+import { NnnError, NnnErrorCode } from './errors.js';
+import type { NnnLogger } from './logger.js';
 
 export interface CircuitBreakerState {
 	failures: number;
