@@ -68,12 +68,13 @@ export class TrustNamespace {
 		this._client.logger.debug('Syncing cross-registry trust');
 		const headers: Record<string, string> = { ...this._client.headers() };
 		if (adminKey) headers['Authorization'] = `Bearer ${adminKey}`;
+		const requestUrl = `${this._client.baseUrl}/api/trust/cross-registry`;
 		const res = await this._client.fetch(
-			`${this._client.baseUrl}/api/trust/cross-registry`,
+			requestUrl,
 			{ method: 'POST', headers, body: JSON.stringify({}) },
 			'trust.syncCrossRegistry'
 		);
-		return this._client.safeParseJson<Record<string, unknown>>(res, 'trust.syncCrossRegistry');
+		return this._client.safeParseJson<Record<string, unknown>>(res, 'trust.syncCrossRegistry', false, requestUrl);
 	}
 
 	// ── Graph ───────────────────────────────────────────────────

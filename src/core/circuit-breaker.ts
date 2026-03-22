@@ -46,7 +46,7 @@ export class CircuitBreaker {
 			this.config = { ...DEFAULT_CIRCUIT_BREAKER, ...config };
 		}
 		this.logger = logger;
-		this.maxEndpoints = this.config?.maxEndpoints ?? 256;
+		this.maxEndpoints = Math.max(1, this.config?.maxEndpoints ?? 256);
 	}
 
 	/**

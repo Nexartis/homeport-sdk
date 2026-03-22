@@ -26,5 +26,5 @@ export interface NnnClientInternals {
 	readonly logger: NnnLogger;
 	headers(): Record<string, string>;
 	externalHeaders(): Record<string, string>;
-	safeParseJson<T>(res: Response, ctx: string, skipBreaker?: boolean): Promise<T>;
+	safeParseJson<T>(res: Response, ctx: string, skipBreaker?: boolean, requestUrl?: string): Promise<T>;
 }

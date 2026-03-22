@@ -76,7 +76,7 @@ class ResponseCache {
 
 	constructor(defaultTtlMs: number, maxEntries: number = 256) {
 		this.defaultTtlMs = defaultTtlMs;
-		this.maxEntries = maxEntries;
+		this.maxEntries = Math.max(1, maxEntries);
 	}
 
 	get<T>(key: string): T | undefined {
