@@ -140,11 +140,12 @@ export class CircuitBreaker {
 		return first ? { ...first } : { failures: 0, lastFailureTime: 0, state: 'closed' };
 	}
 
-	/** Current circuit breaker state for the endpoint group that `url` belongs to. */
+	/** Current circuit breaker state for the endpoint group that `url` belongs to (read-only, does not create entries). */
 	currentStateFor(url: string): CircuitBreakerState {
 		if (!this.config) return { failures: 0, lastFailureTime: 0, state: 'closed' };
 		const key = this.keyFor(url);
-		return { ...this.getState(key) };
+		const existing = this.endpoints.get(key);
+		return existing ? { ...existing } : { failures: 0, lastFailureTime: 0, state: 'closed' };
 	}
 
 	/** Reset all circuit states. */
