@@ -1180,8 +1180,8 @@ describe('NnnClient', () => {
 			await expect(client.health()).rejects.toThrow();
 			await expect(client.health()).rejects.toThrow();
 
-			// Third should be fast-failed by circuit breaker
-			await expect(client.health()).rejects.toThrow(/Circuit breaker is open/);
+			// Third should be fast-failed by circuit breaker (per-endpoint)
+			await expect(client.health()).rejects.toThrow(/Circuit breaker is open for/);
 			// fetch should only have been called twice (not three times)
 			expect(globalThis.fetch).toHaveBeenCalledTimes(2);
 		});

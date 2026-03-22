@@ -68,13 +68,15 @@ function isStreamingRequest(init: RequestInit): boolean {
 
 // ── Response Cache (B-4) ─────────────────────────────────────────────
 
-/** Simple TTL-based response cache with pattern invalidation. */
+/** Simple TTL-based response cache with LRU eviction and pattern invalidation. */
 class ResponseCache {
 	private cache = new Map<string, { data: unknown; expiresAt: number }>();
 	private defaultTtlMs: number;
+	private maxEntries: number;
 
-	constructor(defaultTtlMs: number) {
+	constructor(defaultTtlMs: number, maxEntries: number = 256) {
 		this.defaultTtlMs = defaultTtlMs;
+		this.maxEntries = maxEntries;
 	}
 
 	get<T>(key: string): T | undefined {
@@ -84,10 +86,20 @@ class ResponseCache {
 			this.cache.delete(key);
 			return undefined;
 		}
+		// Move to end (most recently used) for LRU
+		this.cache.delete(key);
+		this.cache.set(key, entry);
 		return entry.data as T;
 	}
 
 	set(key: string, data: unknown, ttlMs?: number): void {
+		// Evict oldest entry if at capacity
+		if (this.cache.size >= this.maxEntries && !this.cache.has(key)) {
+			const oldestKey = this.cache.keys().next().value;
+			if (oldestKey !== undefined) {
+				this.cache.delete(oldestKey);
+			}
+		}
 		this.cache.set(key, {
 			data,
 			expiresAt: Date.now() + (ttlMs ?? this.defaultTtlMs)
@@ -107,6 +119,11 @@ class ResponseCache {
 			regex.lastIndex = 0;
 			if (regex.test(key)) this.cache.delete(key);
 		}
+	}
+
+	/** Number of entries currently in the cache. */
+	get size(): number {
+		return this.cache.size;
 	}
 }
 
@@ -151,7 +168,10 @@ export class NnnClient {
 
 		// Response cache — disabled by default
 		if (config.cache) {
-			this.responseCache = new ResponseCache(config.cache.defaultTtlMs ?? 60_000);
+			this.responseCache = new ResponseCache(
+				config.cache.defaultTtlMs ?? 60_000,
+				config.cache.maxEntries ?? 256
+			);
 		} else {
 			this.responseCache = null;
 		}
@@ -257,7 +277,7 @@ export class NnnClient {
 	 * affect the registry circuit breaker state.
 	 */
 	private async fetch(url: string, init: RequestInit, context: string, skipBreaker = false): Promise<Response> {
-		if (!skipBreaker) this.circuitBreaker.check();
+		if (!skipBreaker) this.circuitBreaker.check(url);
 
 		const startTime = Date.now();
 
@@ -289,7 +309,7 @@ export class NnnClient {
 					`${context} failed (${response.status}): ${bodyText}`
 				);
 				error.context.durationMs = durationMs;
-				if (!skipBreaker && response.status >= 500) this.circuitBreaker.recordFailure();
+				if (!skipBreaker && response.status >= 500) this.circuitBreaker.recordFailure(url);
 				await this.hooks.onError?.(url, error);
 				throw error;
 			}
@@ -298,7 +318,7 @@ export class NnnClient {
 			// so that a JSON parse failure doesn't prematurely reset the streak.
 			// Streaming callers bypass safeParseJson, so record success here.
 			if (!skipBreaker && isSSE) {
-				this.circuitBreaker.recordSuccess();
+				this.circuitBreaker.recordSuccess(url);
 			}
 			return response;
 		} catch (err) {
@@ -311,7 +331,7 @@ export class NnnClient {
 			// 429 (rate-limit) is a client-side throttle, not a server failure —
 			// don't let it trip the circuit breaker.
 			const is429 = err instanceof NnnError && err.statusCode === 429;
-			if (!skipBreaker && !is429) this.circuitBreaker.recordFailure();
+			if (!skipBreaker && !is429) this.circuitBreaker.recordFailure(url);
 
 			// Enrich NnnError with duration context before firing onError
 			// so hook consumers can access timing information
@@ -437,10 +457,10 @@ export class NnnClient {
 	private async safeParseJson<T>(res: Response, ctx: string, skipBreaker = false): Promise<T> {
 		try {
 			const data = await res.json() as T;
-			if (!skipBreaker) this.circuitBreaker.recordSuccess();
+			if (!skipBreaker) this.circuitBreaker.recordSuccess(res.url);
 			return data;
 		} catch (err) {
-			if (!skipBreaker) this.circuitBreaker.recordFailure();
+			if (!skipBreaker) this.circuitBreaker.recordFailure(res.url);
 			const parseError = new NnnError(
 				NnnErrorCode.SERVER_ERROR,
 				`${ctx}: failed to parse response body as JSON`
