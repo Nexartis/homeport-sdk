@@ -33,6 +33,7 @@ import type {
 	NnnStats
 } from '../types';
 import { NnnError, NnnErrorCode } from '../errors';
+import { parseSSEStream } from '../sse';
 
 export class OrchestrationNamespace {
 	/** @internal */
@@ -118,7 +119,7 @@ export class OrchestrationNamespace {
 		if (!res.body) {
 			throw new NnnError(NnnErrorCode.NETWORK_ERROR, 'streamWorkflowEvents: response body is null');
 		}
-		yield* this.parseSSE(res.body);
+		yield* parseSSEStream(res.body, this._client.logger);
 	}
 
 	// ── Delegation ──────────────────────────────────────────────
@@ -219,46 +220,6 @@ export class OrchestrationNamespace {
 		return () => { stopped = true; };
 	}
 
-	// ── Private helpers ─────────────────────────────────────────
-
-	private async *parseSSE(body: ReadableStream<Uint8Array>): AsyncGenerator<Record<string, unknown>, void, unknown> {
-		const reader = body.getReader();
-		const decoder = new TextDecoder();
-		let buffer = '';
-		try {
-			const dataLines: string[] = [];
-			let streamDone = false;
-			const logger = this._client.logger;
-
-			const flushEvent = function* () {
-				if (dataLines.length === 0) return;
-				const payload = dataLines.splice(0).join('\n');
-				if (payload === '[DONE]') { streamDone = true; return; }
-				try { yield JSON.parse(payload) as Record<string, unknown>; }
-				catch { logger.warn('Failed to parse SSE event', { data: payload }); }
-			};
-
-			while (!streamDone) {
-				const { done, value } = await reader.read();
-				if (done) break;
-				buffer += decoder.decode(value, { stream: true });
-				const lines = buffer.split('\n');
-				buffer = lines.pop() ?? '';
-				for (const line of lines) {
-					const trimmed = line.trim();
-					if (trimmed.startsWith(':')) continue;
-					if (!trimmed) { yield* flushEvent(); if (streamDone) break; continue; }
-					if (trimmed.startsWith('data:')) {
-						dataLines.push(trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5));
-					}
-				}
-			}
-			if (!streamDone) yield* flushEvent();
-		} finally {
-			reader.cancel().catch(() => {});
-			reader.releaseLock();
-		}
-	}
 }
 
 /** Safely invoke a callback, catching and logging errors. */

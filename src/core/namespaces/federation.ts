@@ -14,16 +14,7 @@ import type {
 	A2AResponse
 } from '../types';
 import { NnnError, NnnErrorCode } from '../errors';
-
-/** Generate a unique request ID, safe across all JS runtimes. */
-function generateRequestId(): string {
-	try {
-		if (typeof globalThis !== 'undefined' && globalThis.crypto?.randomUUID) {
-			return globalThis.crypto.randomUUID();
-		}
-	} catch { /* fall back */ }
-	return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
+import { generateRequestId, parseSSEStream } from '../sse';
 
 export class FederationNamespace {
 	/** @internal */
@@ -56,6 +47,12 @@ export class FederationNamespace {
 				'federation.sendA2ARequest.lookup'
 			);
 			targetUrl = agent.api_url ?? agent.agent_url;
+			if (!targetUrl) {
+				throw new NnnError(
+					NnnErrorCode.CONFIGURATION_ERROR,
+					`Agent ${params.target_agent_id} has no api_url or agent_url`
+				);
+			}
 		}
 
 		const rpcRequest: A2ARequest = {
@@ -66,7 +63,7 @@ export class FederationNamespace {
 		};
 
 		const res = await this._client.fetch(
-			targetUrl!,
+			targetUrl,
 			{
 				method: 'POST',
 				headers: this._client.externalHeaders(),
@@ -90,6 +87,12 @@ export class FederationNamespace {
 				'federation.streamA2ARequest.lookup'
 			);
 			targetUrl = agent.api_url ?? agent.agent_url;
+			if (!targetUrl) {
+				throw new NnnError(
+					NnnErrorCode.CONFIGURATION_ERROR,
+					`Agent ${params.target_agent_id} has no api_url or agent_url`
+				);
+			}
 		}
 
 		const rpcRequest: A2ARequest = {
@@ -100,7 +103,7 @@ export class FederationNamespace {
 		};
 
 		const res = await this._client.fetch(
-			targetUrl!,
+			targetUrl,
 			{
 				method: 'POST',
 				headers: { ...this._client.externalHeaders(), Accept: 'text/event-stream' },
@@ -114,42 +117,6 @@ export class FederationNamespace {
 			throw new NnnError(NnnErrorCode.NETWORK_ERROR, 'federation.streamA2ARequest: response body is null');
 		}
 
-		const reader = res.body.getReader();
-		const decoder = new TextDecoder();
-		let buffer = '';
-
-		try {
-			const dataLines: string[] = [];
-			let streamDone = false;
-
-			const flushEvent = function* () {
-				if (dataLines.length === 0) return;
-				const payload = dataLines.splice(0).join('\n');
-				if (payload === '[DONE]') { streamDone = true; return; }
-				try { yield JSON.parse(payload) as A2AResponse; }
-				catch { /* skip unparseable */ }
-			};
-
-			while (!streamDone) {
-				const { done, value } = await reader.read();
-				if (done) break;
-				buffer += decoder.decode(value, { stream: true });
-				const lines = buffer.split('\n');
-				buffer = lines.pop() ?? '';
-				for (const line of lines) {
-					const trimmed = line.trim();
-					if (trimmed.startsWith(':')) continue;
-					if (!trimmed) { yield* flushEvent(); if (streamDone) break; continue; }
-					if (trimmed.startsWith('data:')) {
-						dataLines.push(trimmed.startsWith('data: ') ? trimmed.slice(6) : trimmed.slice(5));
-					}
-				}
-			}
-			if (!streamDone) yield* flushEvent();
-		} finally {
-			reader.cancel().catch(() => {});
-			reader.releaseLock();
-		}
+		yield* parseSSEStream<A2AResponse>(res.body, this._client.logger);
 	}
 }
-

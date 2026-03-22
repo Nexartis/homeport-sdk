@@ -28,13 +28,3 @@ export interface NnnClientInternals {
 	externalHeaders(): Record<string, string>;
 	safeParseJson<T>(res: Response, ctx: string, skipBreaker?: boolean): Promise<T>;
 }
-
-/**
- * Base class for namespace classes providing access to client internals.
- * @internal
- */
-export abstract class BaseNamespace {
-	/** @internal */
-	constructor(protected readonly _client: NnnClientInternals) {}
-}
-

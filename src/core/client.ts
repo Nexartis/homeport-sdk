@@ -21,6 +21,7 @@ import { createNnnLogger, type NnnLogger } from './logger';
 import { NnnError, NnnErrorCode } from './errors';
 import { SDK_VERSION } from './version';
 import { CircuitBreaker } from './circuit-breaker';
+import { generateRequestId } from './sse';
 import type { NnnClientInternals } from './namespace-helpers';
 import {
 	AgentsNamespace,
@@ -33,16 +34,6 @@ import {
 } from './namespaces';
 
 export { SDK_VERSION } from './version';
-
-/** Generate a unique request ID, safe across all JS runtimes. */
-function generateRequestId(): string {
-	try {
-		if (typeof globalThis !== 'undefined' && globalThis.crypto?.randomUUID) {
-			return globalThis.crypto.randomUUID();
-		}
-	} catch { /* crypto.randomUUID unavailable — fall back to timestamp+random */ }
-	return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
-}
 
 
 
@@ -480,7 +471,7 @@ export class NnnClient {
 	 */
 	async deepHealth(): Promise<NnnHealthStatus & { healthy: boolean; degradedChecks: string[] }> {
 		const h = await this.health();
-		const degradedChecks = Object.entries(h.checks)
+		const degradedChecks = Object.entries(h.checks ?? {})
 			.filter(([, v]) => v !== 'ok')
 			.map(([k]) => k);
 		return {
@@ -490,6 +481,3 @@ export class NnnClient {
 		};
 	}
 }
-
-
-
