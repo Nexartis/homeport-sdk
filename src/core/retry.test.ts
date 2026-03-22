@@ -102,19 +102,31 @@ describe('fetchWithRetry', () => {
 		expect(globalThis.fetch).toHaveBeenCalledTimes(2);
 	});
 
-	it('throws NnnError after exhausting retries on 500', async () => {
+	it('throws NnnError with lastResponse after exhausting retries on 5xx', async () => {
 		globalThis.fetch = vi.fn().mockImplementation(() =>
 			Promise.resolve(new Response('server error', { status: 500 }))
 		);
 
-		await expect(
-			fetchWithRetry('https://example.com', {}, 'test', {
+		let caughtError: unknown;
+		try {
+			await fetchWithRetry('https://example.com', {}, 'test', {
 				maxRetries: 1,
 				baseDelayMs: 1,
 				maxDelayMs: 10,
 				timeoutMs: 5000
-			})
-		).rejects.toThrow(NnnError);
+			});
+			// Should not reach here
+			expect.fail('fetchWithRetry should have thrown');
+		} catch (err) {
+			caughtError = err;
+		}
+
+		expect(caughtError).toBeInstanceOf(NnnError);
+		const nnnErr = caughtError as NnnError;
+		expect(nnnErr.statusCode).toBe(500);
+		// lastResponse is attached so upstream hooks (e.g. afterResponse) can inspect it
+		expect(nnnErr.lastResponse).toBeDefined();
+		expect(nnnErr.lastResponse!.status).toBe(500);
 	});
 
 	it('does not retry on 404 (permanent failure)', async () => {
