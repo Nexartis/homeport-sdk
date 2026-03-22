@@ -7,7 +7,7 @@
  * @module core/namespaces/trust
  */
 
-import type { NnnClientInternals } from '../namespace-helpers';
+import type { NnnClientInternals } from '../namespace-helpers.js';
 import type {
 	AgentAddr,
 	ResolutionContext,
@@ -19,7 +19,7 @@ import type {
 	TrustGraphResponse,
 	TrustPathResponse,
 	BehaviorAnalyticsResponse
-} from '../types';
+} from '../types.js';
 
 export class TrustNamespace {
 	/** @internal */
