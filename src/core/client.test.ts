@@ -1180,9 +1180,56 @@ describe('NnnClient', () => {
 			await expect(client.health()).rejects.toThrow();
 			await expect(client.health()).rejects.toThrow();
 
-			// Third should be fast-failed by circuit breaker
-			await expect(client.health()).rejects.toThrow(/Circuit breaker is open/);
+			// Third should be fast-failed by circuit breaker (per-endpoint)
+			await expect(client.health()).rejects.toThrow(/Circuit breaker is open for/);
 			// fetch should only have been called twice (not three times)
+			expect(globalThis.fetch).toHaveBeenCalledTimes(2);
+		});
+
+		it('isolates failures per endpoint group', async () => {
+			let callCount = 0;
+			globalThis.fetch = vi.fn().mockImplementation((url: string) => {
+				callCount++;
+				if (url.includes('/health')) {
+					return Promise.reject(new Error('health endpoint down'));
+				}
+				// /api/agents endpoints succeed
+				return Promise.resolve(new Response(JSON.stringify([{ agent_id: 'a1' }]), { status: 200 }));
+			});
+
+			const client = new NnnClient({
+				...BASE_CONFIG,
+				circuitBreaker: { failureThreshold: 2, cooldownMs: 60_000 }
+			});
+
+			// Trip the circuit for /health
+			await expect(client.health()).rejects.toThrow();
+			await expect(client.health()).rejects.toThrow();
+
+			// /health should now be fast-failed
+			await expect(client.health()).rejects.toThrow(/Circuit breaker is open for/);
+
+			// /api/agents should still work — different endpoint group
+			const result = await client.agents.search();
+			expect(result).toEqual([{ agent_id: 'a1' }]);
+		});
+
+		it('groups endpoints with the same prefix into a shared circuit', async () => {
+			globalThis.fetch = vi.fn().mockRejectedValue(new Error('server down'));
+
+			// With groupingDepth: 1, /lookup/a1 and /lookup/a2 share key origin/lookup
+			const client = new NnnClient({
+				...BASE_CONFIG,
+				circuitBreaker: { failureThreshold: 2, cooldownMs: 60_000, groupingDepth: 1 }
+			});
+
+			// Trip the circuit via /lookup/a1
+			await expect(client.agents.lookup('a1')).rejects.toThrow();
+			await expect(client.agents.lookup('a1')).rejects.toThrow();
+
+			// /lookup/a2 shares the same group → should be fast-failed
+			await expect(client.agents.lookup('a2')).rejects.toThrow(/Circuit breaker is open for/);
+			// fetch should only have been called twice (the two a1 calls)
 			expect(globalThis.fetch).toHaveBeenCalledTimes(2);
 		});
 

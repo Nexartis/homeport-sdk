@@ -72,7 +72,7 @@ export class FederationNamespace {
 			'federation.sendA2ARequest',
 			true // skipBreaker — external call
 		);
-		return this._client.safeParseJson<A2AResponse>(res, 'federation.sendA2ARequest', true);
+		return this._client.safeParseJson<A2AResponse>(res, 'federation.sendA2ARequest', true, targetUrl);
 	}
 
 	/**

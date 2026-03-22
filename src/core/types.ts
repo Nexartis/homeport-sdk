@@ -34,12 +34,31 @@ export interface NnnCircuitBreakerConfig {
 	failureThreshold?: number;
 	/** Cooldown period in ms before allowing a probe request. Default: 30000. */
 	cooldownMs?: number;
+	/**
+	 * Number of leading URL path segments used to group endpoints into circuits.
+	 * Default: 2 (e.g. `/api/agents/search` and `/api/agents` share a circuit).
+	 *
+	 * A lower depth groups more sub-paths together. A higher depth isolates
+	 * sub-paths but increases the number of independent circuits.
+	 *
+	 * @default 2
+	 * Set to `Infinity` to give every unique pathname its own circuit.
+	 */
+	groupingDepth?: number;
+	/**
+	 * Maximum number of endpoint keys tracked simultaneously.
+	 * When exceeded, the oldest (least-recently-created) entry is evicted.
+	 * @default 256
+	 */
+	maxEndpoints?: number;
 }
 
 /** Response cache configuration. */
 export interface NnnCacheConfig {
 	/** Default TTL in milliseconds. Default: 60000 (1 minute). */
 	defaultTtlMs?: number;
+	/** Maximum number of cached entries. Default: 256. Oldest entries are evicted when exceeded. */
+	maxEntries?: number;
 }
 
 export interface NnnConfig {
