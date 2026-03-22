@@ -6,7 +6,7 @@
  */
 
 // Client
-export { NnnClient, SDK_VERSION } from './client';
+export { NnnClient, SDK_VERSION } from './client.js';
 
 // Namespace classes
 export {
@@ -17,11 +17,11 @@ export {
 	WebhooksNamespace,
 	DevelopersNamespace,
 	BillingNamespace
-} from './namespaces';
+} from './namespaces/index.js';
 
 // Circuit Breaker (standalone utility)
-export { CircuitBreaker } from './circuit-breaker';
-export type { CircuitBreakerState } from './circuit-breaker';
+export { CircuitBreaker } from './circuit-breaker.js';
+export type { CircuitBreakerState } from './circuit-breaker.js';
 
 // Types
 export type {
@@ -111,16 +111,16 @@ export type {
 	BehaviorAnalyticsResponse,
 	VerifyNpPaymentRequest,
 	VerifyNpPaymentResponse
-} from './types';
+} from './types.js';
 
 // Errors
-export { NnnError, NnnErrorCode } from './errors';
-export type { NnnErrorContext } from './errors';
+export { NnnError, NnnErrorCode } from './errors.js';
+export type { NnnErrorContext } from './errors.js';
 
 // Logger
-export { createNnnLogger } from './logger';
-export type { NnnLogger } from './logger';
+export { createNnnLogger } from './logger.js';
+export type { NnnLogger } from './logger.js';
 
 // Retry (standalone utility)
-export { fetchWithRetry, normalizeBaseUrl, calculateBackoffDelay, isTransientError, DEFAULT_RETRY_CONFIG } from './retry';
+export { fetchWithRetry, normalizeBaseUrl, calculateBackoffDelay, isTransientError, DEFAULT_RETRY_CONFIG } from './retry.js';
 

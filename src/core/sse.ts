@@ -8,7 +8,7 @@
  * @module core/sse
  */
 
-import type { NnnLogger } from './logger';
+import type { NnnLogger } from './logger.js';
 
 /**
  * Parse an SSE stream into JSON objects.

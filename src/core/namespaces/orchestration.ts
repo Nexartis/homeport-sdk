@@ -7,7 +7,7 @@
  * @module core/namespaces/orchestration
  */
 
-import type { NnnClientInternals } from '../namespace-helpers';
+import type { NnnClientInternals } from '../namespace-helpers.js';
 import type {
 	CreateWorkflowRequest,
 	WorkflowRecord,
@@ -31,9 +31,9 @@ import type {
 	IndexChangeCallback,
 	IndexChangeEvent,
 	NnnStats
-} from '../types';
-import { NnnError, NnnErrorCode } from '../errors';
-import { parseSSEStream } from '../sse';
+} from '../types.js';
+import { NnnError, NnnErrorCode } from '../errors.js';
+import { parseSSEStream } from '../sse.js';
 
 export class OrchestrationNamespace {
 	/** @internal */

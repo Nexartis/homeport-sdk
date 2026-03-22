@@ -7,7 +7,7 @@
  * @module core/namespaces/agents
  */
 
-import type { NnnClientInternals } from '../namespace-helpers';
+import type { NnnClientInternals } from '../namespace-helpers.js';
 import type {
 	NnnAgent,
 	RegisterAgentRequest,
@@ -24,7 +24,7 @@ import type {
 	TombstoneAgentResponse,
 	AgentVersion,
 	CreateAgentVersionRequest
-} from '../types';
+} from '../types.js';
 
 export class AgentsNamespace {
 	/** @internal */

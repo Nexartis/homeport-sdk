@@ -14,15 +14,15 @@ import type {
 	NnnConfig,
 	NnnHealthStatus,
 	NnnHooks
-} from './types';
+} from './types.js';
 
-import { fetchWithRetry } from './retry';
-import { createNnnLogger, type NnnLogger } from './logger';
-import { NnnError, NnnErrorCode } from './errors';
-import { SDK_VERSION } from './version';
-import { CircuitBreaker } from './circuit-breaker';
-import { generateRequestId } from './sse';
-import type { NnnClientInternals } from './namespace-helpers';
+import { fetchWithRetry } from './retry.js';
+import { createNnnLogger, type NnnLogger } from './logger.js';
+import { NnnError, NnnErrorCode } from './errors.js';
+import { SDK_VERSION } from './version.js';
+import { CircuitBreaker } from './circuit-breaker.js';
+import { generateRequestId } from './sse.js';
+import type { NnnClientInternals } from './namespace-helpers.js';
 import {
 	AgentsNamespace,
 	OrchestrationNamespace,
@@ -31,9 +31,9 @@ import {
 	WebhooksNamespace,
 	DevelopersNamespace,
 	BillingNamespace
-} from './namespaces';
+} from './namespaces/index.js';
 
-export { SDK_VERSION } from './version';
+export { SDK_VERSION } from './version.js';
 
 
 

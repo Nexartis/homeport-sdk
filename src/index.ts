@@ -3,5 +3,5 @@
  *
  * Root entry point — re-exports core for convenience.
  */
-export * from './core/index';
+export * from './core/index.js';
 

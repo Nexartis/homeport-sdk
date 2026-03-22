@@ -6,12 +6,12 @@
  * @module core/namespaces/webhooks
  */
 
-import type { NnnClientInternals } from '../namespace-helpers';
+import type { NnnClientInternals } from '../namespace-helpers.js';
 import type {
 	CreateWebhookRequest,
 	CreateWebhookResponse,
 	WebhookSubscription
-} from '../types';
+} from '../types.js';
 
 export class WebhooksNamespace {
 	/** @internal */

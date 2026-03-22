@@ -9,7 +9,7 @@
  * @module core/namespace-helpers
  */
 
-import type { NnnLogger } from './logger';
+import type { NnnLogger } from './logger.js';
 
 /**
  * Internal HTTP helpers exposed by NnnClient to namespace classes.

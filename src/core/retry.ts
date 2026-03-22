@@ -8,8 +8,8 @@
  * @module core/retry
  */
 
-import type { NnnRetryConfig } from './types';
-import { NnnError, NnnErrorCode } from './errors';
+import type { NnnRetryConfig } from './types.js';
+import { NnnError, NnnErrorCode } from './errors.js';
 
 /** Strip trailing slashes from an API base URL to prevent double-slash paths. */
 export function normalizeBaseUrl(url: string): string {
