@@ -8,10 +8,26 @@
 // Client
 export { NnnClient, SDK_VERSION } from './client';
 
+// Namespace classes
+export {
+	AgentsNamespace,
+	OrchestrationNamespace,
+	TrustNamespace,
+	FederationNamespace,
+	WebhooksNamespace,
+	DevelopersNamespace,
+	BillingNamespace
+} from './namespaces';
+
+// Circuit Breaker (standalone utility)
+export { CircuitBreaker } from './circuit-breaker';
+export type { CircuitBreakerState } from './circuit-breaker';
+
 // Types
 export type {
 	NnnConfig,
 	NnnRetryConfig,
+	NnnCacheConfig,
 	NnnHealthStatus,
 	NnnAgent,
 	RegisterAgentRequest,
@@ -37,6 +53,8 @@ export type {
 	UpdateAgentRequest,
 	AgentRefreshResult,
 	WorkflowRunStatus,
+	WorkflowRun,
+	StepRun,
 	IndexDiffResult,
 	IndexChangeCallback,
 	IndexChangeEvent,
@@ -74,7 +92,25 @@ export type {
 	CreateWebhookRequest,
 	WebhookSubscription,
 	CreateWebhookResponse,
-	EarningsActionRequest
+	EarningsActionRequest,
+	// Sprint C types
+	DeveloperApiKey,
+	CreateDeveloperKeyRequest,
+	CreateDeveloperKeyResponse,
+	RevokeDeveloperKeyResponse,
+	DeprecateAgentRequest,
+	DeprecateAgentResponse,
+	TombstoneAgentResponse,
+	CreateAgentVersionRequest,
+	AgentVersion,
+	ComplianceScanResult,
+	TrustEdge,
+	TrustGraphResponse,
+	TrustPathResponse,
+	BehaviorMetric,
+	BehaviorAnalyticsResponse,
+	VerifyNpPaymentRequest,
+	VerifyNpPaymentResponse
 } from './types';
 
 // Errors

@@ -36,6 +36,13 @@ export class NnnError extends Error {
 	/** Structured context for observability. */
 	context: NnnErrorContext;
 
+	/**
+	 * Clone of the last HTTP response that caused this error, if available.
+	 * Attached by fetchWithRetry on the final failed attempt so that hooks
+	 * (e.g. afterResponse) can still inspect headers/status.
+	 */
+	lastResponse?: Response;
+
 	constructor(
 		public code: NnnErrorCode,
 		message: string,
