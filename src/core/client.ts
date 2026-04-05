@@ -30,7 +30,9 @@ import {
 	FederationNamespace,
 	WebhooksNamespace,
 	DevelopersNamespace,
-	BillingNamespace
+	BillingNamespace,
+	SwitchboardNamespace,
+	PaymentsNamespace
 } from './namespaces/index.js';
 
 export { SDK_VERSION } from './version.js';
@@ -153,6 +155,8 @@ export class NnnClient {
 	private _webhooks: WebhooksNamespace | null = null;
 	private _developers: DevelopersNamespace | null = null;
 	private _billing: BillingNamespace | null = null;
+	private _switchboard: SwitchboardNamespace | null = null;
+	private _payments: PaymentsNamespace | null = null;
 
 	/** Internal bridge object shared with namespace classes. */
 	private _internals: NnnClientInternals | null = null;
@@ -237,6 +241,16 @@ export class NnnClient {
 	/** Subscriptions, invoices, checkout sessions, and NP payment verification. */
 	get billing(): BillingNamespace {
 		return (this._billing ??= new BillingNamespace(this.internals()));
+	}
+
+	/** Protocol switchboard: auto-discovery, adapters, resync, and export. */
+	get switchboard(): SwitchboardNamespace {
+		return (this._switchboard ??= new SwitchboardNamespace(this.internals()));
+	}
+
+	/** Multi-currency payments: currencies, exchange rates, conversion, and wallets. */
+	get payments(): PaymentsNamespace {
+		return (this._payments ??= new PaymentsNamespace(this.internals()));
 	}
 
 	// ── HTTP helpers ──────────────────────────────────────────────────

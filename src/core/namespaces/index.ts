@@ -10,4 +10,6 @@ export { FederationNamespace } from './federation.js';
 export { WebhooksNamespace } from './webhooks.js';
 export { DevelopersNamespace } from './developers.js';
 export { BillingNamespace } from './billing.js';
+export { SwitchboardNamespace } from './switchboard.js';
+export { PaymentsNamespace } from './payments.js';
 

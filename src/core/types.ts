@@ -98,7 +98,6 @@ export interface NnnHealthStatus {
 		db: 'ok' | 'error';
 		r2: 'ok' | 'error';
 		kv: 'ok' | 'error';
-		queues: 'ok' | 'error';
 	};
 }
 
@@ -106,9 +105,9 @@ export interface NnnHealthStatus {
 
 export interface NnnAgent {
 	agent_id: string;
-	agent_url: string;
+	agent_url: string | null;
 	api_url?: string;
-	facts_url?: string;
+	facts_url?: string | null;
 	capabilities?: string[];
 	tags?: string[];
 	source?: string;
@@ -118,12 +117,15 @@ export interface NnnAgent {
 }
 
 export interface RegisterAgentRequest {
-	agent_id: string;
+	agent_id?: string;
 	agent_url: string;
 	api_url?: string;
 	facts_url?: string;
 	capabilities?: string[];
 	tags?: string[];
+	trust_score?: number;
+	/** When true, auto-discover protocols at agent_url via the switchboard. */
+	auto_discover?: boolean;
 }
 
 export interface RegisterAgentResponse {
@@ -513,12 +515,19 @@ export interface ConflictOutcome {
 
 export interface AgentAddr {
 	agent_id: string;
-	agent_url: string;
-	api_url: string | null;
+	public_key_hex: string;
 	facts_url: string | null;
+	private_url?: string;
+	resolver_url?: string;
 	ttl_seconds: number;
-	signature: string;
-	signed_at: number;
+	signature_hex: string;
+	signer_id: string;
+	created_at: number;
+	updated_at: number;
+	expires_at?: number;
+	source: 'local' | string;
+	quilt_type: 'native' | 'gov' | 'enterprise' | 'web3';
+	content_id?: string;
 }
 
 export interface ResolutionContext {
@@ -824,4 +833,118 @@ export interface VerifyNpPaymentResponse {
 	verified: boolean;
 	settlement_id?: string;
 	recon?: unknown | null;
+}
+
+// ── Switchboard (Protocol Bridge) ──────────────────────────────────
+
+export type ProtocolType = 'a2a' | 'mcp' | 'nlweb' | 'nanda' | 'agntcy' | 'unknown';
+
+export interface DetectedProtocol {
+	protocol: ProtocolType;
+	url: string;
+	confidence: number;
+	metadata?: Record<string, unknown>;
+}
+
+export interface SwitchboardLookupResult {
+	agentId: string;
+	source: ProtocolType;
+	facts: Record<string, unknown>;
+	detectedProtocols: DetectedProtocol[];
+	lookupDurationMs: number;
+}
+
+export interface SwitchboardDiscoverRequest {
+	url: string;
+}
+
+export interface SwitchboardExportRequest {
+	agent_id: string;
+	target_protocol: 'a2a' | 'mcp' | 'nlweb';
+}
+
+export interface SwitchboardExportResponse {
+	agent_id: string;
+	target_protocol: string;
+	exported: unknown;
+}
+
+export interface SwitchboardResyncRequest {
+	agent_id: string;
+}
+
+export interface SwitchboardResyncResponse {
+	status: string;
+	agent_id: string;
+	adapters: ProtocolAdapterRecord[];
+}
+
+export interface ProtocolAdapterRecord {
+	id: string;
+	agentId: string;
+	protocol: string;
+	metadataJson: string | null;
+	detectedAt: number | null;
+	lastSyncedAt: number | null;
+}
+
+export interface AdapterInfo {
+	registryId: string;
+	adapterType: string;
+	status: 'active' | 'inactive' | 'error';
+	supportedProtocols?: ProtocolType[];
+}
+
+export interface SwitchboardAdaptersResponse {
+	agent_id: string;
+	adapters: ProtocolAdapterRecord[];
+	available_adapter_types: AdapterInfo[];
+}
+
+// ── Payments / Multi-Currency ──────────────────────────────────────
+
+export interface CurrencyDefinition {
+	symbol: string;
+	name: string;
+	decimals: number;
+	chain: string | null;
+	contractAddress: string | null;
+	active: boolean;
+	category: 'stablecoin' | 'internal';
+}
+
+export interface ExchangeRate {
+	from: string;
+	to: string;
+	rate: number;
+	timestamp: number;
+	source: 'config' | 'cache' | 'peg';
+}
+
+export interface ConvertCurrencyRequest {
+	from: string;
+	to: string;
+	amount: number;
+}
+
+export interface ConvertCurrencyResponse {
+	from: string;
+	to: string;
+	amount: number;
+	converted: number;
+	rate: number;
+}
+
+export interface WalletBalancesResponse {
+	agent_id: string;
+	balances: Record<string, number>;
+}
+
+export interface ExchangeRateMatrixResponse {
+	rates: Record<string, Record<string, number>>;
+	currencies: string[];
+}
+
+export interface CurrenciesResponse {
+	currencies: CurrencyDefinition[];
 }

@@ -40,7 +40,7 @@ describe('NnnClient', () => {
 
 	describe('health()', () => {
 		it('returns health status', async () => {
-			const healthData = { status: 'ok', timestamp: '2026-01-01', environment: 'test', agents: 5, checks: { db: 'ok', r2: 'ok', kv: 'ok', queues: 'ok' } };
+			const healthData = { status: 'ok', timestamp: '2026-01-01', environment: 'test', agents: 5, checks: { db: 'ok', r2: 'ok', kv: 'ok' } };
 			mockFetch({ status: 200, body: healthData });
 
 			const client = new NnnClient(BASE_CONFIG);
@@ -1251,7 +1251,7 @@ describe('NnnClient', () => {
 
 	describe('deepHealth()', () => {
 		it('returns healthy=true when all checks pass', async () => {
-			const healthData = { status: 'ok', timestamp: '2026-01-01', environment: 'test', agents: 5, checks: { db: 'ok', r2: 'ok', kv: 'ok', queues: 'ok' } };
+			const healthData = { status: 'ok', timestamp: '2026-01-01', environment: 'test', agents: 5, checks: { db: 'ok', r2: 'ok', kv: 'ok' } };
 			mockFetch({ status: 200, body: healthData });
 
 			const client = new NnnClient(BASE_CONFIG);
@@ -1261,13 +1261,13 @@ describe('NnnClient', () => {
 		});
 
 		it('returns degraded checks', async () => {
-			const healthData = { status: 'degraded', timestamp: '2026-01-01', environment: 'test', agents: 5, checks: { db: 'ok', r2: 'error', kv: 'ok', queues: 'error' } };
+			const healthData = { status: 'degraded', timestamp: '2026-01-01', environment: 'test', agents: 5, checks: { db: 'ok', r2: 'error', kv: 'ok' } };
 			mockFetch({ status: 200, body: healthData });
 
 			const client = new NnnClient(BASE_CONFIG);
 			const result = await client.deepHealth();
 			expect(result.healthy).toBe(false);
-			expect(result.degradedChecks).toEqual(['r2', 'queues']);
+			expect(result.degradedChecks).toEqual(['r2']);
 		});
 	});
 
