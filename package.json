@@ -49,5 +49,10 @@
     "@types/node": "^25.5.0",
     "typescript": "^5.9.3",
     "vitest": "^4.1.0"
-  }
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "packageManager": "pnpm@10.28.1"
 }
