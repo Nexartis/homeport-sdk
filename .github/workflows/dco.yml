@@ -5,8 +5,11 @@ on:
     types: [opened, synchronize, reopened]
 
 # Least-privilege default for GITHUB_TOKEN (CodeQL advisory).
+# pull-requests: read is required by tim-actions/get-pr-commits to
+# list the commits on the PR via the REST API.
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   dco-check:
@@ -17,7 +20,13 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Get PR commits
+        id: pr-commits
+        uses: tim-actions/get-pr-commits@v1.3.1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Check Signed-off-by on every PR commit
         uses: tim-actions/dco@v1.1.0
         with:
-          commits: ${{ github.event.pull_request.commits }}
+          commits: ${{ steps.pr-commits.outputs.commits }}
