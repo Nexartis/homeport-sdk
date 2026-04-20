@@ -1,21 +1,24 @@
 # ------------------------------------------------------------------------------
-# Publish to npmjs via Trusted Publishing (OIDC + provenance)
+# Publish to npmjs with provenance.
 #
-# Requires one-time npmjs Trusted Publisher config:
-#   repo        = Nexartis/nexartis-nanda-node-sdk
-#   workflow    = publish.yml
-#   environment = npm-publish
-# The environment below MUST match the Trusted Publisher config on npmjs.com;
-# when they diverge, npm returns a misleading `404 Not Found` on the publish
-# PUT (even though provenance signing succeeds). See the original failure at
-# https://github.com/Nexartis/nexartis-nanda-node-sdk/actions/runs/24647311587 .
-# See https://docs.npmjs.com/trusted-publishers .
+# Authentication: classic NPM automation token (`secrets.NPM_TOKEN`).
+# Provenance:    OIDC-signed SLSA provenance attestations are still produced
+#                via `--provenance` and `id-token: write`, and are published
+#                to the sigstore transparency log alongside the tarball.
 #
-# Also requires one manual bootstrap `npm publish` to claim the package name
-# on npmjs before the first CI publish can succeed.
+# Why a token instead of Trusted Publishing?
+# The initial OIDC trusted-publisher setup could not be made to match npm's
+# configured claims (repeated 404 on the publish PUT even after adding an
+# `environment`). We unblocked v1.2.0 via a scoped NPM_TOKEN to keep the
+# release pipeline moving; migration back to OIDC trusted publishing is
+# tracked as a follow-up (see run 24647530233 for the final failed OIDC run).
 #
-# Identity is derived from GitHub OIDC — no NPM_TOKEN / NODE_AUTH_TOKEN secret
-# is used or required.
+# Required repository secret (Settings -> Secrets and variables -> Actions):
+#   NPM_TOKEN — an npm *Automation* token scoped to the @nexartis org with
+#               publish rights on @nexartis/nexartis-nanda-node-sdk.
+#
+# Requires one manual bootstrap `npm publish` to claim the package name on
+# npmjs before the first CI publish can succeed (already done for 1.1.0).
 # ------------------------------------------------------------------------------
 name: Publish to npmjs
 
@@ -30,10 +33,10 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    # Must match the `environment` configured on the npmjs Trusted Publisher
-    # for this package. Without this, OIDC token validation returns a 404.
-    environment: npm-publish
     permissions:
+      # `id-token: write` still required so `--provenance` can fetch an OIDC
+      # token from GitHub and hand it to sigstore for SLSA provenance signing.
+      # Auth to the npm registry itself is via NPM_TOKEN, not OIDC.
       id-token: write
       contents: write
     steps:
@@ -76,8 +79,21 @@ jobs:
             echo "already_published=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish to npmjs (OIDC trusted publishing with provenance)
+      # Write an explicit .npmrc so pnpm sees the token immediately (setup-node
+      # already writes one, but tying it to NPM_TOKEN here removes any ambiguity).
+      - name: Configure npmjs authentication
         if: steps.check.outputs.already_published == 'false'
+        run: |
+          echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> "$HOME/.npmrc"
+          echo "always-auth=true" >> "$HOME/.npmrc"
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Publish to npmjs (NPM_TOKEN auth + OIDC provenance)
+        if: steps.check.outputs.already_published == 'false'
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm publish --provenance --access public --no-git-checks
 
       - name: Create git tag
