@@ -4,49 +4,173 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Nexartis NANDA Node SDK · Documentation</title>
-<meta name="description" content="TypeScript SDK for Nexartis NANDA Node — agent discovery, registry, orchestration, and A2A routing." />
-<meta http-equiv="refresh" content="3; url=/api/" />
+<meta name="description" content="Official TypeScript SDK for the Nexartis NANDA Node — agent registration, A2A discovery, trust scoring, and DAG workflow orchestration on the open agentic web." />
+<meta name="theme-color" content="#0a0a0f" />
+<meta property="og:title" content="Nexartis NANDA Node SDK · Documentation" />
+<meta property="og:description" content="TypeScript client for the Nexartis NANDA Node — agent registration, A2A discovery, trust scoring, DAG orchestration, and NANDA Index resolution." />
+<meta property="og:type" content="website" />
+<meta property="og:url" content="https://sdk.nandanetwork.link/" />
+<meta name="twitter:card" content="summary_large_image" />
 <link rel="canonical" href="https://sdk.nandanetwork.link/" />
+<link rel="preconnect" href="https://rsms.me/" />
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
 <style>
-	:root { color-scheme: light dark; --fg: #e7eaf0; --muted: #a8b0bd; --bg: #0b0d10; --card: #12151a; --accent: #8ab4ff; --border: #1f242c; }
-	@media (prefers-color-scheme: light) {
-		:root { --fg: #121418; --muted: #4a5160; --bg: #f6f7f9; --card: #ffffff; --accent: #1a5fff; --border: #e2e5ea; }
+	:root {
+		color-scheme: dark;
+		--bg: #0a0a0f;
+		--surface: #12121a;
+		--elevated: #1a1a24;
+		--border: rgba(37, 37, 48, 0.6);
+		--border-hover: rgba(105, 66, 230, 0.4);
+		--text: #fafafa;
+		--text-muted: #94a3b8;
+		--text-dim: #71717a;
+		--primary: #6942e6;
+		--primary-400: #7c5cff;
+		--accent: #0cd3da;
+		--accent-400: #28eef3;
+		--gradient: linear-gradient(135deg, #6942e6, #0cd3da);
+		--gradient-subtle: linear-gradient(135deg, rgba(105, 66, 230, 0.1), rgba(12, 211, 218, 0.1));
 	}
 	* { box-sizing: border-box; }
-	body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--fg); margin: 0; display: grid; place-items: center; min-height: 100vh; padding: 2rem; line-height: 1.6; }
-	main { max-width: 40rem; width: 100%; }
-	.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 2.25rem 2rem; }
-	h1 { font-size: 1.75rem; margin: 0 0 0.5rem; letter-spacing: -0.01em; }
-	.tagline { color: var(--muted); margin: 0 0 1.5rem; font-size: 0.95rem; }
-	.cta { display: inline-block; background: var(--accent); color: #fff; padding: 0.65rem 1.1rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.95rem; }
-	.cta:hover { filter: brightness(1.1); }
-	.meta { display: flex; flex-wrap: wrap; gap: 0.75rem 1.25rem; margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); font-size: 0.9rem; }
-	.meta a { color: var(--accent); text-decoration: none; }
-	.meta a:hover { text-decoration: underline; }
-	code { background: color-mix(in srgb, var(--fg) 10%, transparent); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; }
-	.fallback { color: var(--muted); font-size: 0.85rem; margin-top: 1rem; }
+	html, body { margin: 0; padding: 0; }
+	body {
+		font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+		background: var(--bg);
+		color: var(--text);
+		min-height: 100vh;
+		display: grid;
+		place-items: center;
+		padding: 2rem 1.25rem;
+		line-height: 1.6;
+		-webkit-font-smoothing: antialiased;
+		background-image:
+			radial-gradient(ellipse 80% 50% at 50% -20%, rgba(105, 66, 230, 0.15), transparent 60%),
+			radial-gradient(ellipse 60% 50% at 80% 110%, rgba(12, 211, 218, 0.1), transparent 60%);
+	}
+	main { max-width: 42rem; width: 100%; }
+	.card {
+		background: var(--surface);
+		border: 1px solid var(--border);
+		border-radius: 16px;
+		padding: 2.75rem 2.25rem;
+		box-shadow: 0 0 24px rgba(105, 66, 230, 0.08);
+	}
+	.badge {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.5rem;
+		background: var(--gradient-subtle);
+		border: 1px solid var(--border-hover);
+		color: var(--primary-400);
+		font-size: 0.75rem;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
+		padding: 0.35rem 0.75rem;
+		border-radius: 999px;
+		margin-bottom: 1.25rem;
+	}
+	.badge::before {
+		content: '';
+		width: 6px; height: 6px; border-radius: 999px;
+		background: var(--accent);
+		box-shadow: 0 0 10px var(--accent);
+	}
+	h1 {
+		font-size: 2rem;
+		font-weight: 700;
+		margin: 0 0 0.75rem;
+		letter-spacing: -0.02em;
+		background: var(--gradient);
+		-webkit-background-clip: text;
+		background-clip: text;
+		-webkit-text-fill-color: transparent;
+		display: inline-block;
+	}
+	.tagline { color: var(--text-muted); margin: 0 0 2rem; font-size: 1.05rem; max-width: 34rem; }
+	.cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+	.cta {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		background: var(--gradient);
+		color: #fff;
+		padding: 0.75rem 1.25rem;
+		border-radius: 10px;
+		text-decoration: none;
+		font-weight: 600;
+		font-size: 0.95rem;
+		transition: transform 0.15s ease, box-shadow 0.15s ease;
+	}
+	.cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(105, 66, 230, 0.35); }
+	.cta-ghost {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.4rem;
+		color: var(--text);
+		background: var(--elevated);
+		border: 1px solid var(--border);
+		padding: 0.75rem 1.1rem;
+		border-radius: 10px;
+		text-decoration: none;
+		font-weight: 500;
+		font-size: 0.95rem;
+	}
+	.cta-ghost:hover { border-color: var(--border-hover); color: var(--primary-400); }
+	.install {
+		margin: 1.75rem 0 0;
+		background: var(--bg);
+		border: 1px solid var(--border);
+		border-radius: 10px;
+		padding: 0.85rem 1rem;
+		font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+		font-size: 0.875rem;
+		color: var(--accent-400);
+		overflow-x: auto;
+	}
+	.install::before { content: '$ '; color: var(--text-dim); }
+	.meta {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1.5rem;
+		margin-top: 2rem;
+		padding-top: 1.5rem;
+		border-top: 1px solid var(--border);
+		font-size: 0.875rem;
+	}
+	.meta a { color: var(--text-muted); text-decoration: none; transition: color 0.15s ease; }
+	.meta a:hover { color: var(--accent-400); }
+	.meta .pkg { color: var(--text-dim); font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.8rem; }
+	.fallback { color: var(--text-dim); font-size: 0.8rem; margin: 1.25rem 0 0; }
 </style>
+<meta http-equiv="refresh" content="5; url=/api/" />
 </head>
 <body>
 <main>
 	<div class="card">
+		<span class="badge">Nexartis · NANDA Protocol</span>
 		<h1>Nexartis NANDA Node SDK</h1>
 		<p class="tagline">
-			TypeScript SDK for agent discovery, registry, orchestration, and
-			A2A routing on the NANDA Network.
+			The official TypeScript SDK for the Nexartis NANDA Node — agent
+			registration, A2A discovery, trust scoring, DAG workflow
+			orchestration, and NANDA Index resolution on the open agentic web.
 		</p>
 
-		<p><a class="cta" href="/api/">Open the API reference →</a></p>
+		<div class="cta-row">
+			<a class="cta" href="/api/">Open the API reference →</a>
+			<a class="cta-ghost" href="https://github.com/Nexartis/nexartis-nanda-node-sdk" rel="noopener">View on GitHub</a>
+		</div>
 
-		<p class="fallback">
-			You will be redirected automatically in a few seconds. If nothing
-			happens, follow the link above.
-		</p>
+		<div class="install">pnpm add @nexartis/nexartis-nanda-node-sdk</div>
+
+		<p class="fallback">Redirecting to the API reference in a few seconds…</p>
 
 		<div class="meta">
-			<span>📦 <code>@nexartis/nexartis-nanda-node-sdk</code></span>
+			<span class="pkg">@nexartis/nexartis-nanda-node-sdk</span>
 			<a href="https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk" rel="noopener">npm</a>
 			<a href="https://github.com/Nexartis/nexartis-nanda-node-sdk" rel="noopener">GitHub</a>
+			<a href="https://nanda.nexartis.com/docs/sdk" rel="noopener">Guide</a>
 			<a href="/api/">API reference</a>
 		</div>
 	</div>

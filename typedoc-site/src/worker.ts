@@ -56,17 +56,34 @@ function renderNotFound(env: Env): Response {
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>404 · Nexartis NANDA Node SDK docs</title>
+<meta name="theme-color" content="#0a0a0f" />
+<link rel="preconnect" href="https://rsms.me/" />
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
 <style>
-	:root { color-scheme: light dark; }
-	body { font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-		background: #0b0d10; color: #e7eaf0; margin: 0; display: grid;
-		place-items: center; min-height: 100vh; padding: 2rem; }
+	:root { color-scheme: dark; }
+	* { box-sizing: border-box; }
+	html, body { margin: 0; padding: 0; }
+	body {
+		font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+		background: #0a0a0f; color: #fafafa;
+		min-height: 100vh; display: grid; place-items: center;
+		padding: 2rem 1.25rem; line-height: 1.6;
+		-webkit-font-smoothing: antialiased;
+		background-image:
+			radial-gradient(ellipse 80% 50% at 50% -20%, rgba(105, 66, 230, 0.15), transparent 60%),
+			radial-gradient(ellipse 60% 50% at 80% 110%, rgba(12, 211, 218, 0.1), transparent 60%);
+	}
 	main { max-width: 34rem; text-align: center; }
-	h1 { font-size: 2.5rem; margin: 0 0 0.5rem; letter-spacing: -0.02em; }
-	p { line-height: 1.6; color: #a8b0bd; }
-	a { color: #8ab4ff; text-decoration: none; }
+	h1 {
+		font-size: 3rem; font-weight: 700; margin: 0 0 0.75rem;
+		letter-spacing: -0.02em;
+		background: linear-gradient(135deg, #6942e6, #0cd3da);
+		-webkit-background-clip: text; background-clip: text;
+		-webkit-text-fill-color: transparent;
+	}
+	p { color: #94a3b8; margin: 0.5rem 0; }
+	a { color: #28eef3; text-decoration: none; font-weight: 500; }
 	a:hover { text-decoration: underline; }
-	code { background: #1a1d22; padding: 0.15em 0.4em; border-radius: 4px; }
 </style>
 </head>
 <body>
