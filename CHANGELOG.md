@@ -5,6 +5,21 @@ All notable changes to the Nexartis NANDA Node SDK will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.0.0...v1.1.0) (2026-04-20)
+
+
+### Features
+
+* ABI SDK integration hardening ([d4a4b23](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/d4a4b23080c3b9334ede5fc4b16d2505c689140d))
+* ABI SDK integration hardening ([5bc3a41](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/5bc3a41e6707335a3235dd3ac0131bbbafbce3cc))
+* **docs-site:** add typedoc config and in-repo Cloudflare Worker for sdk.nandanetwork.link ([6871314](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/687131410fa7dc59fd5e493f1996645260320e90))
+* open-source prep — Apache-2.0, trusted-publish, TypeDoc site, workers example (v1.1.0) ([164803e](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/164803e0d476a19a03b7ffb6bee6b158542b8159))
+
+
+### Bug Fixes
+
+* **security:** resolve CodeQL ReDoS alerts and drop duplicate codeql workflow ([f2475b7](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/f2475b7b328d86ae6c7e07fa8add906505dfaa45))
+
 ## [1.1.0] - 2026-04-19
 
 ### Added
@@ -115,4 +130,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NnnError` constructor accepts optional `NnnErrorContext` parameter.
 - `NnnError.fromStatus()` and `NnnError.fromNetworkError()` accept optional context.
 - `SearchAgentsParams` now includes `limit` and `cursor` for pagination.
-
