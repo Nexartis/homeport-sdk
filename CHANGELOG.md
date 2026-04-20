@@ -14,9 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `SECURITY.md`, `GOVERNANCE.md`, and GitHub issue + pull-request templates.
 - **Developer Certificate of Origin** — enforced via a `dco.yml` GitHub Actions
   workflow; all commits require a `Signed-off-by:` trailer.
-- **CI, CodeQL, and release-please workflows** — `ci.yml` (lint + typecheck +
-  test matrix), `codeql.yml` (JavaScript/TypeScript security scanning),
-  `release-please.yml` (automated conventional-commit release PRs).
+- **CI and release-please workflows** — `ci.yml` (typecheck + test matrix on
+  Node 20 + 22, optional `size-limit` gate) and `release-please.yml`
+  (automated conventional-commit release PRs). CodeQL runs via the
+  org-level default setup and surfaces alerts on every PR.
 - **TypeDoc documentation site** — root `typedoc.json` generates the API
   reference; an in-repo Cloudflare Worker (`typedoc-site/`) serves it at
   `sdk.nandanetwork.link` (prod) and `sdk-dev.nandanetwork.link` (dev).

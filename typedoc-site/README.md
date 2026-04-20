@@ -28,8 +28,8 @@ cp typedoc-site/public/index.html typedoc-site/dist/index.html
 pnpm --filter @nexartis/nexartis-nanda-node-sdk-docs-site run dev
 ```
 
-> The `docs` script is owned by the root `package.json` (added by SDK Agent D).
-> See the PR description for the exact additions it needs.
+> The `docs` script is defined in the root `package.json` and runs TypeDoc
+> against `src/index.ts` using settings from `typedoc.json` at the repo root.
 
 ## Deploying
 
