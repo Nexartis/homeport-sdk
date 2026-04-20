@@ -7,19 +7,26 @@
 [![Bundle size](https://img.shields.io/bundlephobia/minzip/%40nexartis%2Fnexartis-nanda-node-sdk?label=min%2Bgzip)](https://bundlephobia.com/package/@nexartis/nexartis-nanda-node-sdk)
 [![Provenance](https://img.shields.io/badge/provenance-npmjs-success?logo=npm)](https://docs.npmjs.com/generating-provenance-statements)
 
-> Typed TypeScript SDK for the **Nexartis NANDA Node** — agent registry,
-> discovery, DAG orchestration, trust, and A2A interoperability.
+> The official TypeScript SDK for the **Nexartis NANDA Node** — agent
+> registration, A2A discovery, trust scoring, DAG workflow orchestration,
+> and NANDA Index resolution.
 
 ---
 
 ## What is NANDA Node?
 
-The **Nexartis NANDA Node (NNN)** is the runtime infrastructure for the
-[NANDA](https://nanda.media.mit.edu/) (Nexartis Agent & Network Discovery
-Architecture) protocol — a decentralised registry and discovery layer for
-autonomous AI agents. An NNN instance provides an agent registry, a NANDA
-Index, `.well-known/agent-card.json` A2A discovery endpoints, trust scoring,
-webhook delivery, and a DAG orchestration engine for multi-agent workflows.
+[**Project NANDA**](https://projectnanda.org) — *Networked AI Agents in
+Decentralized Architecture* — is an open agent discovery protocol that
+originated at **MIT Media Lab**. Think of it as *DNS for AI agents*:
+a decentralized layer for naming, trust, discovery, and orchestration on the
+agentic web.
+
+The **Nexartis NANDA Node (NNN)** is Nexartis' open-source implementation of
+the NANDA protocol, running on Cloudflare Workers. A single NNN instance
+provides the NANDA Index, `.well-known/agent-card.json` A2A discovery
+endpoints, agent certification and reputation scoring, compliance auditing,
+webhook delivery, federation (CRDT gossip) with peer nodes, and a DAG
+orchestration engine for multi-agent workflows.
 
 This SDK is the official TypeScript client for that API. It is published
 under **Apache-2.0**, has **zero runtime dependencies** (uses the platform
