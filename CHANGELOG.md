@@ -5,6 +5,57 @@ All notable changes to the Nexartis NANDA Node SDK will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-04-19
+
+### Added
+- **Apache-2.0 licensing** — `LICENSE` (Apache 2.0 full text) and `NOTICE` at the
+  repo root; `SPDX-License-Identifier: Apache-2.0` headers on every `src/**/*.ts`.
+- **Community health files** — `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
+  `SECURITY.md`, `GOVERNANCE.md`, and GitHub issue + pull-request templates.
+- **Developer Certificate of Origin** — enforced via a `dco.yml` GitHub Actions
+  workflow; all commits require a `Signed-off-by:` trailer.
+- **CI, CodeQL, and release-please workflows** — `ci.yml` (lint + typecheck +
+  test matrix), `codeql.yml` (JavaScript/TypeScript security scanning),
+  `release-please.yml` (automated conventional-commit release PRs).
+- **TypeDoc documentation site** — root `typedoc.json` generates the API
+  reference; an in-repo Cloudflare Worker (`typedoc-site/`) serves it at
+  `sdk.nandanetwork.link` (prod) and `sdk-dev.nandanetwork.link` (dev).
+  `deploy-docs.yml` builds + deploys the site on push to `prod`.
+- **`size-limit` bundle-size budgets** — `/core` ≤ 50 KB and root ≤ 80 KB
+  (min+gzip), enforced via `pnpm run size` and run in CI.
+- **`workers-agent` example** — `examples/workers-agent/` minimal Cloudflare
+  Workers consumer demonstrating `NnnClient` on the edge.
+- **Public README** — badges, install instructions, features/API matrices,
+  compatibility matrix (Node 20+, Bun, Deno, Workers, browsers), contributing
+  and governance pointers.
+
+### Changed
+- **`publishConfig` → public npmjs with provenance** — switched from GitHub
+  Packages (`npm.pkg.github.com`) to `registry.npmjs.org` with
+  `"access": "public"` and `"provenance": true`. CI publishes via OIDC trusted
+  publishing (no long-lived `NPM_TOKEN`).
+- **`license`** — `UNLICENSED` → `Apache-2.0`.
+- **`package.json` `files`** — now includes `LICENSE`, `NOTICE`, `README.md`,
+  and `CHANGELOG.md` so the published tarball carries the required legal
+  artifacts.
+- **`package.json` metadata** — polished public-facing `description`; added
+  `homepage` (`https://sdk.nandanetwork.link`), `bugs.url`, and `apache-2.0`,
+  `oss`, `cloudflare-workers` keywords.
+- **`package.json` scripts** — added `docs`, `docs:serve`, `size`, `size:why`,
+  and `prepack` (`clean && build`).
+- **Examples** — imports switched from `../src/core` to
+  `@nexartis/nexartis-nanda-node-sdk`; SPDX headers + extended JSDoc added.
+
+### Migration Notes
+- **Consumers of `@nexartis/nexartis-nanda-node-sdk` no longer need a
+  `.npmrc`** override for this package. If your `.npmrc` contained a line
+  like `@nexartis:registry=https://npm.pkg.github.com` solely for this SDK,
+  you can remove it — `pnpm add @nexartis/nexartis-nanda-node-sdk` now
+  resolves from the public npmjs registry with no auth. Keep the override
+  only if you still consume other `@nexartis/*` packages from GitHub Packages.
+- **No runtime API changes.** All namespaces, methods, types, and error codes
+  are source-compatible with `1.0.0`.
+
 ## [1.0.0] - 2026-03-21
 
 ### Added
