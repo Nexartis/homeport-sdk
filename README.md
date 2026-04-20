@@ -139,7 +139,7 @@ All methods live on namespaces under the client. The only direct methods on
 | `client.billing`       | Subscriptions, invoices, checkout sessions, NP-payment verification. |
 
 Full generated reference (every type, every method, every example) is hosted
-at **<https://sdk.nandanetwork.link>**.
+at **<https://nnn-sdk.nexartis.com>**.
 
 ## Examples
 

@@ -43,4 +43,4 @@ npx tsx examples/<example>.ts
 ## Full API reference
 
 Generated TypeDoc for every public export is hosted at
-<https://sdk.nandanetwork.link>.
+<https://nnn-sdk.nexartis.com>.
