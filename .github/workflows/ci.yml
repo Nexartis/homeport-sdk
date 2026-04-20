@@ -39,4 +39,4 @@ jobs:
 
       - name: Size limit (optional)
         if: hashFiles('.size-limit.json') != ''
-        run: pnpm dlx size-limit
+        run: pnpm run build && pnpm run size
