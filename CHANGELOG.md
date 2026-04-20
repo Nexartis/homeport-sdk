@@ -5,6 +5,14 @@ All notable changes to the Nexartis NANDA Node SDK will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.1.0...v1.2.0) (2026-04-20)
+
+
+### Features
+
+* **docs-site:** switch docs domain to nnn-sdk.nexartis.com ([1a076d1](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/1a076d10ac1cf0d75a828f32526b3ad948689799))
+* **docs-site:** switch docs domain to nnn-sdk.nexartis.com ([2cd78d9](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/2cd78d9092586bbf08236aba0271f08ab50ad290))
+
 ## [1.1.0] - 2026-04-19
 
 ### Added
@@ -115,4 +123,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NnnError` constructor accepts optional `NnnErrorContext` parameter.
 - `NnnError.fromStatus()` and `NnnError.fromNetworkError()` accept optional context.
 - `SearchAgentsParams` now includes `limit` and `cursor` for pagination.
-
