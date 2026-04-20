@@ -1,0 +1,12 @@
+[
+  {
+    "name": "/core",
+    "path": "dist/core/index.js",
+    "limit": "50 KB"
+  },
+  {
+    "name": "root",
+    "path": "dist/index.js",
+    "limit": "80 KB"
+  }
+]

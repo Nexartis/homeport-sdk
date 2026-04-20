@@ -1,0 +1,23 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	/*
+	 * Minimal Cloudflare Workers example consuming
+	 * @nexartis/nexartis-nanda-node-sdk from the edge.
+	 *
+	 * Run locally: pnpm run dev     (→ http://localhost:8787/health)
+	 * Deploy:      pnpm run deploy
+	 *
+	 * Configure secrets before deploying:
+	 *   wrangler secret put NNN_API_KEY
+	 */
+	"name": "example-workers-agent",
+	"main": "src/index.ts",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": ["nodejs_compat"],
+	"observability": {
+		"enabled": true
+	},
+	"vars": {
+		"NNN_BASE_URL": "https://nanda.nexartis.com"
+	}
+}

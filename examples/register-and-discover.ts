@@ -1,10 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
- * Example: Register an agent and discover others via the NANDA registry.
+ * Example — Register an agent and discover others via the NANDA registry.
  *
- * Usage: npx tsx examples/register-and-discover.ts
+ * Demonstrates:
+ *   1. `client.agents.register` — publish a new agent on the NANDA network.
+ *   2. `client.agents.search`   — single-page capability query.
+ *   3. `client.agents.searchAll`/`listAll` — auto-paginating async iterators.
+ *   4. `client.agents.lookup`   — fetch a single agent by id.
+ *
+ * Run:
+ *   NNN_API_KEY=... npx tsx examples/register-and-discover.ts
+ *
+ * Requires Node 20+, Bun, or Deno with `fetch`.
  */
 
-import { NnnClient } from '../src/core';
+import { NnnClient } from '@nexartis/nexartis-nanda-node-sdk';
 
 const client = new NnnClient({
 	baseUrl: 'https://nanda.nexartis.com',

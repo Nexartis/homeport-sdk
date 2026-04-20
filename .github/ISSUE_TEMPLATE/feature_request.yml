@@ -1,0 +1,65 @@
+name: Feature request
+description: Propose a new capability or API for the NANDA Node SDK
+title: "feat: <short description>"
+labels: ["enhancement", "needs-triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For **breaking changes** or substantial new APIs, please follow the
+        RFC process described in [GOVERNANCE.md](../../GOVERNANCE.md#rfc-process-for-breaking-changes)
+        rather than filing a standard feature request.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / use case
+      description: What are you trying to accomplish? What does the current SDK not let you do, or make harder than it should be?
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API
+      description: |
+        Sketch the API you have in mind. Method signatures, option shapes,
+        return types — whatever helps communicate the idea. This is a
+        proposal, not a contract; maintainers may iterate on it.
+      render: typescript
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What other approaches did you consider? Why did you rule them out? Workarounds you currently use are also useful here.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: willing-to-pr
+    attributes:
+      label: Are you willing to submit a pull request?
+      description: Maintainers can help guide the implementation either way; this just helps us plan.
+      options:
+        - "Yes, I can implement this"
+        - "Yes, with guidance"
+        - "No, I'm requesting this feature"
+    validations:
+      required: true
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional context
+      description: Links to prior discussions, related issues, downstream use cases, or anything else relevant.
+
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: Code of Conduct
+      options:
+        - label: I agree to follow this project's [Code of Conduct](../../CODE_OF_CONDUCT.md).
+          required: true

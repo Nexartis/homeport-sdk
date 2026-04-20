@@ -1,0 +1,16 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "typedoc-site/dist/api",
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "readme": "./README.md",
+  "name": "@nexartis/nexartis-nanda-node-sdk",
+  "plugin": ["typedoc-plugin-mdn-links"],
+  "navigation": {
+    "includeCategories": true
+  },
+  "includeVersion": true,
+  "hideGenerator": false,
+  "cleanOutputDir": true
+}
