@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { normalizeBaseUrl, calculateBackoffDelay, isTransientError, fetchWithRetry } from './retry';
 import { NnnError, NnnErrorCode } from './errors';
