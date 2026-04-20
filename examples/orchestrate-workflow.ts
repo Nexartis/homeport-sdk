@@ -1,10 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
- * Example: Create and run a DAG-based workflow.
+ * Example — Create and run a DAG-based multi-agent workflow.
  *
- * Usage: npx tsx examples/orchestrate-workflow.ts
+ * Demonstrates:
+ *   1. `client.orchestration.createWorkflow` — define a DAG of agent nodes + edges.
+ *   2. `client.orchestration.runWorkflow`    — execute the DAG with structured input.
+ *   3. `client.orchestration.getWorkflowStatus` — inspect run + step statuses.
+ *   4. `client.orchestration.listWorkflows`  — enumerate workflows.
+ *
+ * Run:
+ *   NNN_API_KEY=... npx tsx examples/orchestrate-workflow.ts
+ *
+ * Requires Node 20+, Bun, or Deno with `fetch`.
  */
 
-import { NnnClient } from '../src/core';
+import { NnnClient } from '@nexartis/nexartis-nanda-node-sdk';
 
 const client = new NnnClient({
 	baseUrl: 'https://nanda.nexartis.com',

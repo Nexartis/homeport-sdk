@@ -1,10 +1,20 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
- * Example: Health monitoring with hooks, circuit breaker, and deep health checks.
+ * Example — Health monitoring with lifecycle hooks, circuit breaker, and deep health.
  *
- * Usage: npx tsx examples/health-monitoring.ts
+ * Demonstrates:
+ *   1. `hooks.beforeRequest` / `afterResponse` / `onError` — per-call observability.
+ *   2. `circuitBreaker` config — auto-trip after N failures with cooldown.
+ *   3. `client.isHealthy` / `client.deepHealth` — liveness + per-subsystem checks.
+ *   4. `client.orchestration.diffIndex` / `subscribeToIndex` — index change feed.
+ *
+ * Run:
+ *   NNN_API_KEY=... npx tsx examples/health-monitoring.ts
+ *
+ * Requires Node 20+, Bun, or Deno with `fetch`.
  */
 
-import { NnnClient } from '../src/core';
+import { NnnClient } from '@nexartis/nexartis-nanda-node-sdk';
 
 const client = new NnnClient({
 	baseUrl: 'https://nanda.nexartis.com',

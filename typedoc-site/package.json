@@ -1,0 +1,15 @@
+{
+  "name": "@nexartis/nexartis-nanda-node-sdk-docs-site",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker that serves the TypeDoc-generated documentation for @nexartis/nexartis-nanda-node-sdk at sdk.nandanetwork.link.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:prod": "wrangler deploy --env prod"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}
