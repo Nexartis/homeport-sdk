@@ -7,6 +7,10 @@ on:
       - dev
       - prod
 
+# Least-privilege default for GITHUB_TOKEN (CodeQL advisory).
+permissions:
+  contents: read
+
 jobs:
   test:
     runs-on: ubuntu-latest

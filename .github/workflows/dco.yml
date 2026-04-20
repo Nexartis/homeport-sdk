@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
+# Least-privilege default for GITHUB_TOKEN (CodeQL advisory).
+permissions:
+  contents: read
+
 jobs:
   dco-check:
     name: DCO
