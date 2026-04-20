@@ -36,7 +36,24 @@ jobs:
           # was introduced (2026-04-20). Each entry is the full 40-char SHA.
           GRANDFATHERED=(
             "53271b31d4918f8b537fa6b332ad40060608711f"  # chore: remove husky/lint-staged (#9) — pre-DCO, Tony Rose
+            "164803e0d476a19a03b7ffb6bee6b158542b8159"  # Merge PR #11 into dev — GitHub-generated merge commit, has no sign-off slot
           )
+
+          # Merge commits created by GitHub's "Create a merge commit" button
+          # carry no sign-off slot. Exempt them automatically when they have
+          # two parents AND no Signed-off-by trailer is found. This mirrors
+          # common DCO-app behavior and keeps first-party commits strict.
+          is_github_merge_commit() {
+            local sha="$1"
+            local parents
+            parents=$(git rev-list --parents -n 1 "$sha" | wc -w | tr -d ' ')
+            [ "$parents" = "3" ] || return 1   # 1 self + 2 parents = 3 tokens
+            local author_email
+            author_email=$(git log -1 --format=%ae "$sha")
+            local subject
+            subject=$(git log -1 --format=%s "$sha")
+            [[ "$subject" =~ ^Merge\ pull\ request\ \#[0-9]+\ from\  ]]
+          }
 
           is_grandfathered() {
             local sha="$1"
@@ -57,6 +74,8 @@ jobs:
             fi
             if git log -1 --format=%B "$sha" | grep -qE '^Signed-off-by: .+ <.+@.+>'; then
               echo "  $sha  OK"
+            elif is_github_merge_commit "$sha"; then
+              echo "::notice::$sha — GitHub-generated PR merge commit (no sign-off slot)"
             else
               echo "::error::$sha is missing a Signed-off-by trailer"
               git log -1 --format="%h %an <%ae> :: %s" "$sha"
