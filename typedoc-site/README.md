@@ -13,6 +13,7 @@ everything from `./dist/`:
 ```
 dist/
   index.html      ← branded landing page (copied from public/index.html)
+  assets/         ← landing.css + landing.js (copied from public/assets/)
   api/            ← TypeDoc output (entry point: src/index.ts)
 ```
 
@@ -24,7 +25,7 @@ From the repository root:
 pnpm install
 pnpm run build                 # resolve .d.ts for TypeDoc
 pnpm run docs                  # generate dist/api via typedoc.json
-cp typedoc-site/public/index.html typedoc-site/dist/index.html
+cp -R typedoc-site/public/. typedoc-site/dist/
 pnpm --filter @nexartis/nexartis-nanda-node-sdk-docs-site run dev
 ```
 
