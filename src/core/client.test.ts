@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { NnnClient } from './client';
 import { NnnError, NnnErrorCode } from './errors';

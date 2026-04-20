@@ -1,18 +1,34 @@
-name: Publish to GitHub Packages
+# ------------------------------------------------------------------------------
+# Publish to npmjs via Trusted Publishing (OIDC + provenance)
+#
+# Requires one-time npmjs Trusted Publisher config:
+#   repo        = Nexartis/nexartis-nanda-node-sdk
+#   workflow    = publish.yml
+#   environment = (leave blank or 'npm-publish')
+# See https://docs.npmjs.com/trusted-publishers .
+#
+# Also requires one manual bootstrap `npm publish` to claim the package name
+# on npmjs before the first CI publish can succeed.
+#
+# Identity is derived from GitHub OIDC — no NPM_TOKEN / NODE_AUTH_TOKEN secret
+# is used or required.
+# ------------------------------------------------------------------------------
+name: Publish to npmjs
 
 on:
   push:
     branches:
       - prod
     tags:
-      - 'v*'
+      - 'v*.*.*'
+  workflow_dispatch:
 
 jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
+      id-token: write
       contents: write
-      packages: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,14 +36,13 @@ jobs:
 
       - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10
 
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'pnpm'
-          registry-url: 'https://npm.pkg.github.com'
-          scope: '@nexartis'
+          registry-url: 'https://registry.npmjs.org'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -38,6 +53,10 @@ jobs:
       - name: Run tests
         run: pnpm run test
 
+      - name: Size limit (optional)
+        if: hashFiles('.size-limit.json') != ''
+        run: pnpm dlx size-limit
+
       - name: Get package version
         id: version
         run: echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
@@ -45,19 +64,15 @@ jobs:
       - name: Check if version already published
         id: check
         run: |
-          if pnpm view @nexartis/nexartis-nanda-node-sdk@${{ steps.version.outputs.version }} version 2>/dev/null; then
+          if npm view @nexartis/nexartis-nanda-node-sdk@${{ steps.version.outputs.version }} version 2>/dev/null; then
             echo "already_published=true" >> $GITHUB_OUTPUT
           else
             echo "already_published=false" >> $GITHUB_OUTPUT
           fi
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Publish
+      - name: Publish to npmjs (OIDC trusted publishing with provenance)
         if: steps.check.outputs.already_published == 'false'
-        run: pnpm publish --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: pnpm publish --provenance --access public --no-git-checks
 
       - name: Create git tag
         if: github.ref == 'refs/heads/prod'
@@ -85,4 +100,3 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-

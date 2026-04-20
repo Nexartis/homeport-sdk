@@ -1,10 +1,19 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
- * Example: Agent-to-Agent (A2A) communication and routing.
+ * Example — Agent-to-Agent (A2A) JSON-RPC routing with trace propagation.
  *
- * Usage: npx tsx examples/a2a-routing.ts
+ * Demonstrates:
+ *   1. `client.orchestration.routeRequest` — best-match agent resolution by skill + trust.
+ *   2. `client.federation.sendA2ARequest`  — JSON-RPC over A2A with auto-discovery.
+ *   3. `traceContext` constructor option   — W3C traceparent propagation on every call.
+ *
+ * Run:
+ *   NNN_API_KEY=... npx tsx examples/a2a-routing.ts
+ *
+ * Requires Node 20+, Bun, or Deno with `fetch`.
  */
 
-import { NnnClient } from '../src/core';
+import { NnnClient } from '@nexartis/nexartis-nanda-node-sdk';
 
 const client = new NnnClient({
 	baseUrl: 'https://nanda.nexartis.com',

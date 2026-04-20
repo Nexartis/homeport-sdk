@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 /**
  * NNN SDK — Retry with Exponential Backoff
  *
@@ -11,9 +12,20 @@
 import type { NnnRetryConfig } from './types.js';
 import { NnnError, NnnErrorCode } from './errors.js';
 
-/** Strip trailing slashes from an API base URL to prevent double-slash paths. */
+/**
+ * Strip trailing slashes from an API base URL to prevent double-slash paths.
+ *
+ * Implemented as a bounded loop rather than a regex replace to avoid the
+ * polynomial-time ReDoS class (CodeQL js/polynomial-redos) that applies to
+ * ambiguous end-anchored quantifiers like `/\/+$/` on attacker-controlled
+ * input.
+ */
 export function normalizeBaseUrl(url: string): string {
-	return url.replace(/\/+$/, '');
+	let end = url.length;
+	while (end > 0 && url.charCodeAt(end - 1) === 0x2f /* '/' */) {
+		end--;
+	}
+	return end === url.length ? url : url.slice(0, end);
 }
 
 const DEFAULT_RETRY_CONFIG: Required<NnnRetryConfig> = {
