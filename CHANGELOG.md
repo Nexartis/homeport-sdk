@@ -5,6 +5,25 @@ All notable changes to the Nexartis NANDA Node SDK will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.1](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.2.0...v1.2.1) (2026-04-20)
+
+
+### Bug Fixes
+
+* **ci:** add npm-publish environment to publish job for OIDC trusted publishing ([817575a](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/817575a32ce36831c722029f21a4e04a2807d2da))
+* **ci:** add npm-publish environment to publish job for OIDC trusted publishing ([f541c26](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/f541c2643dfa9509cb8215b7e5a26d123567d2ea))
+* **ci:** publish via NPM_TOKEN to unblock v1.2.0 release ([ea8ec21](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/ea8ec21837a1b034256b645ac55a15201b4b8e30))
+* **ci:** switch publish to 'npm publish' (not 'pnpm publish') for OIDC ([f162e4e](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/f162e4edc8aab7cb60be2daa7b408fc533b15952))
+* **ci:** switch to 'npm publish' for OIDC Trusted Publishing (with NPM_TOKEN fallback) ([08fdc4a](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/08fdc4a37b34c6241aa2ab8b2b1b5b937cabee0e))
+
+## [1.2.0](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.1.0...v1.2.0) (2026-04-20)
+
+
+### Features
+
+* **docs-site:** switch docs domain to nnn-sdk.nexartis.com ([1a076d1](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/1a076d10ac1cf0d75a828f32526b3ad948689799))
+* **docs-site:** switch docs domain to nnn-sdk.nexartis.com ([2cd78d9](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/2cd78d9092586bbf08236aba0271f08ab50ad290))
+
 ## [1.1.0] - 2026-04-19
 
 ### Added
@@ -115,4 +134,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `NnnError` constructor accepts optional `NnnErrorContext` parameter.
 - `NnnError.fromStatus()` and `NnnError.fromNetworkError()` accept optional context.
 - `SearchAgentsParams` now includes `limit` and `cursor` for pagination.
-
