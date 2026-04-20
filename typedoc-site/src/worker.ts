@@ -49,7 +49,7 @@ function withSecurityHeaders(response: Response): Response {
 }
 
 function renderNotFound(env: Env): Response {
-	const canonical = env.DOCS_CANONICAL_URL ?? "https://sdk.nandanetwork.link";
+	const canonical = env.DOCS_CANONICAL_URL ?? "https://nnn-sdk.nexartis.com";
 	const body = `<!doctype html>
 <html lang="en">
 <head>

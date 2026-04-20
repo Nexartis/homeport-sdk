@@ -15,8 +15,8 @@
 	 *     api/            ← typedoc output (from root typedoc.json)
 	 *
 	 * Custom domains:
-	 *   env.dev  → sdk-dev.nandanetwork.link
-	 *   env.prod → sdk.nandanetwork.link
+	 *   env.dev  → nnn-sdk-dev.nexartis.com
+	 *   env.prod → nnn-sdk.nexartis.com
 	 *
 	 * Deploy conventions (see repo root rules): always invoke via
 	 *   pnpm run deploy:dev    or    pnpm run deploy:prod
@@ -52,36 +52,36 @@
 	// Each environment is explicit; no root-level routes/vars.
 	"env": {
 		// ===================================================================
-		// 🧪 DEVELOPMENT — sdk-dev.nandanetwork.link
+		// 🧪 DEVELOPMENT — nnn-sdk-dev.nexartis.com
 		// ===================================================================
 		"dev": {
 			"name": "nexartis-nanda-node-sdk-docs-dev",
 			"routes": [
 				{
-					"pattern": "sdk-dev.nandanetwork.link",
+					"pattern": "nnn-sdk-dev.nexartis.com",
 					"custom_domain": true
 				}
 			],
 			"vars": {
 				"ENVIRONMENT": "development",
-				"DOCS_CANONICAL_URL": "https://sdk-dev.nandanetwork.link"
+				"DOCS_CANONICAL_URL": "https://nnn-sdk-dev.nexartis.com"
 			}
 		},
 
 		// ===================================================================
-		// 🚀 PRODUCTION — sdk.nandanetwork.link
+		// 🚀 PRODUCTION — nnn-sdk.nexartis.com
 		// ===================================================================
 		"prod": {
 			"name": "nexartis-nanda-node-sdk-docs",
 			"routes": [
 				{
-					"pattern": "sdk.nandanetwork.link",
+					"pattern": "nnn-sdk.nexartis.com",
 					"custom_domain": true
 				}
 			],
 			"vars": {
 				"ENVIRONMENT": "production",
-				"DOCS_CANONICAL_URL": "https://sdk.nandanetwork.link"
+				"DOCS_CANONICAL_URL": "https://nnn-sdk.nexartis.com"
 			}
 		}
 	}

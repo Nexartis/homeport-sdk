@@ -36,6 +36,7 @@ jobs:
           # was introduced (2026-04-20). Each entry is the full 40-char SHA.
           GRANDFATHERED=(
             "53271b31d4918f8b537fa6b332ad40060608711f"  # chore: remove husky/lint-staged (#9) — pre-DCO, Tony Rose
+            "f328a562bd531a0b75b0e36f77b5b66bc80bb801"  # chore: remove husky/lint-staged (#9) (#10) — pre-DCO backport to prod, Tony Rose
             "164803e0d476a19a03b7ffb6bee6b158542b8159"  # Merge PR #11 into dev — GitHub-generated merge commit, has no sign-off slot
           )
 
