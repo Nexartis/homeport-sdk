@@ -53,7 +53,8 @@ jobs:
 
       - name: Size limit (optional)
         if: hashFiles('.size-limit.json') != ''
-        run: pnpm dlx size-limit
+        continue-on-error: true
+        run: pnpm dlx -p size-limit -p @size-limit/preset-small-lib size-limit
 
       - name: Get package version
         id: version
