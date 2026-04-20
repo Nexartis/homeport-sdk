@@ -17,7 +17,7 @@ import type {
 	NnnHooks
 } from './types.js';
 
-import { fetchWithRetry } from './retry.js';
+import { fetchWithRetry, normalizeBaseUrl } from './retry.js';
 import { createNnnLogger, type NnnLogger } from './logger.js';
 import { NnnError, NnnErrorCode } from './errors.js';
 import { SDK_VERSION } from './version.js';
@@ -162,7 +162,7 @@ export class NnnClient {
 		if (!config.baseUrl) {
 			throw new NnnError(NnnErrorCode.CONFIGURATION_ERROR, 'NnnClient requires config.baseUrl');
 		}
-		this.baseUrl = config.baseUrl.replace(/\/+$/, '');
+		this.baseUrl = normalizeBaseUrl(config.baseUrl);
 		this.apiKey = config.apiKey ?? null;
 		this.logger = createNnnLogger(config.verbose ?? false);
 		this.retryConfig = config.retryConfig;
