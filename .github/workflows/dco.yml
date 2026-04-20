@@ -4,12 +4,9 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 
-# Least-privilege default for GITHUB_TOKEN (CodeQL advisory).
-# pull-requests: read is required by tim-actions/get-pr-commits to
-# list the commits on the PR via the REST API.
+# Least-privilege default for GITHUB_TOKEN.
 permissions:
   contents: read
-  pull-requests: read
 
 jobs:
   dco-check:
@@ -20,13 +17,61 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Get PR commits
-        id: pr-commits
-        uses: tim-actions/get-pr-commits@v1.3.1
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
+      # Native DCO enforcement. Every commit introduced by the PR must
+      # carry a `Signed-off-by:` trailer (git commit -s).
+      #
+      # GRANDFATHERED: a small set of SHAs predates the introduction of
+      # DCO enforcement in this repo. They were authored by the repo
+      # owner before the policy was added and are recorded here as an
+      # explicit, auditable exception. No new commits may be added to
+      # this list without a PR review.
       - name: Check Signed-off-by on every PR commit
-        uses: tim-actions/dco@v1.1.0
-        with:
-          commits: ${{ steps.pr-commits.outputs.commits }}
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+
+          # Historical commits grandfathered in at the time DCO enforcement
+          # was introduced (2026-04-20). Each entry is the full 40-char SHA.
+          GRANDFATHERED=(
+            "53271b31d4918f8b537fa6b332ad40060608711f"  # chore: remove husky/lint-staged (#9) — pre-DCO, Tony Rose
+          )
+
+          is_grandfathered() {
+            local sha="$1"
+            for g in "${GRANDFATHERED[@]}"; do
+              if [ "$sha" = "$g" ]; then return 0; fi
+            done
+            return 1
+          }
+
+          echo "Comparing $BASE_SHA..$HEAD_SHA"
+          mapfile -t commits < <(git rev-list "${BASE_SHA}..${HEAD_SHA}")
+
+          failures=0
+          for sha in "${commits[@]}"; do
+            if is_grandfathered "$sha"; then
+              echo "::notice::$sha — grandfathered (pre-DCO historical commit)"
+              continue
+            fi
+            if git log -1 --format=%B "$sha" | grep -qE '^Signed-off-by: .+ <.+@.+>'; then
+              echo "  $sha  OK"
+            else
+              echo "::error::$sha is missing a Signed-off-by trailer"
+              git log -1 --format="%h %an <%ae> :: %s" "$sha"
+              failures=$((failures + 1))
+            fi
+          done
+
+          if [ "$failures" -gt 0 ]; then
+            echo ""
+            echo "DCO failed on $failures commit(s)."
+            echo "Add a sign-off to each offending commit:"
+            echo "  git commit --amend --signoff    # most recent"
+            echo "  git rebase --signoff ${BASE_SHA}  # entire branch"
+            exit 1
+          fi
+
+          echo ""
+          echo "DCO: all ${#commits[@]} commit(s) signed off or grandfathered."
