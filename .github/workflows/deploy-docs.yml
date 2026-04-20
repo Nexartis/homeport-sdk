@@ -66,11 +66,12 @@ jobs:
       - name: Generate TypeDoc site
         run: pnpm run docs
 
-      # Copy the branded landing page so the Worker's root "/" has content.
+      # Copy the branded landing page + its /assets/* (CSS/JS) so the Worker's
+      # root "/" has content and the install-command tabs / copy button work.
       - name: Stage landing page
         run: |
           mkdir -p typedoc-site/dist
-          cp typedoc-site/public/index.html typedoc-site/dist/index.html
+          cp -R typedoc-site/public/. typedoc-site/dist/
 
       - name: Install docs-site dependencies
         working-directory: typedoc-site

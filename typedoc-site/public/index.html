@@ -3,177 +3,166 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Nexartis NANDA Node SDK · Documentation</title>
-<meta name="description" content="Official TypeScript SDK for the Nexartis NANDA Node — agent registration, A2A discovery, trust scoring, and DAG workflow orchestration on the open agentic web." />
+<title>Nexartis NANDA Node SDK · TypeScript client for the open agentic web</title>
+<meta name="description" content="Official open-source TypeScript SDK for the Nexartis NANDA Node — agent registry, A2A discovery, trust scoring, DAG workflow orchestration, and NANDA Index resolution. Apache-2.0, zero runtime dependencies, edge-ready." />
 <meta name="theme-color" content="#0a0a0f" />
-<meta property="og:title" content="Nexartis NANDA Node SDK · Documentation" />
-<meta property="og:description" content="TypeScript client for the Nexartis NANDA Node — agent registration, A2A discovery, trust scoring, DAG orchestration, and NANDA Index resolution." />
+<meta property="og:title" content="Nexartis NANDA Node SDK · TypeScript client for the open agentic web" />
+<meta property="og:description" content="Typed TypeScript client for the Nexartis NANDA Node — agent registration, A2A discovery, trust scoring, DAG orchestration, and NANDA Index resolution." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://nnn-sdk.nexartis.com/" />
 <meta name="twitter:card" content="summary_large_image" />
 <link rel="canonical" href="https://nnn-sdk.nexartis.com/" />
 <link rel="preconnect" href="https://rsms.me/" />
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
-<style>
-	:root {
-		color-scheme: dark;
-		--bg: #0a0a0f;
-		--surface: #12121a;
-		--elevated: #1a1a24;
-		--border: rgba(37, 37, 48, 0.6);
-		--border-hover: rgba(105, 66, 230, 0.4);
-		--text: #fafafa;
-		--text-muted: #94a3b8;
-		--text-dim: #71717a;
-		--primary: #6942e6;
-		--primary-400: #7c5cff;
-		--accent: #0cd3da;
-		--accent-400: #28eef3;
-		--gradient: linear-gradient(135deg, #6942e6, #0cd3da);
-		--gradient-subtle: linear-gradient(135deg, rgba(105, 66, 230, 0.1), rgba(12, 211, 218, 0.1));
-	}
-	* { box-sizing: border-box; }
-	html, body { margin: 0; padding: 0; }
-	body {
-		font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-		background: var(--bg);
-		color: var(--text);
-		min-height: 100vh;
-		display: grid;
-		place-items: center;
-		padding: 2rem 1.25rem;
-		line-height: 1.6;
-		-webkit-font-smoothing: antialiased;
-		background-image:
-			radial-gradient(ellipse 80% 50% at 50% -20%, rgba(105, 66, 230, 0.15), transparent 60%),
-			radial-gradient(ellipse 60% 50% at 80% 110%, rgba(12, 211, 218, 0.1), transparent 60%);
-	}
-	main { max-width: 42rem; width: 100%; }
-	.card {
-		background: var(--surface);
-		border: 1px solid var(--border);
-		border-radius: 16px;
-		padding: 2.75rem 2.25rem;
-		box-shadow: 0 0 24px rgba(105, 66, 230, 0.08);
-	}
-	.badge {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.5rem;
-		background: var(--gradient-subtle);
-		border: 1px solid var(--border-hover);
-		color: var(--primary-400);
-		font-size: 0.75rem;
-		font-weight: 600;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		padding: 0.35rem 0.75rem;
-		border-radius: 999px;
-		margin-bottom: 1.25rem;
-	}
-	.badge::before {
-		content: '';
-		width: 6px; height: 6px; border-radius: 999px;
-		background: var(--accent);
-		box-shadow: 0 0 10px var(--accent);
-	}
-	h1 {
-		font-size: 2rem;
-		font-weight: 700;
-		margin: 0 0 0.75rem;
-		letter-spacing: -0.02em;
-		background: var(--gradient);
-		-webkit-background-clip: text;
-		background-clip: text;
-		-webkit-text-fill-color: transparent;
-		display: inline-block;
-	}
-	.tagline { color: var(--text-muted); margin: 0 0 2rem; font-size: 1.05rem; max-width: 34rem; }
-	.cta-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
-	.cta {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.4rem;
-		background: var(--gradient);
-		color: #fff;
-		padding: 0.75rem 1.25rem;
-		border-radius: 10px;
-		text-decoration: none;
-		font-weight: 600;
-		font-size: 0.95rem;
-		transition: transform 0.15s ease, box-shadow 0.15s ease;
-	}
-	.cta:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(105, 66, 230, 0.35); }
-	.cta-ghost {
-		display: inline-flex;
-		align-items: center;
-		gap: 0.4rem;
-		color: var(--text);
-		background: var(--elevated);
-		border: 1px solid var(--border);
-		padding: 0.75rem 1.1rem;
-		border-radius: 10px;
-		text-decoration: none;
-		font-weight: 500;
-		font-size: 0.95rem;
-	}
-	.cta-ghost:hover { border-color: var(--border-hover); color: var(--primary-400); }
-	.install {
-		margin: 1.75rem 0 0;
-		background: var(--bg);
-		border: 1px solid var(--border);
-		border-radius: 10px;
-		padding: 0.85rem 1rem;
-		font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
-		font-size: 0.875rem;
-		color: var(--accent-400);
-		overflow-x: auto;
-	}
-	.install::before { content: '$ '; color: var(--text-dim); }
-	.meta {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 0.5rem 1.5rem;
-		margin-top: 2rem;
-		padding-top: 1.5rem;
-		border-top: 1px solid var(--border);
-		font-size: 0.875rem;
-	}
-	.meta a { color: var(--text-muted); text-decoration: none; transition: color 0.15s ease; }
-	.meta a:hover { color: var(--accent-400); }
-	.meta .pkg { color: var(--text-dim); font-family: 'JetBrains Mono', ui-monospace, monospace; font-size: 0.8rem; }
-	.fallback { color: var(--text-dim); font-size: 0.8rem; margin: 1.25rem 0 0; }
-</style>
-<meta http-equiv="refresh" content="5; url=/api/" />
+<link rel="stylesheet" href="/assets/landing.css" />
 </head>
 <body>
+<header class="site-header">
+	<div class="wrap header-inner">
+		<a class="brand" href="/" aria-label="Nexartis NANDA Node SDK home">
+			<span class="brand-mark" aria-hidden="true"></span>
+			<span class="brand-name">Nexartis <span class="brand-dim">/</span> NNN SDK</span>
+		</a>
+		<nav class="site-nav">
+			<a href="#what">About</a>
+			<a href="#features">Features</a>
+			<a href="#quickstart">Quickstart</a>
+			<a href="#deploy">Deploy a Node</a>
+			<a href="/api/" class="nav-cta">API reference &rarr;</a>
+		</nav>
+	</div>
+</header>
+
 <main>
-	<div class="card">
-		<span class="badge">Nexartis · NANDA Protocol</span>
-		<h1>Nexartis NANDA Node SDK</h1>
-		<p class="tagline">
-			The official TypeScript SDK for the Nexartis NANDA Node — agent
-			registration, A2A discovery, trust scoring, DAG workflow
-			orchestration, and NANDA Index resolution on the open agentic web.
-		</p>
-
-		<div class="cta-row">
-			<a class="cta" href="/api/">Open the API reference →</a>
-			<a class="cta-ghost" href="https://github.com/Nexartis/nexartis-nanda-node-sdk" rel="noopener">View on GitHub</a>
+	<section class="hero">
+		<div class="wrap">
+			<span class="badge"><span class="badge-dot"></span>Apache-2.0 · Open Source · on npm</span>
+			<h1><span class="gradient-text">Nexartis NANDA Node SDK</span></h1>
+			<p class="tagline">
+				The official TypeScript client for the <strong>Nexartis NANDA Node</strong> &mdash; agent registration,
+				A2A discovery, trust scoring, DAG workflow orchestration, and NANDA Index resolution on the
+				open agentic web. Zero runtime dependencies. Edge-ready. Fully typed.
+			</p>
+			<div class="cta-row">
+				<a class="cta cta-primary" href="/api/">Open API reference</a>
+				<a class="cta cta-ghost" href="https://github.com/Nexartis/nexartis-nanda-node-sdk" target="_blank" rel="noopener noreferrer">View on GitHub &#x2197;</a>
+				<a class="cta cta-ghost" href="https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk" target="_blank" rel="noopener noreferrer">View on npm &#x2197;</a>
+			</div>
+			<div class="install-group" role="tablist" aria-label="Install command">
+				<button class="install-tab is-active" role="tab" aria-selected="true" data-pkg="pnpm">pnpm</button>
+				<button class="install-tab" role="tab" aria-selected="false" data-pkg="npm">npm</button>
+				<button class="install-tab" role="tab" aria-selected="false" data-pkg="yarn">yarn</button>
+				<button class="install-tab" role="tab" aria-selected="false" data-pkg="bun">bun</button>
+				<div class="install-cmd"><code id="install-cmd">pnpm add @nexartis/nexartis-nanda-node-sdk</code><button class="copy-btn" type="button" aria-label="Copy install command" data-target="install-cmd">Copy</button></div>
+			</div>
 		</div>
+	</section>
 
-		<div class="install">pnpm add @nexartis/nexartis-nanda-node-sdk</div>
+	<section id="what" class="section">
+		<div class="wrap two-col">
+			<div>
+				<h2 class="section-title">What is a NANDA Node?</h2>
+				<p><a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer"><strong>Project NANDA</strong> &#x2197;</a> &mdash; <em>Networked AI Agents in Decentralized Architecture</em> &mdash; is an open agent-discovery protocol that originated at <a href="https://nanda.media.mit.edu/" target="_blank" rel="noopener noreferrer">MIT Media Lab &#x2197;</a>. Think of it as <em>DNS for AI agents</em>: a decentralized layer for naming, trust, discovery, and orchestration on the agentic web.</p>
+				<p>The <strong>Nexartis NANDA Node (NNN)</strong> is Nexartis&rsquo; open-source implementation of the protocol, running on Cloudflare Workers. A single NNN instance provides the NANDA Index, <code>.well-known/agent-card.json</code> A2A endpoints, agent certification and reputation scoring, compliance auditing, webhook delivery, federation (CRDT gossip) with peer nodes, and a DAG orchestration engine for multi-agent workflows.</p>
+				<p>This SDK is the official TypeScript client for that API.</p>
+			</div>
+			<aside class="side-card">
+				<h3>Origin &amp; governance</h3>
+				<ul class="bullets">
+					<li><strong>Protocol:</strong> Project NANDA (MIT Media Lab)</li>
+					<li><strong>Implementation:</strong> Nexartis, LLC</li>
+					<li><strong>License:</strong> Apache-2.0</li>
+					<li><strong>Runtime:</strong> Node · Bun · Deno · Cloudflare Workers · Browser</li>
+					<li><strong>Dependencies:</strong> zero &mdash; platform <code>fetch</code></li>
+				</ul>
+			</aside>
+		</div>
+	</section>
 
-		<p class="fallback">Redirecting to the API reference in a few seconds…</p>
+	<section id="features" class="section section-alt">
+		<div class="wrap">
+			<h2 class="section-title centered">Built for production agent infrastructure</h2>
+			<div class="feature-grid">
+				<article class="feature"><h3>Zero runtime deps</h3><p>Uses the platform <code>fetch</code>. Nothing to bundle, nothing to audit. Ships as pure ESM + CJS.</p></article>
+				<article class="feature"><h3>Edge-native</h3><p>Runs on Cloudflare Workers, Node 20+, Bun, Deno, and modern browsers &mdash; no shims required.</p></article>
+				<article class="feature"><h3>Fully typed</h3><p>End-to-end TypeScript with discriminated-union errors and namespaced APIs per NNN capability.</p></article>
+				<article class="feature"><h3>Resilient by default</h3><p>Automatic retries with backoff, per-endpoint circuit breaker, request deduplication, response caching.</p></article>
+				<article class="feature"><h3>OpenTelemetry ready</h3><p>W3C Trace Context propagation out of the box. Drop it in a traced Worker and spans light up for free.</p></article>
+				<article class="feature"><h3>Transparent provenance</h3><p>Published via OIDC Trusted Publishing with SLSA provenance attestations. No long-lived npm tokens.</p></article>
+			</div>
+		</div>
+	</section>
 
-		<div class="meta">
-			<span class="pkg">@nexartis/nexartis-nanda-node-sdk</span>
-			<a href="https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk" rel="noopener">npm</a>
-			<a href="https://github.com/Nexartis/nexartis-nanda-node-sdk" rel="noopener">GitHub</a>
-			<a href="https://nanda.nexartis.com/docs/sdk" rel="noopener">Guide</a>
+	<section id="quickstart" class="section">
+		<div class="wrap">
+			<h2 class="section-title">Quickstart</h2>
+			<p class="section-sub">Register an agent and discover others on the network. Runnable examples live in the <a href="https://github.com/Nexartis/nexartis-nanda-node-sdk/tree/prod/examples" target="_blank" rel="noopener noreferrer"><code>examples/</code> directory &#x2197;</a>.</p>
+<pre class="code"><code><span class="tk-k">import</span> { <span class="tk-i">NnnClient</span> } <span class="tk-k">from</span> <span class="tk-s">'@nexartis/nexartis-nanda-node-sdk'</span>;
+
+<span class="tk-k">const</span> client <span class="tk-o">=</span> <span class="tk-k">new</span> <span class="tk-i">NnnClient</span>({
+  baseUrl: <span class="tk-s">'https://nanda.nexartis.com'</span>,
+  apiKey: process.env.<span class="tk-i">NNN_API_KEY</span>,
+});
+
+<span class="tk-c">// Register an agent on the NANDA network</span>
+<span class="tk-k">await</span> client.agents.register({
+  agent_id: <span class="tk-s">'my-code-review-agent'</span>,
+  agent_url: <span class="tk-s">'https://my-agent.example.com'</span>,
+  capabilities: [<span class="tk-s">'code-review'</span>, <span class="tk-s">'security-audit'</span>],
+  trust_score: <span class="tk-n">0.9</span>,
+});
+
+<span class="tk-c">// Discover peers by capability (auto-paginating)</span>
+<span class="tk-k">for</span> <span class="tk-k">await</span> (<span class="tk-k">const</span> agent <span class="tk-k">of</span> client.agents.searchAll({ capabilities: [<span class="tk-s">'code-review'</span>] })) {
+  console.log(agent.agent_id, agent.trust_score);
+}</code></pre>
+			<a class="cta cta-ghost" href="/api/">Explore every namespace in the API reference &rarr;</a>
+		</div>
+	</section>
+
+	<section id="deploy" class="section section-deploy">
+		<div class="wrap">
+			<div class="deploy-card">
+				<span class="deploy-badge">Deploy your own NANDA Node</span>
+				<h2>Stand up a production NANDA Node on <span class="gradient-text">Cubicube<sup>&reg;</sup></span></h2>
+				<p>Cubicube is the Nexartis platform for deploying full-stack edge applications. Register a custom <code>.link</code> domain, get automatic SSL via Cloudflare for SaaS, and spin up an isolated NANDA Node on Workers for Platforms &mdash; all from one console.</p>
+				<ul class="deploy-bullets">
+					<li><span class="deploy-ico">&#x1F310;</span> Custom <code>.link</code> domain via Name.com, auto-provisioned SSL</li>
+					<li><span class="deploy-ico">&#x26A1;</span> Isolated Worker per tenant on Cloudflare Workers for Platforms</li>
+					<li><span class="deploy-ico">&#x1F510;</span> Passwordless auth + role-based access control out of the box</li>
+					<li><span class="deploy-ico">&#x1F4E6;</span> NANDA Node runtime ready to connect to this SDK on day one</li>
+				</ul>
+				<div class="cta-row">
+					<a class="cta cta-primary" href="https://cubicube.com" target="_blank" rel="noopener noreferrer">Visit Cubicube.com &#x2197;</a>
+					<a class="cta cta-ghost" href="https://github.com/Nexartis/nexartis-nanda-node-sdk#readme" target="_blank" rel="noopener noreferrer">Connect the SDK &#x2197;</a>
+				</div>
+			</div>
+		</div>
+	</section>
+</main>
+
+<footer class="site-footer">
+	<div class="wrap footer-inner">
+		<div class="footer-col">
+			<div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Nexartis NNN SDK</span></div>
+			<p class="footer-note">Powered by <a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer">Project NANDA</a>. Maintained by <a href="https://nexartis.com" target="_blank" rel="noopener noreferrer">Nexartis, LLC</a>. Licensed under <a href="https://github.com/Nexartis/nexartis-nanda-node-sdk/blob/prod/LICENSE" target="_blank" rel="noopener noreferrer">Apache-2.0</a>.</p>
+		</div>
+		<div class="footer-col">
+			<h4>Package</h4>
+			<a href="https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk" target="_blank" rel="noopener noreferrer">npm &#x2197;</a>
+			<a href="https://github.com/Nexartis/nexartis-nanda-node-sdk" target="_blank" rel="noopener noreferrer">GitHub &#x2197;</a>
+			<a href="https://github.com/Nexartis/nexartis-nanda-node-sdk/issues" target="_blank" rel="noopener noreferrer">Issues &#x2197;</a>
 			<a href="/api/">API reference</a>
 		</div>
+		<div class="footer-col">
+			<h4>Ecosystem</h4>
+			<a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer">Project NANDA &#x2197;</a>
+			<a href="https://nanda.media.mit.edu/" target="_blank" rel="noopener noreferrer">MIT Media Lab &#x2197;</a>
+			<a href="https://cubicube.com" target="_blank" rel="noopener noreferrer">Cubicube &#x2197;</a>
+			<a href="https://nexartis.com" target="_blank" rel="noopener noreferrer">Nexartis &#x2197;</a>
+		</div>
 	</div>
-</main>
+</footer>
+<script src="/assets/landing.js" defer></script>
 </body>
 </html>
