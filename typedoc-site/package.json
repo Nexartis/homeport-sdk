@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Cloudflare Worker that serves the TypeDoc-generated documentation for @nexartis/nexartis-nanda-node-sdk at sdk.nandanetwork.link.",
+  "description": "Cloudflare Worker that serves the TypeDoc-generated documentation for @nexartis/nexartis-nanda-node-sdk at nnn-sdk.nexartis.com.",
   "scripts": {
     "dev": "wrangler dev",
     "deploy:dev": "wrangler deploy --env dev",

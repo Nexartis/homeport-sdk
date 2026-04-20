@@ -3,8 +3,8 @@
 This folder contains the Cloudflare Worker that serves the TypeDoc-generated
 API reference for `@nexartis/nexartis-nanda-node-sdk`.
 
-- **Production:** https://sdk.nandanetwork.link
-- **Development:** https://sdk-dev.nandanetwork.link
+- **Production:** https://nnn-sdk.nexartis.com
+- **Development:** https://nnn-sdk-dev.nexartis.com
 
 The Worker uses a [static-assets
 binding](https://developers.cloudflare.com/workers/static-assets/) to serve
@@ -48,13 +48,13 @@ CI deploys prod automatically on release; see
 
 Both custom hostnames are declared in `wrangler.jsonc` as Worker custom
 domains. Before the first deploy of each environment, make sure the zone
-`nandanetwork.link` exists in the same Cloudflare account and that the
+`nexartis.com` exists in the same Cloudflare account and that the
 following records are *not* already claimed by other Workers:
 
 | Environment | Hostname                     | Worker name                          |
 | ----------- | ---------------------------- | ------------------------------------ |
-| dev         | `sdk-dev.nandanetwork.link`  | `nexartis-nanda-node-sdk-docs-dev`   |
-| prod        | `sdk.nandanetwork.link`      | `nexartis-nanda-node-sdk-docs`       |
+| dev         | `nnn-sdk-dev.nexartis.com`   | `nexartis-nanda-node-sdk-docs-dev`   |
+| prod        | `nnn-sdk.nexartis.com`       | `nexartis-nanda-node-sdk-docs`       |
 
 Wrangler provisions the custom-hostname record on first successful deploy.
 
@@ -63,5 +63,5 @@ Wrangler provisions the custom-hostname record on first successful deploy.
 `.github/workflows/deploy-docs.yml` uses:
 
 - `CLOUDFLARE_API_TOKEN` — scoped to `Edit Workers` + `Workers Routes:Edit`
-  on the `nandanetwork.link` zone.
+  on the `nexartis.com` zone.
 - `CLOUDFLARE_ACCOUNT_ID` — the Nexartis Cloudflare account ID.

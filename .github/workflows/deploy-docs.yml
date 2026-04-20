@@ -1,6 +1,6 @@
 # Deploys the TypeDoc-generated API reference for
 # @nexartis/nexartis-nanda-node-sdk to the Cloudflare Worker at
-# sdk.nandanetwork.link.
+# nnn-sdk.nexartis.com.
 #
 # Triggers:
 #   - Pushes to the `prod` branch (runs after the release-please release PR
@@ -13,7 +13,7 @@
 #   - CLOUDFLARE_API_TOKEN  (scoped: Workers Scripts:Edit, Workers
 #                            Routes:Edit, Account Settings:Read, Workers
 #                            KV Storage:Edit if needed; zone-scoped to
-#                            nandanetwork.link is sufficient for custom
+#                            nexartis.com is sufficient for custom
 #                            domains)
 #   - CLOUDFLARE_ACCOUNT_ID (the Nexartis Cloudflare account ID)
 name: Deploy docs site
@@ -33,12 +33,12 @@ permissions:
 
 jobs:
   deploy:
-    name: Build and deploy to sdk.nandanetwork.link
+    name: Build and deploy to nnn-sdk.nexartis.com
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
       name: production
-      url: https://sdk.nandanetwork.link
+      url: https://nnn-sdk.nexartis.com
 
     steps:
       - name: Checkout
