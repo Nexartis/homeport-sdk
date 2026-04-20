@@ -1,0 +1,88 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	/*
+	 * ===================================================================
+	 * NEXARTIS NANDA NODE SDK — DOCS SITE WORKER
+	 * ===================================================================
+	 *
+	 * Serves the TypeDoc-generated API reference for
+	 * @nexartis/nexartis-nanda-node-sdk via a Cloudflare Worker with a
+	 * static assets binding.
+	 *
+	 * Layout of ./dist after `pnpm run docs` + landing-page copy:
+	 *   dist/
+	 *     index.html      ← branded landing page (from ./public/index.html)
+	 *     api/            ← typedoc output (from root typedoc.json)
+	 *
+	 * Custom domains:
+	 *   env.dev  → sdk-dev.nandanetwork.link
+	 *   env.prod → sdk.nandanetwork.link
+	 *
+	 * Deploy conventions (see repo root rules): always invoke via
+	 *   pnpm run deploy:dev    or    pnpm run deploy:prod
+	 * from inside typedoc-site/.
+	 * ===================================================================
+	 */
+	"name": "nexartis-nanda-node-sdk-docs",
+	"main": "src/worker.ts",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": ["nodejs_compat"],
+
+	// Static Assets binding — serves everything under ./dist to the Worker
+	// via the ASSETS binding. Requests fall through to the Worker's fetch()
+	// handler only when no matching asset exists (see src/worker.ts).
+	"assets": {
+		"directory": "./dist",
+		"binding": "ASSETS"
+	},
+
+	// Observability — logs only (no tracing needed for a docs-only worker).
+	"observability": {
+		"enabled": true,
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1.0
+		}
+	},
+
+	// ===================================================================
+	// DEPLOYMENT ENVIRONMENTS
+	// ===================================================================
+	// Organized by deployment pipeline order: Dev → Prod
+	// Each environment is explicit; no root-level routes/vars.
+	"env": {
+		// ===================================================================
+		// 🧪 DEVELOPMENT — sdk-dev.nandanetwork.link
+		// ===================================================================
+		"dev": {
+			"name": "nexartis-nanda-node-sdk-docs-dev",
+			"routes": [
+				{
+					"pattern": "sdk-dev.nandanetwork.link",
+					"custom_domain": true
+				}
+			],
+			"vars": {
+				"ENVIRONMENT": "development",
+				"DOCS_CANONICAL_URL": "https://sdk-dev.nandanetwork.link"
+			}
+		},
+
+		// ===================================================================
+		// 🚀 PRODUCTION — sdk.nandanetwork.link
+		// ===================================================================
+		"prod": {
+			"name": "nexartis-nanda-node-sdk-docs",
+			"routes": [
+				{
+					"pattern": "sdk.nandanetwork.link",
+					"custom_domain": true
+				}
+			],
+			"vars": {
+				"ENVIRONMENT": "production",
+				"DOCS_CANONICAL_URL": "https://sdk.nandanetwork.link"
+			}
+		}
+	}
+}
