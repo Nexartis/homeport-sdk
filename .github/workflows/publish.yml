@@ -4,7 +4,11 @@
 # Requires one-time npmjs Trusted Publisher config:
 #   repo        = Nexartis/nexartis-nanda-node-sdk
 #   workflow    = publish.yml
-#   environment = (leave blank or 'npm-publish')
+#   environment = npm-publish
+# The environment below MUST match the Trusted Publisher config on npmjs.com;
+# when they diverge, npm returns a misleading `404 Not Found` on the publish
+# PUT (even though provenance signing succeeds). See the original failure at
+# https://github.com/Nexartis/nexartis-nanda-node-sdk/actions/runs/24647311587 .
 # See https://docs.npmjs.com/trusted-publishers .
 #
 # Also requires one manual bootstrap `npm publish` to claim the package name
@@ -26,6 +30,9 @@ on:
 jobs:
   publish:
     runs-on: ubuntu-latest
+    # Must match the `environment` configured on the npmjs Trusted Publisher
+    # for this package. Without this, OIDC token validation returns a 404.
+    environment: npm-publish
     permissions:
       id-token: write
       contents: write
