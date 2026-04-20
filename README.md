@@ -198,7 +198,7 @@ Released under the **Apache License, Version 2.0**. See [LICENSE](./LICENSE)
 for the full text and [NOTICE](./NOTICE) for attribution requirements.
 
 ```
-Copyright (c) Nexartis LLC and contributors.
+Copyright (c) 2025-2026 Nexartis, LLC and contributors.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
