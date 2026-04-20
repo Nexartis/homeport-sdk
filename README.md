@@ -1,58 +1,64 @@
 # @nexartis/nexartis-nanda-node-sdk
 
-TypeScript SDK for the [Nexartis NANDA Node](https://nanda.nexartis.com) — agent registry, discovery, orchestration, and A2A interoperability. Zero dependencies beyond standard `fetch`.
+[![npm version](https://img.shields.io/npm/v/%40nexartis%2Fnexartis-nanda-node-sdk.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk)
+[![npm downloads](https://img.shields.io/npm/dm/%40nexartis%2Fnexartis-nanda-node-sdk.svg)](https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
+[![CI](https://github.com/Nexartis/nexartis-nanda-node-sdk/actions/workflows/ci.yml/badge.svg?branch=prod)](https://github.com/Nexartis/nexartis-nanda-node-sdk/actions/workflows/ci.yml)
+[![Bundle size](https://img.shields.io/bundlephobia/minzip/%40nexartis%2Fnexartis-nanda-node-sdk?label=min%2Bgzip)](https://bundlephobia.com/package/@nexartis/nexartis-nanda-node-sdk)
+[![Provenance](https://img.shields.io/badge/provenance-npmjs-success?logo=npm)](https://docs.npmjs.com/generating-provenance-statements)
+
+> Typed TypeScript SDK for the **Nexartis NANDA Node** — agent registry,
+> discovery, DAG orchestration, trust, and A2A interoperability.
+
+---
 
 ## What is NANDA Node?
 
-Nexartis NANDA Node (NNN) is the runtime infrastructure for the NANDA (Nexartis Agent & Network Discovery Architecture) protocol. It provides:
+The **Nexartis NANDA Node (NNN)** is the runtime infrastructure for the
+[NANDA](https://nanda.media.mit.edu/) (Nexartis Agent & Network Discovery
+Architecture) protocol — a decentralised registry and discovery layer for
+autonomous AI agents. An NNN instance provides an agent registry, a NANDA
+Index, `.well-known/agent-card.json` A2A discovery endpoints, trust scoring,
+webhook delivery, and a DAG orchestration engine for multi-agent workflows.
 
-- **Agent Registry** — register, lookup, search, and list AI agents across the network
-- **A2A Discovery** — `.well-known/agent-card.json` and NANDA Index for interoperability
-- **Agent Facts** — structured metadata (AgentFacts v1/v2) for trust and capability discovery
-- **DAG Orchestration** — create and manage multi-agent workflows with directed acyclic graphs
-- **Health & Stats** — subsystem health checks (DB, R2, KV, Queues) and registry statistics
+This SDK is the official TypeScript client for that API. It is published
+under **Apache-2.0**, has **zero runtime dependencies** (uses the platform
+`fetch`), runs on Node, Bun, Deno, Cloudflare Workers, and modern browsers,
+and exposes a namespaced, fully-typed surface with built-in retry, circuit
+breaking, response caching, request deduplication, OpenTelemetry trace
+propagation, and typed errors.
 
-This SDK wraps all NNN REST API endpoints with typed responses and retry logic.
-
-## Installation
-
-This package is published to GitHub Packages (private).
-
-### 1. Configure npm registry
-
-Create `.npmrc` in your project root:
-
-```
-@nexartis:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${NPM_TOKEN}
-```
-
-### 2. Install
+## Install
 
 ```bash
 pnpm add @nexartis/nexartis-nanda-node-sdk
 ```
 
-### Local Development
+<details><summary>npm / yarn / bun / deno</summary>
 
-For local development, link the SDK directly:
+```bash
+npm install @nexartis/nexartis-nanda-node-sdk
+yarn  add @nexartis/nexartis-nanda-node-sdk
+bun   add @nexartis/nexartis-nanda-node-sdk
 
-```json
-{
-  "dependencies": {
-    "@nexartis/nexartis-nanda-node-sdk": "link:../nexartis-nanda-node-sdk"
-  }
-}
+# Deno
+import { NnnClient } from 'npm:@nexartis/nexartis-nanda-node-sdk';
 ```
 
-## Quick Start
+</details>
+
+The package is a public, scoped, provenance-signed publish on
+[npmjs.com](https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk).
+**No `.npmrc` or auth token is required** to install it.
+
+## 30-second quickstart
 
 ```typescript
 import { NnnClient } from '@nexartis/nexartis-nanda-node-sdk';
 
 const nnn = new NnnClient({
   baseUrl: 'https://nanda.nexartis.com',
-  apiKey: 'your-api-key',
+  apiKey: process.env.NNN_API_KEY,
 });
 
 // Register an agent
@@ -69,262 +75,127 @@ const agents = await nnn.agents.search({
   min_trust: 0.8,
 });
 
-// Get NANDA index
-const index = await nnn.agents.getNandaIndex();
-
-// Create a DAG workflow
+// Create and run a DAG workflow
 await nnn.orchestration.createWorkflow({
   name: 'review-pipeline',
   owner_id: 'orchestrator-1',
   dag: {
     nodes: [
       { id: 'analyze', type: 'agent', data: { agent_id: 'analyzer' } },
-      { id: 'review', type: 'agent', data: { agent_id: 'reviewer' } },
+      { id: 'review',  type: 'agent', data: { agent_id: 'reviewer' } },
     ],
     edges: [{ source: 'analyze', target: 'review' }],
   },
 });
-
-// Run a workflow and get the result
 const result = await nnn.orchestration.runWorkflow('workflow-123', { prompt: 'Analyze this PR' });
 
-// Auto-paginate through all agents
+// Auto-paginate
 for await (const agent of nnn.agents.searchAll({ capabilities: ['code-review'] })) {
   console.log(agent.agent_id);
 }
 
-// Health check
-const healthy = await nnn.isHealthy(); // never throws
+// Health check (never throws)
+const healthy = await nnn.isHealthy();
 ```
 
-## Architecture
+## Features
 
-```
-@nexartis/nexartis-nanda-node-sdk
-└── src/core/
-    ├── client.ts              NnnClient — core infrastructure + namespace getters
-    ├── namespace-helpers.ts   NnnClientInternals + BaseNamespace
-    ├── namespaces/
-    │   ├── agents.ts          AgentsNamespace — registration, lifecycle, pagination
-    │   ├── orchestration.ts   OrchestrationNamespace — workflows, routing, conflicts
-    │   ├── trust.ts           TrustNamespace — resolution, scores, frameworks
-    │   ├── federation.ts      FederationNamespace — peers, gossip, A2A
-    │   ├── webhooks.ts        WebhooksNamespace — subscriptions, delivery
-    │   ├── developers.ts      DevelopersNamespace — keys, earnings
-    │   └── billing.ts         BillingNamespace — subscriptions, invoices, checkout
-    ├── errors.ts              NnnError + NnnErrorCode enum
-    ├── retry.ts               fetchWithRetry, exponential backoff + jitter
-    ├── logger.ts              Portable logger (no-op when disabled)
-    └── types.ts               All TypeScript interfaces
-```
+| Capability | Notes |
+|---|---|
+| **Zero runtime deps** | Uses platform `fetch`. No transitive bloat. |
+| **Namespaced API** | 7 logical groupings: `agents`, `orchestration`, `trust`, `federation`, `webhooks`, `developers`, `billing`. |
+| **Typed errors** | `NnnError` with `NnnErrorCode` enum — branch on codes, not status numbers. |
+| **Retry + backoff** | Exponential backoff with jitter, caller abort-signal forwarding. |
+| **Circuit breaker** | Per-endpoint path-grouped breaker; external A2A calls scoped separately. |
+| **Response cache** | Opt-in LRU cache for GETs with TTL + pattern invalidation. |
+| **Request dedup** | In-flight GET deduplication out of the box. |
+| **Idempotency** | `Idempotency-Key` header on every mutating request. |
+| **Lifecycle hooks** | `beforeRequest` / `afterResponse` / `onError` for metrics + logging. |
+| **OTel trace context** | `traceparent` + `tracestate` propagation via config or `setTraceContext()`. |
+| **Auto-pagination** | `searchAll()` / `listAll()` async generators with stale-cursor guards. |
+| **SSE streaming** | Server-Sent Events for workflow events + A2A streaming methods. |
+| **Provenance-signed** | npm provenance attestations built from a GitHub-hosted workflow. |
 
-## API Reference
+## API overview
 
-All methods are accessed through **namespaced accessors** on the client (e.g., `client.agents.register()`, `client.orchestration.runWorkflow()`). The only direct methods on `NnnClient` are `health()`, `isHealthy()`, and `deepHealth()`.
+All methods live on namespaces under the client. The only direct methods on
+`NnnClient` are `health()`, `isHealthy()`, and `deepHealth()`.
 
-### `client` (direct methods)
+| Namespace | Purpose |
+|---|---|
+| `client.agents`        | Register, update, delete, lookup, search, list, version, deprecate, tombstone. Includes `searchAll` / `listAll` async iterators. |
+| `client.orchestration` | Create / update / run / cancel DAG workflows; intelligent routing; pattern + delegation + conflict management; index diff + subscribe. |
+| `client.trust`         | Lean-Index resolution, trust scores, frameworks, behaviour analytics, compliance scans, trust-graph + path queries. |
+| `client.federation`    | Peer discovery, gossip status, federated agent listing, A2A JSON-RPC. |
+| `client.webhooks`      | CRUD for subscriptions (create returns a signing `secret`). |
+| `client.developers`    | API-key lifecycle + developer earnings. |
+| `client.billing`       | Subscriptions, invoices, checkout sessions, NP-payment verification. |
 
-| Method | Description |
-|--------|-------------|
-| `health()` | Full health status (DB, R2, KV, Queues) |
-| `isHealthy()` | Boolean convenience (never throws) |
-| `deepHealth()` | Extended health with degraded-check details |
+Full generated reference (every type, every method, every example) is hosted
+at **<https://sdk.nandanetwork.link>**.
 
-### `client.agents`
+## Examples
 
-| Method | Description |
-|--------|-------------|
-| `register(req)` | Register an agent on the NANDA network |
-| `lookup(agentId)` | Lookup a single agent by ID |
-| `search(params?)` | Search agents (single page) |
-| `getFacts(agentId)` | Get AgentFacts (v1/v2 metadata) |
-| `getNandaIndex()` | Get `.well-known/nanda-index` descriptor |
-| `update(agentId, updates)` | Update agent metadata |
-| `updateStatus(agentId, status, caps?)` | Update agent status & capabilities |
-| `delete(agentId)` | Remove an agent |
-| `refresh(agentId)` | Trigger a live-probe refresh |
-| `deprecate(agentId, opts)` | Mark an agent as deprecated |
-| `tombstone(agentId)` | Tombstone a deprecated agent |
-| `listVersions(agentId)` | List agent versions |
-| `createVersion(agentId, req)` | Create a new agent version |
-| `searchAll(params?)` | `AsyncGenerator` — yields every matching agent across all pages |
-| `listAll(params?)` | `AsyncGenerator` — yields every agent across all pages |
+Runnable examples live in the [`examples/`](./examples) directory:
 
-### `client.orchestration`
+- [`register-and-discover.ts`](./examples/register-and-discover.ts) — registry lifecycle + pagination.
+- [`orchestrate-workflow.ts`](./examples/orchestrate-workflow.ts) — DAG create + run + status.
+- [`a2a-routing.ts`](./examples/a2a-routing.ts) — A2A JSON-RPC with trace propagation.
+- [`health-monitoring.ts`](./examples/health-monitoring.ts) — hooks, circuit breaker, deep health.
+- [`workers-agent/`](./examples/workers-agent) — Cloudflare Workers consumer.
 
-| Method | Description |
-|--------|-------------|
-| `createWorkflow(req)` | Create a DAG workflow |
-| `listWorkflows(params?)` | List workflows by owner/status |
-| `getWorkflow(workflowId)` | Get workflow details + steps |
-| `updateWorkflow(workflowId, updates)` | Update a workflow |
-| `deleteWorkflow(workflowId)` | Delete a workflow |
-| `runWorkflow(workflowId, input?)` | Execute a workflow and return run result |
-| `listWorkflowRuns(workflowId)` | List runs for a workflow |
-| `getWorkflowStatus(runId)` | Get run status + step details |
-| `cancelWorkflowRun(runId)` | Cancel a running workflow |
-| `routeRequest(params)` | Intelligent agent routing |
-| `delegateTask(params)` | Delegate a sub-task to an agent |
-| `listDelegations(workflowId)` | List delegations for a workflow |
-| `listPatterns(options?)` | List orchestrator patterns |
-| `createPattern(params)` | Register a new pattern |
-| `listConflicts(params?)` | List orchestration conflicts |
-| `raiseConflict(params)` | Raise a conflict for resolution |
-| `diffIndex(since)` | Get added/updated/removed agents since a `Date` |
-| `subscribeToIndex(cb, intervalMs?)` | Long-poll watcher; returns `stop()` function |
+See the [examples README](./examples/README.md) for prerequisites and how to
+run each one.
 
-### `client.trust`
+## Compatibility
 
-| Method | Description |
-|--------|-------------|
-| `resolveAgent(agentId)` | Resolve an agent via Lean Index |
-| `adaptiveResolve(agentId, ctx?)` | Multi-strategy adaptive resolution |
-| `getReputation()` | Get agent reputation entries |
-| `getScores(options?)` | Query trust scores |
-| `getFrameworks(options?)` | Query trust frameworks |
-| `syncCrossRegistry(adminKey?)` | Trigger cross-registry trust sync |
-| `getGraph(options?)` | Query the trust graph |
-| `getPath(from, to)` | Get trust path between two agents |
-| `getBehaviorAnalytics(options?)` | Get behavior analytics data |
-| `scanCompliance(options?)` | Run a compliance scan |
+This SDK targets the platform `fetch` API and has no Node-only dependencies.
 
-### `client.federation`
+| Runtime | Supported | Notes |
+|---|---|---|
+| **Node.js 20+**         | ✅ | LTS. `fetch` is global as of Node 18 and stable in 20. |
+| **Bun**                 | ✅ | `fetch` + Web Streams built in. |
+| **Deno**                | ✅ | Install via `npm:@nexartis/nexartis-nanda-node-sdk`. |
+| **Cloudflare Workers**  | ✅ | See [`examples/workers-agent`](./examples/workers-agent). No `nodejs_compat` required for core calls. |
+| **Browsers with `fetch`** | ✅ | Any ES2022 target; CORS must be enabled on the NANDA Node. |
 
-| Method | Description |
-|--------|-------------|
-| `getPeers()` | List federation peers |
-| `getStatus()` | Get federation status |
-| `getAgents()` | List agents federated from peers |
-| `sendA2ARequest(params)` | Send a JSON-RPC A2A request to a remote agent |
+ES2022 module output, `"type": "module"`, ships `.d.ts` + sourcemaps.
 
-### `client.webhooks`
+## Contributing
 
-| Method | Description |
-|--------|-------------|
-| `list()` | List webhook subscriptions |
-| `create(params)` | Create a webhook (returns `secret`) |
-| `get(webhookId)` | Get a webhook subscription |
-| `update(webhookId, action)` | Pause or resume a webhook |
-| `delete(webhookId)` | Delete a webhook subscription |
+We welcome contributions from the community. Read
+[CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow, coding
+conventions, testing requirements, and review process.
 
-### `client.developers`
+All commits must be signed off under the
+[Developer Certificate of Origin](https://developercertificate.org/) — run
+`git commit -s` to add the required `Signed-off-by:` trailer. A DCO status
+check is enforced on every pull request.
 
-| Method | Description |
-|--------|-------------|
-| `listKeys()` | List developer API keys |
-| `createKey(params)` | Create a developer API key |
-| `revokeKey(keyId)` | Revoke a developer API key |
-| `getEarnings(developerId, view?)` | Get developer earnings |
-| `earningsAction(params)` | Perform an earnings action (withdraw, etc.) |
+Please also review our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
-### `client.billing`
+## Governance
 
-| Method | Description |
-|--------|-------------|
-| `getSubscription(keyId)` | Get subscription details |
-| `createSubscription(params)` | Create a subscription |
-| `listInvoices(keyId)` | List invoices for a key |
-| `createInvoice(params)` | Create an invoice |
-| `createCheckoutSession(params)` | Create a checkout session |
-| `getCheckoutSession(sessionId)` | Get checkout session details |
-| `submitCheckoutPayment(sessionId, payment)` | Submit payment for a checkout |
-| `cancelCheckoutSession(sessionId)` | Cancel a checkout session |
-| `verifyNpPayment(params)` | Verify an NP payment |
+Project direction, maintainer responsibilities, and the decision-making
+process are documented in [GOVERNANCE.md](./GOVERNANCE.md).
 
-### Standalone Functions
+## Security
 
-Retry utilities are available as standalone functions for consumers who need lower-level control:
-
-```typescript
-import { fetchWithRetry, normalizeBaseUrl, calculateBackoffDelay, isTransientError } from '@nexartis/nexartis-nanda-node-sdk';
-```
-
-### Error Handling
-
-All errors are typed `NnnError` with a `code` enum for programmatic handling:
-
-```typescript
-import { NnnError, NnnErrorCode } from '@nexartis/nexartis-nanda-node-sdk';
-
-try {
-  await nnn.agents.lookup('nonexistent');
-} catch (err) {
-  if (err instanceof NnnError) {
-    switch (err.code) {
-      case NnnErrorCode.NOT_FOUND:
-        // Handle 404
-        break;
-      case NnnErrorCode.RATE_LIMITED:
-        // Back off
-        break;
-      case NnnErrorCode.CONFIGURATION_ERROR:
-        // Invalid config
-        break;
-    }
-  }
-}
-```
-
-### Configuration
-
-All methods use exponential backoff with jitter by default. The client also supports lifecycle hooks, a built-in circuit breaker, and OpenTelemetry trace propagation:
-
-```typescript
-const nnn = new NnnClient({
-  baseUrl: 'https://nanda.nexartis.com',
-  apiKey: 'your-api-key',
-
-  // Retry tuning
-  retryConfig: {
-    maxRetries: 5,       // default: 3
-    baseDelayMs: 500,    // default: 1000
-    maxDelayMs: 15000,   // default: 10000
-    timeoutMs: 10000,    // default: 8000
-  },
-
-  // Lifecycle hooks
-  hooks: {
-    beforeRequest: (url, init) => { /* mutate headers, log, etc. */ },
-    afterResponse: (url, response, durationMs) => { /* metrics, logging */ },
-    onError: (url, error) => { /* alerting */ },
-  },
-
-  // Circuit breaker (pass `false` to disable)
-  circuitBreaker: {
-    failureThreshold: 5,   // consecutive failures to trip
-    cooldownMs: 30_000,    // ms before a probe request is allowed
-    groupingDepth: 2,      // URL path segments for per-endpoint grouping (default: 2)
-    maxEndpoints: 256,     // max tracked endpoint keys before eviction (default: 256)
-  },
-
-  // Response cache for GET requests
-  cache: {
-    defaultTtlMs: 60_000, // TTL per entry (default: 60 000)
-    maxEntries: 256,       // max cached entries with LRU eviction (default: 256)
-  },
-
-  // OpenTelemetry trace context propagation
-  traceContext: {
-    traceparent: '00-abc123-def456-01',
-    tracestate: 'vendor=value',
-  },
-});
-
-// Trace context can also be updated at runtime
-nnn.setTraceContext({ traceparent: '00-newTrace-newSpan-01' });
-```
-
-## Design Principles
-
-- **Zero dependencies** — only standard `fetch`
-- **No env reads** — all configuration via constructor injection
-- **Typed errors** — `NnnError` enum codes, never raw strings
-- **Retry resilience** — exponential backoff + jitter, caller abort signal forwarding
-- **Circuit breaker** — automatic failure isolation with half-open probing; external A2A calls are scoped separately to prevent third-party failures from tripping the registry breaker
-- **Namespaced API** — logical groupings (`agents`, `orchestration`, `trust`, `federation`, `webhooks`, `developers`, `billing`) for discoverability
-- **A2A compatible** — first-class support for Agent Card JSON, NANDA Index, and A2A JSON-RPC
-- **Auto-pagination** — `agents.searchAll()` and `agents.listAll()` async generators handle cursor pagination with stale-cursor guards
+To report a vulnerability, please follow the disclosure process in
+[SECURITY.md](./SECURITY.md). **Do not** file public GitHub issues for
+security reports.
 
 ## License
 
-Proprietary — Nexartis LLC. All rights reserved.
+Released under the **Apache License, Version 2.0**. See [LICENSE](./LICENSE)
+for the full text and [NOTICE](./NOTICE) for attribution requirements.
+
+```
+Copyright (c) Nexartis LLC and contributors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+```
