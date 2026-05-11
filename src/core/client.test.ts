@@ -1389,6 +1389,12 @@ describe('NnnClient', () => {
 			expect(client.billing).toBeDefined();
 			expect(client.billing).toBe(client.billing);
 		});
+
+			it('keeps switchboard and payments aliases compatible', () => {
+				const client = new NnnClient(BASE_CONFIG);
+				expect(client.switchboard).toBe(client.orchestration);
+				expect(client.payments).toBe(client.billing);
+			});
 	});
 });
 
