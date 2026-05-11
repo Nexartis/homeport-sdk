@@ -826,3 +826,117 @@ export interface VerifyNpPaymentResponse {
 	settlement_id?: string;
 	recon?: unknown | null;
 }
+
+// ── Compatibility Types: Switchboard / Payments ───────────────────────
+
+export type ProtocolType = 'a2a' | 'mcp' | 'https' | 'nlweb' | 'openapi' | 'grpc' | (string & {});
+
+export interface DetectedProtocol {
+	type: ProtocolType;
+	url?: string;
+	confidence?: number;
+	metadata?: Record<string, unknown>;
+}
+
+export interface SwitchboardLookupResult {
+	agent_id: string;
+	protocols: DetectedProtocol[];
+	endpoints?: ResolvedEndpoint[];
+	adapter?: string;
+	metadata?: Record<string, unknown>;
+}
+
+export interface SwitchboardDiscoverRequest {
+	agent_id?: string;
+	url?: string;
+	preferred_protocol?: ProtocolType;
+	metadata?: Record<string, unknown>;
+}
+
+export interface SwitchboardExportRequest {
+	format?: 'agent-card' | 'nanda-index' | 'oasf' | string;
+	agent_ids?: string[];
+	protocol?: ProtocolType;
+}
+
+export interface SwitchboardExportResponse {
+	format: string;
+	exported_at: string;
+	data: unknown;
+}
+
+export interface SwitchboardResyncRequest {
+	agent_id?: string;
+	force?: boolean;
+}
+
+export interface SwitchboardResyncResponse {
+	ok: boolean;
+	resynced: number;
+	errors?: Array<{ agent_id?: string; message: string }>;
+}
+
+export interface ProtocolAdapterRecord {
+	id: string;
+	protocol: ProtocolType;
+	name: string;
+	version?: string;
+	enabled?: boolean;
+	metadata?: Record<string, unknown>;
+}
+
+export interface AdapterInfo {
+	protocol: ProtocolType;
+	name: string;
+	version?: string;
+	capabilities?: string[];
+}
+
+export interface SwitchboardAdaptersResponse {
+	adapters: AdapterInfo[];
+}
+
+export interface CurrencyDefinition {
+	code: string;
+	name?: string;
+	symbol?: string;
+	decimals?: number;
+	network?: string;
+	metadata?: Record<string, unknown>;
+}
+
+export interface ExchangeRate {
+	from: string;
+	to: string;
+	rate: number;
+	asOf?: string;
+	source?: string;
+}
+
+export interface ConvertCurrencyRequest {
+	from: string;
+	to: string;
+	amount: number;
+}
+
+export interface ConvertCurrencyResponse extends ConvertCurrencyRequest {
+	rate: number;
+	convertedAmount: number;
+	asOf?: string;
+}
+
+export interface WalletBalancesResponse {
+	wallet?: string;
+	agent_id?: string;
+	balances: Array<{ currency: string; amount: number }> | Record<string, number>;
+}
+
+export interface ExchangeRateMatrixResponse {
+	base?: string;
+	rates: Record<string, number | Record<string, number>>;
+	asOf?: string;
+}
+
+export interface CurrenciesResponse {
+	currencies: CurrencyDefinition[];
+}

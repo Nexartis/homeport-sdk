@@ -5,10 +5,10 @@
  */
 
 export { AgentsNamespace } from './agents.js';
-export { OrchestrationNamespace } from './orchestration.js';
+export { OrchestrationNamespace, OrchestrationNamespace as SwitchboardNamespace } from './orchestration.js';
 export { TrustNamespace } from './trust.js';
 export { FederationNamespace } from './federation.js';
 export { WebhooksNamespace } from './webhooks.js';
 export { DevelopersNamespace } from './developers.js';
-export { BillingNamespace } from './billing.js';
+export { BillingNamespace, BillingNamespace as PaymentsNamespace } from './billing.js';
 
