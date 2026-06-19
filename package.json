@@ -1,6 +1,6 @@
 {
   "name": "@nexartis/nexartis-nanda-node-sdk",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Official TypeScript SDK for the Nexartis NANDA Node — agent registration, A2A discovery, trust scoring, DAG workflow orchestration, and NANDA Index resolution on the open agentic web (Project NANDA, MIT Media Lab).",
   "homepage": "https://nnn-sdk.nexartis.com",
   "bugs": {
