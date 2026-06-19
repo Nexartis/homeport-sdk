@@ -118,6 +118,7 @@ export type {
 		DetectedProtocol,
 		SwitchboardLookupResult,
 		SwitchboardDiscoverRequest,
+			SwitchboardExportFormat,
 		SwitchboardExportRequest,
 		SwitchboardExportResponse,
 		SwitchboardResyncRequest,

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { NnnClient } from './client';
+import { NnnClient, SDK_VERSION } from './client';
 import { NnnError, NnnErrorCode } from './errors';
 
 /** Helper to mock globalThis.fetch */
@@ -36,6 +36,10 @@ describe('NnnClient', () => {
 		it('strips trailing slashes from baseUrl', () => {
 			const client = new NnnClient({ baseUrl: 'https://nanda.test.com///' });
 			expect(client.baseUrl).toBe('https://nanda.test.com');
+		});
+
+		it('exports the current package version for request metadata', () => {
+			expect(SDK_VERSION).toBe('1.2.2');
 		});
 	});
 

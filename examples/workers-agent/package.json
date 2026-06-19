@@ -6,13 +6,20 @@
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy:prod": "wrangler deploy --env prod"
   },
   "dependencies": {
-    "@nexartis/nexartis-nanda-node-sdk": "^1.1.0"
+    "@nexartis/nexartis-nanda-node-sdk": "^1.2.2"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260418.1",
     "wrangler": "^4.83.0"
+  },
+  "packageManager": "pnpm@10.28.1",
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=10.0.0"
   }
 }
