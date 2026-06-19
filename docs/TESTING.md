@@ -18,7 +18,7 @@ The SDK uses Vitest for unit tests, TypeScript for type safety, TypeDoc generati
 | `pnpm run size` | Check configured min+gzip size budgets. | CI and release readiness. |
 | `pnpm run validate` | Safe local audit gate: typecheck, tests, build, docs, and size. | Before PR, push, and dev deploy. |
 | `pnpm run deploy:dev` | Build, stage, and deploy the docs site to dev. | Audit/dev validation only. |
-| `pnpm run deploy:prod` | Build, stage, and deploy the docs site to prod. | Release-owner path only; do not run for audits. |
+| `pnpm run deploy:prod` | Build, stage, and deploy the docs site to prod. | Release-owner/final-audit path only after validation passes. |
 
 ## Unit and integration approach
 

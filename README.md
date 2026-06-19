@@ -186,8 +186,8 @@ We welcome contributions from the community. Read
 conventions, testing requirements, and review process.
 
 The standard local gate is `pnpm run validate`. The docs site can be deployed
-to dev with `pnpm run deploy:dev`; do not run `pnpm run deploy:prod` during
-audit work.
+to dev with `pnpm run deploy:dev`; use `pnpm run deploy:prod` only on the
+release-owner/final-audit path after validation has passed.
 
 All commits must be signed off under the
 [Developer Certificate of Origin](https://developercertificate.org/) — run
