@@ -43,3 +43,9 @@ This file records every issue, discrepancy, risk, and follow-up found during the
 
 - Default recurrence: 90 days.
 - Next audit should verify package version automation, docs-site browser smoke coverage, and dependency/security audit status.
+
+## Dependabot and code-scanning reconciliation — 2026-06-19
+
+| Area | Status | Metadata finding | Follow-up |
+| --- | --- | --- | --- |
+| Dependency/security/code-scanning | Open for default-branch Dependabot rescan | Tracker marks dependency/security audits pass/pass. GitHub metadata reports 4 open npm Dependabot alerts on the default branch (1 high, 2 medium, 1 low) and 0 open code-scanning alerts. Local branch `pnpm audit --audit-level high` exits 0. | Do not dismiss alerts. Recheck after this PR merges/rescans; keep docs-site/browser-smoke follow-ups separate. |
