@@ -25,7 +25,8 @@ This file records every issue, discrepancy, risk, and follow-up found during the
 | NNN-SDK-AUDIT-015 | Fixed | Documentation generation | TypeDoc emitted warnings because README linked to directories and a referenced switchboard type was missing from the public barrel. | Replaced directory links with file links and exported `SwitchboardExportFormat`; `pnpm run validate` now generates docs without warnings. |
 | NNN-SDK-AUDIT-016 | Fixed | Dependency security | `pnpm audit --audit-level moderate` found high/moderate transitive advisories in Vite, markdown-it, and brace-expansion, plus a low esbuild advisory. | Added package-manager overrides and a direct patched Vite dev dependency; `pnpm audit --audit-level low` reports no known vulnerabilities. |
 | NNN-SDK-AUDIT-017 | Open | Dependency governance | `pnpm install` reports pnpm's ignored-build-scripts warning for build-time packages such as esbuild, sharp, and workerd. | Decide whether this repo should document an approved-builds policy; validation, size checks, and dev deploy pass without approving scripts. |
-| NNN-SDK-AUDIT-018 | Fixed | Dependency governance | Dev deployment warned that `typedoc-site` used outdated Wrangler 3. | Updated `typedoc-site` to Wrangler 4.102.0 and redeployed dev successfully. |
+| NNN-SDK-AUDIT-018 | Fixed | Dependency governance | Dev deployment warned that `typedoc-site` used outdated Wrangler 3, then second-round audit found a newer Wrangler patch available. | Updated `typedoc-site` to Wrangler 4.103.0 and redeployed dev successfully. |
+| NNN-SDK-AUDIT-019 | Fixed | Documentation accuracy | Second-round audit found stale deployment wording in the docs-site Wrangler comments, Worker example README, deployment gap notes, and a CI comment. | Updated the wording to match root `pnpm run deploy:dev` conventions and clarified that dev deploy has already been run and smoke checked. |
 
 ## Testing gaps
 
@@ -33,9 +34,9 @@ This file records every issue, discrepancy, risk, and follow-up found during the
 - Authenticated Playwright coverage is not applicable to the SDK package or unauthenticated docs site.
 - Example Worker behavior is documented but not covered by automated integration tests.
 
-## Deployment and operations gaps
+## Deployment and operations notes
 
-- Dev deployment should be run with `pnpm run deploy:dev` during this audit and recorded in the workspace tracker.
+- Dev deployment was run with `pnpm run deploy:dev`, recorded in the workspace tracker, and smoke checked at `https://nnn-sdk-dev.nexartis.com/` and `/api/`.
 - Rollback for docs-site production deploys is currently GitHub/Cloudflare standard rollback, not a repo-specific runbook.
 
 ## Recurring audit notes

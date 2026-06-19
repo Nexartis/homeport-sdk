@@ -10,7 +10,7 @@
     "deploy:prod": "wrangler deploy --env prod"
   },
   "devDependencies": {
-    "wrangler": "^4.102.0"
+    "wrangler": "^4.103.0"
   },
   "packageManager": "pnpm@10.28.1",
   "engines": {

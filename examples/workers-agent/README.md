@@ -41,7 +41,10 @@ curl http://localhost:8787/health
 ## Deploy
 
 ```bash
-pnpm run deploy
+pnpm run deploy:dev
+pnpm run deploy:prod   # release-owner path only
 ```
+
+For audits and local validation, deploy only the dev environment.
 
 See the top-level [examples index](../README.md) for more examples.
