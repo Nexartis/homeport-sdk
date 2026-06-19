@@ -215,6 +215,11 @@ export class NnnClient {
 		return (this._orchestration ??= new OrchestrationNamespace(this.internals()));
 	}
 
+	/** Backward-compatible alias for protocol bridge/switchboard callers. */
+	get switchboard(): OrchestrationNamespace {
+		return this.orchestration;
+	}
+
 	/** Resolution, reputation, trust scores/frameworks/graph, compliance, and analytics. */
 	get trust(): TrustNamespace {
 		return (this._trust ??= new TrustNamespace(this.internals()));
@@ -238,6 +243,11 @@ export class NnnClient {
 	/** Subscriptions, invoices, checkout sessions, and NP payment verification. */
 	get billing(): BillingNamespace {
 		return (this._billing ??= new BillingNamespace(this.internals()));
+	}
+
+	/** Backward-compatible alias for payment/currency callers. */
+	get payments(): BillingNamespace {
+		return this.billing;
 	}
 
 	// ── HTTP helpers ──────────────────────────────────────────────────
