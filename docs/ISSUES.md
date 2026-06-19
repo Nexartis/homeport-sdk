@@ -4,6 +4,19 @@
 
 This file records every issue, discrepancy, risk, and follow-up found during the 2026-06-19 full agentic audit. Items marked fixed were resolved as minor documentation, convention, package metadata, or audit-truthfulness cleanup in this audit branch.
 
+## PR review and security surface status (2026-06-19)
+
+Metadata-only GitHub sweep for PR #38 at head `19ae43c`; no review/comment bodies or alert payloads were fetched.
+
+- PR review: open draft PR; review decision remains `REVIEW_REQUIRED`; 0 review threads and 0 unresolved review threads.
+- Augment/code-review findings: the issue register below remains the source of truth for audit findings; no separate review-body content is duplicated here.
+- CodeQL/code scanning: latest check rollup `SUCCESS`; 0 open code-scanning alerts.
+- Dependabot/security alerts: 4 open GitHub vulnerability alerts; reconcile through the dependency governance follow-ups after branch/default-branch rescan.
+- CI/checks: 6 latest contexts, 0 failing/queued/non-success contexts, and 0 skipped contexts.
+- Dev deploy/smoke: docs-site dev deploy and smoke were previously recorded as passed for `https://nnn-sdk-dev.nexartis.com`.
+- Authenticated E2E: not applicable for this SDK/docs package.
+- Ready-for-review blocker/risk: draft PR status remains; no accepted risk with owner/date is recorded in this register.
+
 ## Issue register
 
 | ID | Status | Category | Finding | Resolution or follow-up |
