@@ -5,6 +5,14 @@ All notable changes to the Nexartis NANDA Node SDK will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.2](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.2.1...v1.2.2) (2026-06-19)
+
+
+### Bug Fixes
+
+* **RELEASE:** address SDK release review findings ([dad82d1](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/dad82d121ba50a0858e4654d3a6103f420f81983))
+* **RELEASE:** address SDK release review findings ([2874a01](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/2874a0165d08af1365b9391639cc08d536e89829))
+
 ## [1.2.1](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.2.0...v1.2.1) (2026-04-20)
 
 
