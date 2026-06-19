@@ -853,8 +853,10 @@ export interface SwitchboardDiscoverRequest {
 	metadata?: Record<string, unknown>;
 }
 
+export type SwitchboardExportFormat = 'agent-card' | 'nanda-index' | 'oasf' | (string & {});
+
 export interface SwitchboardExportRequest {
-	format?: 'agent-card' | 'nanda-index' | 'oasf' | string;
+	format?: SwitchboardExportFormat;
 	agent_ids?: string[];
 	protocol?: ProtocolType;
 }
