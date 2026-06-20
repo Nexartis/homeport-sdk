@@ -4,8 +4,9 @@
 	 * Minimal Cloudflare Workers example consuming
 	 * @nexartis/nexartis-nanda-node-sdk from the edge.
 	 *
-	 * Run locally: pnpm run dev     (→ http://localhost:8787/health)
-	 * Deploy:      pnpm run deploy
+	 * Run locally: pnpm run dev        (→ http://localhost:8787/health)
+	 * Deploy dev:  pnpm run deploy:dev
+	 * Deploy prod: pnpm run deploy:prod
 	 *
 	 * Configure secrets before deploying:
 	 *   wrangler secret put NNN_API_KEY
@@ -19,5 +20,19 @@
 	},
 	"vars": {
 		"NNN_BASE_URL": "https://nanda.nexartis.com"
+	},
+	"env": {
+		"dev": {
+			"name": "example-workers-agent-dev",
+			"vars": {
+				"NNN_BASE_URL": "https://nanda.nexartis.com"
+			}
+		},
+		"prod": {
+			"name": "example-workers-agent",
+			"vars": {
+				"NNN_BASE_URL": "https://nanda.nexartis.com"
+			}
+		}
 	}
 }

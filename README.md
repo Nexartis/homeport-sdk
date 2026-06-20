@@ -141,15 +141,26 @@ All methods live on namespaces under the client. The only direct methods on
 Full generated reference (every type, every method, every example) is hosted
 at **<https://nnn-sdk.nexartis.com>**.
 
+## Repository docs
+
+Deeper current-state and audit documentation lives in the repo docs:
+
+- [Product architecture](./docs/PRODUCT_ARCHITECTURE.md)
+- [Testing strategy](./docs/TESTING.md)
+- [E2E coverage matrix](./docs/E2E_COVERAGE_MATRIX.md)
+- [Known issues and audit findings](./docs/ISSUES.md)
+- [Roadmap](./docs/ROADMAP.md)
+- [Document inventory](./docs/DOCUMENT_INVENTORY.md)
+
 ## Examples
 
-Runnable examples live in the [`examples/`](./examples) directory:
+Runnable examples live in the [`examples/`](./examples/README.md) directory:
 
 - [`register-and-discover.ts`](./examples/register-and-discover.ts) — registry lifecycle + pagination.
 - [`orchestrate-workflow.ts`](./examples/orchestrate-workflow.ts) — DAG create + run + status.
 - [`a2a-routing.ts`](./examples/a2a-routing.ts) — A2A JSON-RPC with trace propagation.
 - [`health-monitoring.ts`](./examples/health-monitoring.ts) — hooks, circuit breaker, deep health.
-- [`workers-agent/`](./examples/workers-agent) — Cloudflare Workers consumer.
+- [`workers-agent/`](./examples/workers-agent/README.md) — Cloudflare Workers consumer.
 
 See the [examples README](./examples/README.md) for prerequisites and how to
 run each one.
@@ -163,7 +174,7 @@ This SDK targets the platform `fetch` API and has no Node-only dependencies.
 | **Node.js 20+**         | ✅ | LTS. `fetch` is global as of Node 18 and stable in 20. |
 | **Bun**                 | ✅ | `fetch` + Web Streams built in. |
 | **Deno**                | ✅ | Install via `npm:@nexartis/nexartis-nanda-node-sdk`. |
-| **Cloudflare Workers**  | ✅ | See [`examples/workers-agent`](./examples/workers-agent). No `nodejs_compat` required for core calls. |
+| **Cloudflare Workers**  | ✅ | See [`examples/workers-agent`](./examples/workers-agent/README.md). No `nodejs_compat` required for core calls. |
 | **Browsers with `fetch`** | ✅ | Any ES2022 target; CORS must be enabled on the NANDA Node. |
 
 ES2022 module output, `"type": "module"`, ships `.d.ts` + sourcemaps.
@@ -173,6 +184,10 @@ ES2022 module output, `"type": "module"`, ships `.d.ts` + sourcemaps.
 We welcome contributions from the community. Read
 [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow, coding
 conventions, testing requirements, and review process.
+
+The standard local gate is `pnpm run validate`. The docs site can be deployed
+to dev with `pnpm run deploy:dev`; use `pnpm run deploy:prod` only on the
+release-owner/final-audit path after validation has passed.
 
 All commits must be signed off under the
 [Developer Certificate of Origin](https://developercertificate.org/) — run

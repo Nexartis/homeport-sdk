@@ -61,8 +61,7 @@ jobs:
         run: pnpm run build
 
       # Generate the API reference into typedoc-site/dist/api per
-      # typedoc.json at the repo root. SDK Agent D adds the `docs` script
-      # (typedoc) + the typedoc devDependency to the root package.json.
+      # typedoc.json at the repo root.
       - name: Generate TypeDoc site
         run: pnpm run docs
 
