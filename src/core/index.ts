@@ -17,9 +17,9 @@ export {
 	FederationNamespace,
 	WebhooksNamespace,
 	DevelopersNamespace,
-		BillingNamespace,
-		SwitchboardNamespace,
-		PaymentsNamespace
+	BillingNamespace,
+	SwitchboardNamespace,
+	PaymentsNamespace
 } from './namespaces/index.js';
 
 // Circuit Breaker (standalone utility)
@@ -113,25 +113,26 @@ export type {
 	BehaviorMetric,
 	BehaviorAnalyticsResponse,
 	VerifyNpPaymentRequest,
-		VerifyNpPaymentResponse,
-		ProtocolType,
-		DetectedProtocol,
-		SwitchboardLookupResult,
-		SwitchboardDiscoverRequest,
-		SwitchboardExportRequest,
-		SwitchboardExportResponse,
-		SwitchboardResyncRequest,
-		SwitchboardResyncResponse,
-		ProtocolAdapterRecord,
-		AdapterInfo,
-		SwitchboardAdaptersResponse,
-		CurrencyDefinition,
-		ExchangeRate,
-		ConvertCurrencyRequest,
-		ConvertCurrencyResponse,
-		WalletBalancesResponse,
-		ExchangeRateMatrixResponse,
-		CurrenciesResponse
+	VerifyNpPaymentResponse,
+	ProtocolType,
+	DetectedProtocol,
+	SwitchboardLookupResult,
+	SwitchboardDiscoverRequest,
+	SwitchboardExportFormat,
+	SwitchboardExportRequest,
+	SwitchboardExportResponse,
+	SwitchboardResyncRequest,
+	SwitchboardResyncResponse,
+	ProtocolAdapterRecord,
+	AdapterInfo,
+	SwitchboardAdaptersResponse,
+	CurrencyDefinition,
+	ExchangeRate,
+	ConvertCurrencyRequest,
+	ConvertCurrencyResponse,
+	WalletBalancesResponse,
+	ExchangeRateMatrixResponse,
+	CurrenciesResponse
 } from './types.js';
 
 // Errors

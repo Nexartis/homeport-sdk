@@ -24,9 +24,8 @@ From the repository root:
 ```bash
 pnpm install
 pnpm run build                 # resolve .d.ts for TypeDoc
-pnpm run docs                  # generate dist/api via typedoc.json
-cp -R typedoc-site/public/. typedoc-site/dist/
-pnpm --filter @nexartis/nexartis-nanda-node-sdk-docs-site run dev
+pnpm run docs:stage            # generate dist/api and copy landing assets
+cd typedoc-site && pnpm run dev
 ```
 
 > The `docs` script is defined in the root `package.json` and runs TypeDoc
@@ -34,13 +33,16 @@ pnpm --filter @nexartis/nexartis-nanda-node-sdk-docs-site run dev
 
 ## Deploying
 
-Per Nexartis conventions, always deploy via `pnpm run deploy:dev` or
-`pnpm run deploy:prod` from inside `typedoc-site/`:
+Per Nexartis conventions, deploy from the repository root so the SDK build,
+TypeDoc output, and landing page assets are staged first:
 
 ```bash
-pnpm --filter @nexartis/nexartis-nanda-node-sdk-docs-site run deploy:dev
-pnpm --filter @nexartis/nexartis-nanda-node-sdk-docs-site run deploy:prod
+pnpm run deploy:dev
+pnpm run deploy:prod
 ```
+
+For audits, run only `pnpm run deploy:dev`; production deploys are release-owner
+work.
 
 CI deploys prod automatically on release; see
 `.github/workflows/deploy-docs.yml`.

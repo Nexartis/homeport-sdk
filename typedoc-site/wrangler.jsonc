@@ -18,9 +18,9 @@
 	 *   env.dev  → nnn-sdk-dev.nexartis.com
 	 *   env.prod → nnn-sdk.nexartis.com
 	 *
-	 * Deploy conventions (see repo root rules): always invoke via
+	 * Deploy conventions (see repo root rules): invoke from the repository root
+	 * so the SDK build, TypeDoc output, and landing assets are staged first:
 	 *   pnpm run deploy:dev    or    pnpm run deploy:prod
-	 * from inside typedoc-site/.
 	 * ===================================================================
 	 */
 	"name": "nexartis-nanda-node-sdk-docs",

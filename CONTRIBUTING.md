@@ -9,13 +9,14 @@ process for substantial changes.
 
 Prerequisites:
 
-- **Node.js 20** (LTS). The repo pins an exact version in `.node-version`.
+- **Node.js 20+**. CI covers Node 20 and 22; `.node-version` sets the local default to Node 22.
 - **pnpm 10** (`corepack enable && corepack prepare pnpm@10 --activate`).
 
 Bootstrap the workspace:
 
 ```bash
 pnpm install
+pnpm run validate   # standard local quality gate
 pnpm run build      # tsc --project tsconfig.json
 pnpm run typecheck  # tsc --noEmit
 pnpm run test       # vitest run
@@ -83,6 +84,7 @@ PR will block merges that are missing the trailer.
 - `pnpm run test` — full suite (vitest, run-once).
 - `pnpm run test:watch` — watch mode during development.
 - `pnpm run typecheck` — TypeScript project check, no emit.
+- `pnpm run validate` — standard local gate: typecheck, tests, build, docs, and size.
 - `pnpm run size` — bundle size check via `size-limit`.
 
 Please add or update tests for any behavior change. PRs that touch runtime
