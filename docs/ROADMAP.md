@@ -31,3 +31,16 @@ This roadmap captures future-facing work discovered during the full agentic audi
 - Multi-runtime example matrix for Bun, Deno, Workers, and browser bundlers.
 - Optional generated API contract snapshots once the server-side contract is stable.
 - Automated link-checking for external Project NANDA, npm, GitHub, and Cubicube links.
+
+## Nexartis Voice-First 1.0 T1 items
+
+This roadmap now feeds the coordinated **`Nexartis Voice-First 1.0 T1`** release train documented in the workspace-level `MASTER-RELEASE-ROADMAP.md`. The SDK adds thin client methods for the new NANDA A2A delegation actions that back the train's PUH + delegation stack.
+
+| Item | Wave | Ships |
+|------|------|-------|
+| `NND-SDK-D1` | 2 | Client methods for the new A2A actions in `nexartis-nanda-node` Wave 2 `NND-D1`: `client.orchestration.grantDelegation(input)`, `client.orchestration.revokeDelegation(delegationId, reason)`, `client.orchestration.checkDelegation(delegationId)`. Types published as `DelegationGrantRequest`, `DelegationGrantResult`, `DelegationRevokeResult`, `DelegationCheckResult` in `src/core/types.ts`. Follows the existing `delegateTask` shape (`src/core/namespaces/orchestration.ts:129`). Works unchanged on Node/Bun/Deno/Workers/browsers per current SDK targets. |
+
+Cross-repo dependencies (Voice-First 1.0 T1):
+
+- `NND-SDK-D1` **depends on** `nexartis-nanda-node` Wave 2 `NND-D1` shipping the A2A actions first. Hard predecessor; do not sign off Wave 2 SDK exit until the NANDA node Wave 2 gate is `GREEN`.
+- **Consumed by** `nexartis-remote-control-client` (`connector/tools/agent-delegation.mjs`) for PUH-attested delegation grants at Wave 3 `PUH-4`.
