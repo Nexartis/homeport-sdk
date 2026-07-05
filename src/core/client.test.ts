@@ -360,6 +360,125 @@ describe('NnnClient', () => {
 		});
 	});
 
+	// Helper to mock a `/a2a` response wrapping a delegation payload.
+	function mockA2AResult(payload: unknown) {
+		mockFetch({
+			status: 200,
+			body: {
+				jsonrpc: '2.0',
+				id: 'test',
+				result: { role: 'agent', parts: [{ text: JSON.stringify(payload) }] }
+			}
+		});
+	}
+
+	describe('orchestration.grantDelegation()', () => {
+		it('posts a delegation.grant A2A envelope and unwraps the result', async () => {
+			const grantResult = { delegationId: 'del-42', kymVcId: 'vc-1', expiresAt: 1900000000 };
+			mockA2AResult(grantResult);
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.orchestration.grantDelegation({
+				granted_by_did: 'did:key:parent',
+				granted_to_did: 'did:key:child',
+				granted_scope: ['tool:search'],
+				expires_at: 1900000000,
+				granted_by_proof_hash: 'a'.repeat(64)
+			});
+
+			expect(result).toEqual(grantResult);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(fetchCall[0]).toContain('/a2a');
+			expect(fetchCall[1].method).toBe('POST');
+			const body = JSON.parse(fetchCall[1].body as string);
+			expect(body.jsonrpc).toBe('2.0');
+			expect(body.method).toBe('message/send');
+			const inner = JSON.parse(body.params.message.parts[0].text);
+			expect(inner.action).toBe('delegation.grant');
+			expect(inner.granted_by_did).toBe('did:key:parent');
+			expect(inner.granted_scope).toEqual(['tool:search']);
+		});
+
+		it('surfaces JSON-RPC error as NnnError', async () => {
+			mockFetch({
+				status: 200,
+				body: {
+					jsonrpc: '2.0',
+					id: 'test',
+					error: { code: -32602, message: 'scope-widens-parent: Child scope "x" is not present in parent grantedScope' }
+				}
+			});
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(
+				client.orchestration.grantDelegation({
+					granted_by_did: 'did:key:parent',
+					granted_to_did: 'did:key:child',
+					granted_scope: ['x'],
+					expires_at: 1,
+					granted_by_proof_hash: 'a'.repeat(64)
+				})
+			).rejects.toThrow(/scope-widens-parent/);
+		});
+	});
+
+	describe('orchestration.revokeDelegation()', () => {
+		it('posts a delegation.revoke envelope and returns the cascade list', async () => {
+			const revokeResult = { revoked: true, revokedAt: 1800000000, cascadedIds: ['del-child-1'] };
+			mockA2AResult(revokeResult);
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.orchestration.revokeDelegation({
+				delegation_id: 'del-42',
+				reason: 'user-request'
+			});
+			expect(result).toEqual(revokeResult);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			const inner = JSON.parse(JSON.parse(fetchCall[1].body as string).params.message.parts[0].text);
+			expect(inner.action).toBe('delegation.revoke');
+			expect(inner.delegation_id).toBe('del-42');
+			expect(inner.reason).toBe('user-request');
+		});
+	});
+
+	describe('orchestration.checkDelegation()', () => {
+		it('posts a delegation.check envelope and returns the validity payload', async () => {
+			const checkResult = {
+				valid: true,
+				revoked: false,
+				expired: false,
+				expiresAt: 1900000000,
+				credentialSubject: { grantedToDid: 'did:key:child', grantedByDid: 'did:key:parent', scope: ['tool:search'] }
+			};
+			mockA2AResult(checkResult);
+
+			const client = new NnnClient(BASE_CONFIG);
+			const result = await client.orchestration.checkDelegation('del-42');
+			expect(result.valid).toBe(true);
+			expect(result.credentialSubject.scope).toEqual(['tool:search']);
+
+			const fetchCall = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			const inner = JSON.parse(JSON.parse(fetchCall[1].body as string).params.message.parts[0].text);
+			expect(inner.action).toBe('delegation.check');
+			expect(inner.delegation_id).toBe('del-42');
+		});
+
+		it('rejects empty delegation IDs', async () => {
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.orchestration.checkDelegation('')).rejects.toThrow(NnnError);
+		});
+
+		it('throws NnnError when the A2A response lacks a text part', async () => {
+			mockFetch({
+				status: 200,
+				body: { jsonrpc: '2.0', id: 'test', result: { role: 'agent', parts: [] } }
+			});
+			const client = new NnnClient(BASE_CONFIG);
+			await expect(client.orchestration.checkDelegation('del-42')).rejects.toThrow(/malformed A2A response/);
+		});
+	});
+
 	describe('orchestration.listPatterns()', () => {
 		it('lists patterns without filters', async () => {
 			const patterns = [{ id: 'p1', name: 'Sequential', description: null, category: 'basic', dagTemplate: { nodes: [], edges: [] }, inputSchema: null, tags: [], isBuiltin: 1 }];

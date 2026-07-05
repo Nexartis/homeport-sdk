@@ -96,6 +96,16 @@ await nnn.orchestration.createWorkflow({
 });
 const result = await nnn.orchestration.runWorkflow('workflow-123', { prompt: 'Analyze this PR' });
 
+// Scoped delegation grants (Voice-First 1.0 T1) — issued via the A2A JSON-RPC envelope.
+const grant = await nnn.orchestration.grantDelegation({
+  granted_by_did: 'did:web:example-operator',
+  granted_to_did: 'did:web:example-delegate',
+  granted_scope: ['payments:send'],
+  expires_at: Math.floor(Date.now() / 1000) + 300, // unix seconds; must not exceed parent's
+});
+const status = await nnn.orchestration.checkDelegation(grant.delegation_id);
+await nnn.orchestration.revokeDelegation({ delegation_id: grant.delegation_id });
+
 // Auto-paginate
 for await (const agent of nnn.agents.searchAll({ capabilities: ['code-review'] })) {
   console.log(agent.agent_id);
@@ -131,7 +141,7 @@ All methods live on namespaces under the client. The only direct methods on
 | Namespace | Purpose |
 |---|---|
 | `client.agents`        | Register, update, delete, lookup, search, list, version, deprecate, tombstone. Includes `searchAll` / `listAll` async iterators. |
-| `client.orchestration` | Create / update / run / cancel DAG workflows; intelligent routing; pattern + delegation + conflict management; index diff + subscribe. |
+| `client.orchestration` | Create / update / run / cancel DAG workflows; intelligent routing; pattern + delegation + conflict management; index diff + subscribe. Includes scoped delegation grants — `grantDelegation`, `revokeDelegation`, `checkDelegation` — dispatched over the A2A JSON-RPC envelope with PUH proofs and cascading revocation. |
 | `client.trust`         | Lean-Index resolution, trust scores, frameworks, behaviour analytics, compliance scans, trust-graph + path queries. |
 | `client.federation`    | Peer discovery, gossip status, federated agent listing, A2A JSON-RPC. |
 | `client.webhooks`      | CRUD for subscriptions (create returns a signing `secret`). |

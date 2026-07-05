@@ -17,6 +17,12 @@ import type {
 	UpdateWorkflowRequest,
 	DelegateTaskRequest,
 	DelegationResult,
+	DelegationGrantRequest,
+	DelegationGrantResult,
+	DelegationRevokeRequest,
+	DelegationRevokeResult,
+	DelegationCheckResult,
+	A2AResponse,
 	ListPatternsOptions,
 	OrchestratorPattern,
 	CreatePatternRequest,
@@ -34,7 +40,7 @@ import type {
 	NnnStats
 } from '../types.js';
 import { NnnError, NnnErrorCode } from '../errors.js';
-import { parseSSEStream } from '../sse.js';
+import { parseSSEStream, generateRequestId } from '../sse.js';
 
 export class OrchestrationNamespace {
 	/** @internal */
@@ -135,6 +141,86 @@ export class OrchestrationNamespace {
 	async listDelegations(workflowId: string): Promise<{ delegations: DelegationResult[] }> {
 		const sp = new URLSearchParams({ workflow_id: workflowId });
 		return this._client.getJson(`/api/orchestration/delegate?${sp.toString()}`, 'orchestration.listDelegations');
+	}
+
+	// ── Delegation Grants (A2A: delegation.grant/.revoke/.check) ─
+
+	/**
+	 * POST /a2a — Issue a scoped delegation grant (A2A action `delegation.grant`).
+	 *
+	 * The grant is subject to the server-side chain-narrowing invariant: when
+	 * `parent_delegation_id` is set, `granted_scope` must be a subset of the
+	 * parent's and `expires_at` must not exceed the parent's TTL. Grants
+	 * cascade on revoke.
+	 */
+	async grantDelegation(params: DelegationGrantRequest): Promise<DelegationGrantResult> {
+		this._client.logger.debug('Granting delegation', {
+			delegator: params.granted_by_did,
+			delegate: params.granted_to_did
+		});
+		return this._sendDelegationAction<DelegationGrantResult>(
+			{ action: 'delegation.grant', ...params },
+			'orchestration.grantDelegation'
+		);
+	}
+
+	/** POST /a2a — Revoke a delegation (A2A action `delegation.revoke`). Cascades to descendants. */
+	async revokeDelegation(params: DelegationRevokeRequest): Promise<DelegationRevokeResult> {
+		this._client.logger.debug('Revoking delegation', { delegationId: params.delegation_id });
+		return this._sendDelegationAction<DelegationRevokeResult>(
+			{ action: 'delegation.revoke', ...params },
+			'orchestration.revokeDelegation'
+		);
+	}
+
+	/** POST /a2a — Check a delegation's validity (A2A action `delegation.check`). */
+	async checkDelegation(delegationId: string): Promise<DelegationCheckResult> {
+		if (!delegationId) {
+			throw new NnnError(NnnErrorCode.CONFIGURATION_ERROR, 'checkDelegation: delegationId is required');
+		}
+		return this._sendDelegationAction<DelegationCheckResult>(
+			{ action: 'delegation.check', delegation_id: delegationId },
+			'orchestration.checkDelegation'
+		);
+	}
+
+	/**
+	 * Wrap a delegation payload in the A2A JSON-RPC envelope expected by
+	 * `/a2a`, POST it to the local node, and unwrap the inner text result.
+	 * @internal
+	 */
+	private async _sendDelegationAction<T>(payload: Record<string, unknown>, ctx: string): Promise<T> {
+		const envelope = {
+			jsonrpc: '2.0' as const,
+			id: generateRequestId(),
+			method: 'message/send',
+			params: {
+				message: {
+					role: 'user',
+					parts: [{ text: JSON.stringify(payload) }]
+				}
+			}
+		};
+		const rpc = await this._client.postJson<A2AResponse>('/a2a', envelope, ctx);
+		if (rpc.error) {
+			throw new NnnError(
+				NnnErrorCode.SERVER_ERROR,
+				`${ctx}: ${rpc.error.message} (code ${rpc.error.code})`
+			);
+		}
+		const result = rpc.result as { parts?: Array<{ text?: string }> } | undefined;
+		const text = result?.parts?.[0]?.text;
+		if (typeof text !== 'string') {
+			throw new NnnError(NnnErrorCode.VALIDATION_ERROR, `${ctx}: malformed A2A response (missing text part)`);
+		}
+		try {
+			return JSON.parse(text) as T;
+		} catch (err) {
+			throw new NnnError(
+				NnnErrorCode.VALIDATION_ERROR,
+				`${ctx}: failed to parse delegation result: ${(err as Error).message}`
+			);
+		}
 	}
 
 	// ── Patterns ────────────────────────────────────────────────
