@@ -24,7 +24,7 @@ Primary audiences:
 |---|---|
 | Agent registry | Register, update, delete, lookup, search, list, refresh, version, deprecate, and tombstone agents. |
 | Discovery and routing | NANDA index reads, best-match routing, A2A JSON-RPC, protocol lookup/discovery/export/resync, and adapter listing. |
-| Orchestration | Create/update/run/cancel DAG workflows, inspect workflow runs, delegate tasks, manage patterns, and raise/resolve conflicts. |
+| Orchestration | Create/update/run/cancel DAG workflows, inspect workflow runs, delegate tasks (`delegateTask`, `listDelegations`), scoped delegation grants (`grantDelegation`, `revokeDelegation`, `checkDelegation`), manage patterns, and raise/resolve conflicts. |
 | Trust | Trust scores, frameworks, reputation, Lean Index resolution, compliance scans, behavior analytics, trust graph, and trust path reads. |
 | Federation | Peer discovery, gossip status, federated agent listing, and A2A forwarding. |
 | Webhooks | CRUD-style subscription management; create responses can include a signing secret. |
@@ -45,6 +45,22 @@ flowchart LR
   Node --> Billing[Billing and payment services]
   Docs[TypeDoc docs site] --> Developer
 ```
+
+## Delegation surface and A2A envelope (stability contract)
+
+Scoped delegation grants delivered with Voice-First 1.0 T1 are dispatched over the A2A JSON-RPC envelope, not a REST route. The SDK owns the wire helper (`_sendDelegationAction`) and exposes three methods on `client.orchestration`:
+
+- `grantDelegation({ granted_by_did, granted_to_did, granted_scope, expires_at, parent_delegation_id?, revocable?, proof? })` — POSTs an A2A envelope with method `delegation.grant` and returns `DelegationGrantResult` (`delegation_id`, `expires_at`, `kym_vc_id?`).
+- `revokeDelegation({ delegation_id, reason? })` — `delegation.revoke`. Cascades to all descendants via `parent_delegation_id`.
+- `checkDelegation(delegation_id)` — `delegation.check`. Returns `{ valid, revoked, revokedAt?, expired, expiresAt?, credentialSubject: { grantedByDid, grantedToDid, scope } }`.
+
+Contract points:
+
+1. Task delegation via `POST /api/orchestration/delegate` (existing) remains supported for coarse task hand-off; the new scoped-grant surface is for authority delegation with PUH provenance.
+2. Parent/child invariants are enforced server-side by `nexartis-nanda-node`: `granted_scope` MUST be a subset of the parent's, `expires_at` MUST NOT exceed the parent's, and `revocable` cannot flip `true → false` between parent and child. Revocation cascades.
+3. Types (`DelegationGrantRequest`, `DelegationGrantResult`, `DelegationRevokeRequest`, `DelegationRevokeResult`, `DelegationCheckResult`) are additive-only within the 1.x line; consumers must ignore unknown response fields.
+4. The envelope shape follows A2A v1.0 JSON-RPC with PascalCase method names; body wrapping/unwrapping is handled by the SDK.
+5. Authorization: NANDA requires the caller to be the delegator (or hold `operator`/`admin` scope). Passing a mismatched `granted_by_did` returns JSON-RPC error `-32001`. Off-domain A2A calls strip host/authorization headers per the existing envelope helper.
 
 ## Main product flows
 

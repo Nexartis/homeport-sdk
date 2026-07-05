@@ -436,6 +436,60 @@ export interface DelegationResult {
 	created_at: string;
 }
 
+// ── Delegation Grants (A2A actions: delegation.grant/.revoke/.check) ──
+
+/** Parameters for `delegation.grant` — issue a scoped delegation. */
+export interface DelegationGrantRequest {
+	/** DID issuing the grant (grantedByDid). */
+	granted_by_did: string;
+	/** DID receiving the grant (grantedToDid). */
+	granted_to_did: string;
+	/** Action ID the grant authorizes (defaults to 'delegated' server-side). */
+	action_id?: string;
+	/** Capability classes / tool IDs the delegate may exercise. */
+	granted_scope: string[];
+	/** Unix seconds at which the grant expires. */
+	expires_at: number;
+	/** SHA-256 hex of the WebAuthn authenticatorData||clientDataJSON that authorized the grant. */
+	granted_by_proof_hash: string;
+	/** If this grant is a child of another grant, the parent delegation ID (enables chain-narrowing). */
+	parent_delegation_id?: string | null;
+	/** Whether this grant may be revoked. Defaults to true when omitted. */
+	revocable?: boolean;
+}
+
+export interface DelegationGrantResult {
+	delegationId: string;
+	kymVcId: string | null;
+	expiresAt: number;
+}
+
+/** Parameters for `delegation.revoke`. */
+export interface DelegationRevokeRequest {
+	delegation_id: string;
+	reason?: string;
+}
+
+export interface DelegationRevokeResult {
+	revoked: true;
+	revokedAt: number;
+	/** IDs of descendant delegations revoked in the same cascade. */
+	cascadedIds: string[];
+}
+
+export interface DelegationCheckResult {
+	valid: boolean;
+	revoked: boolean;
+	revokedAt?: number;
+	expired: boolean;
+	expiresAt?: number;
+	credentialSubject: {
+		grantedToDid: string;
+		grantedByDid: string;
+		scope: string[];
+	};
+}
+
 export interface ListPatternsOptions {
 	category?: string;
 	builtin?: boolean;
