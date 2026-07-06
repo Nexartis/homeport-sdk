@@ -5,6 +5,13 @@ All notable changes to the Nexartis NANDA Node SDK will be documented in this fi
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.2.2...v1.3.0) (2026-07-06)
+
+
+### Features
+
+* Voice-First 1.0 T1 delivery and docs consolidation ([#42](https://github.com/Nexartis/nexartis-nanda-node-sdk/issues/42)) ([b222bb4](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/b222bb40728d074f50919e25cc53b3f640b63f9a))
+
 ## [1.2.2](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.2.1...v1.2.2) (2026-06-19)
 
 
