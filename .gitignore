@@ -11,5 +11,6 @@ coverage/
 
 # Local memory/index caches (machine-local; see workspace AGENTS.md)
 .codesearch.db/
+.codesearch.db
 .chunkhound/
 .serena/

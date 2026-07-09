@@ -5,8 +5,9 @@ npm as `@nexartis/nexartis-nanda-node-sdk`, docs deployed to
 `nnn-sdk.nexartis.com`. This repo is the strongest baseline among the
 Nexartis SDKs — treat it as the reference for structure and tooling.
 
-Repo-specific rules layer on top of the workspace `AGENTS.md`
-(`_NEXARTIS-SDKs/../AGENTS.md`). Read that first.
+Repo-specific rules layer on top of the workspace `AGENTS.md` when this
+repo is checked out inside the Nexartis platform workspace. For a
+standalone checkout, this file is the source of truth.
 
 ## Ground rules
 
