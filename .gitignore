@@ -3,3 +3,13 @@ dist/
 *.tsbuildinfo
 .DS_Store
 
+# TypeDoc-generated docs (produced by `pnpm run docs:stage`)
+typedoc-site/dist/
+
+# Test coverage output
+coverage/
+
+# Local memory/index caches (machine-local; see workspace AGENTS.md)
+.codesearch.db/
+.chunkhound/
+.serena/
