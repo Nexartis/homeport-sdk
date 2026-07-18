@@ -20,7 +20,9 @@ channel.
 
 **Do not** open a public GitHub issue, discussion, or pull request for
 suspected vulnerabilities. GitHub Private Vulnerability Reporting is also
-enabled on the repository and is an acceptable alternative channel.
+enabled on the repository and is an acceptable alternative channel — open a
+report directly at
+<https://github.com/Nexartis/homeport-sdk/security/advisories/new>.
 
 ## Coordinated disclosure
 

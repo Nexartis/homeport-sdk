@@ -213,7 +213,11 @@ To report a vulnerability, please follow the disclosure process in [SECURITY.md]
 
 ## Managed Homeport
 
-Homeport is fully self-hostable and Apache-2.0. If you'd rather not run it yourself, Nexartis operates managed Homeport nodes at **[cubicube.com](https://cubicube.com)**.
+Homeport is fully self-hostable and Apache-2.0 — the code in this repo and the [Homeport runtime](https://github.com/Nexartis/homeport) is the complete node; nothing is held back for a hosted tier.
+
+If you'd rather not operate it yourself, **[Cubicube](https://cubicube.com)** offers managed Homeport nodes: one-click deploy, dedicated edge footprint, and a trust-plane console on top of the same open-source runtime.
+
+Same SDK, same wire protocol — point `HomeportClient` at your self-hosted node or your Cubicube tenant.
 
 ## License
 
