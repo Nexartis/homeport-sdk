@@ -1,3 +1,7 @@
+<p align="center">
+  <a href="https://github.com/Nexartis/homeport"><img src="https://raw.githubusercontent.com/Nexartis/homeport-sdk/dev/.github/homeport-header.webp" alt="Homeport — the open-source, self-hostable NANDA node" width="800" /></a>
+</p>
+
 # Homeport SDK
 
 [![npm version](https://img.shields.io/npm/v/%40nexartis%2Fhomeport-sdk.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/@nexartis/homeport-sdk)
