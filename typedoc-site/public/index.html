@@ -49,12 +49,14 @@
 				<a class="cta cta-ghost" href="https://github.com/Nexartis/homeport-sdk" target="_blank" rel="noopener noreferrer">View on GitHub &#x2197;</a>
 				<a class="cta cta-ghost" href="https://www.npmjs.com/package/@nexartis/homeport-sdk" target="_blank" rel="noopener noreferrer">View on npm &#x2197;</a>
 			</div>
-			<div class="install-group" role="tablist" aria-label="Install command">
-				<button class="install-tab is-active" role="tab" aria-selected="true" data-pkg="pnpm">pnpm</button>
-				<button class="install-tab" role="tab" aria-selected="false" data-pkg="npm">npm</button>
-				<button class="install-tab" role="tab" aria-selected="false" data-pkg="yarn">yarn</button>
-				<button class="install-tab" role="tab" aria-selected="false" data-pkg="bun">bun</button>
-				<div class="install-cmd"><code id="install-cmd">pnpm add @nexartis/homeport-sdk</code><button class="copy-btn" type="button" aria-label="Copy install command" data-target="install-cmd">Copy</button></div>
+			<div class="install-group">
+				<div class="install-tabs" role="tablist" aria-label="Install command">
+					<button class="install-tab is-active" role="tab" aria-selected="true" aria-controls="install-panel" data-pkg="pnpm">pnpm</button>
+					<button class="install-tab" role="tab" aria-selected="false" aria-controls="install-panel" data-pkg="npm">npm</button>
+					<button class="install-tab" role="tab" aria-selected="false" aria-controls="install-panel" data-pkg="yarn">yarn</button>
+					<button class="install-tab" role="tab" aria-selected="false" aria-controls="install-panel" data-pkg="bun">bun</button>
+				</div>
+				<div class="install-cmd" id="install-panel" role="tabpanel" aria-label="Install command"><code id="install-cmd">pnpm add @nexartis/homeport-sdk</code><button class="copy-btn" type="button" aria-label="Copy install command" data-target="install-cmd">Copy</button></div>
 			</div>
 		</div>
 	</section>
@@ -151,14 +153,14 @@
 			<p class="footer-note">Homeport implements the <a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer">NANDA</a> protocol. Published by <a href="https://nexartis.com" target="_blank" rel="noopener noreferrer">Nexartis, LLC</a>. Licensed under <a href="https://github.com/Nexartis/homeport-sdk/blob/prod/LICENSE" target="_blank" rel="noopener noreferrer">Apache-2.0</a>.</p>
 		</div>
 		<div class="footer-col">
-			<h4>Package</h4>
+			<h3>Package</h3>
 			<a href="https://www.npmjs.com/package/@nexartis/homeport-sdk" target="_blank" rel="noopener noreferrer">npm &#x2197;</a>
 			<a href="https://github.com/Nexartis/homeport-sdk" target="_blank" rel="noopener noreferrer">GitHub &#x2197;</a>
 			<a href="https://github.com/Nexartis/homeport-sdk/issues" target="_blank" rel="noopener noreferrer">Issues &#x2197;</a>
 			<a href="/api/">API reference</a>
 		</div>
 		<div class="footer-col">
-			<h4>Ecosystem</h4>
+			<h3>Ecosystem</h3>
 			<a href="https://github.com/Nexartis/homeport" target="_blank" rel="noopener noreferrer">Homeport runtime &#x2197;</a>
 			<a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer">Project NANDA &#x2197;</a>
 			<a href="https://nanda.media.mit.edu/" target="_blank" rel="noopener noreferrer">MIT Media Lab &#x2197;</a>
