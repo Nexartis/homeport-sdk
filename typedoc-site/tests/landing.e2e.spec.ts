@@ -21,13 +21,13 @@ test.describe("Homeport SDK docs landing", () => {
 		const cmd = page.locator("#install-cmd");
 		await expect(cmd).toHaveText("pnpm add @nexartis/homeport-sdk");
 
-		await page.getByRole("tab", { name: "npm" }).click();
+		await page.getByRole("tab", { name: "npm", exact: true }).click();
 		await expect(cmd).toHaveText("npm install @nexartis/homeport-sdk");
 
-		await page.getByRole("tab", { name: "yarn" }).click();
+		await page.getByRole("tab", { name: "yarn", exact: true }).click();
 		await expect(cmd).toHaveText("yarn add @nexartis/homeport-sdk");
 
-		await page.getByRole("tab", { name: "bun" }).click();
+		await page.getByRole("tab", { name: "bun", exact: true }).click();
 		await expect(cmd).toHaveText("bun add @nexartis/homeport-sdk");
 
 		// Grant clipboard permission in Chromium so navigator.clipboard resolves.
