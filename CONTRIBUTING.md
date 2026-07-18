@@ -1,4 +1,4 @@
-# Contributing to the Nexartis NANDA Node SDK
+# Contributing to the Homeport SDK
 
 Thanks for your interest in contributing. This document covers the local
 development setup, branch model, commit conventions, the Developer Certificate

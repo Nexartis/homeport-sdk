@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Federation Namespace
+ * Homeport SDK — Federation Namespace
  *
  * Accessed via `client.federation.*`.
  * Covers federation peers, status, agents, and A2A communication.
@@ -8,18 +8,18 @@
  * @module core/namespaces/federation
  */
 
-import type { NnnClientInternals } from '../namespace-helpers.js';
+import type { HomeportClientInternals } from '../namespace-helpers.js';
 import type {
 	SendA2ARequestParams,
 	A2ARequest,
 	A2AResponse
 } from '../types.js';
-import { NnnError, NnnErrorCode } from '../errors.js';
+import { HomeportError, HomeportErrorCode } from '../errors.js';
 import { generateRequestId, parseSSEStream } from '../sse.js';
 
 export class FederationNamespace {
 	/** @internal */
-	constructor(private readonly _client: NnnClientInternals) {}
+	constructor(private readonly _client: HomeportClientInternals) {}
 
 	/** GET /federation/peers — Get federation peer list. */
 	async getPeers(): Promise<Record<string, unknown>> {
@@ -49,8 +49,8 @@ export class FederationNamespace {
 			);
 			targetUrl = agent.api_url ?? agent.agent_url;
 			if (!targetUrl) {
-				throw new NnnError(
-					NnnErrorCode.CONFIGURATION_ERROR,
+				throw new HomeportError(
+					HomeportErrorCode.CONFIGURATION_ERROR,
 					`Agent ${params.target_agent_id} has no api_url or agent_url`
 				);
 			}
@@ -89,8 +89,8 @@ export class FederationNamespace {
 			);
 			targetUrl = agent.api_url ?? agent.agent_url;
 			if (!targetUrl) {
-				throw new NnnError(
-					NnnErrorCode.CONFIGURATION_ERROR,
+				throw new HomeportError(
+					HomeportErrorCode.CONFIGURATION_ERROR,
 					`Agent ${params.target_agent_id} has no api_url or agent_url`
 				);
 			}
@@ -115,7 +115,7 @@ export class FederationNamespace {
 		);
 
 		if (!res.body) {
-			throw new NnnError(NnnErrorCode.NETWORK_ERROR, 'federation.streamA2ARequest: response body is null');
+			throw new HomeportError(HomeportErrorCode.NETWORK_ERROR, 'federation.streamA2ARequest: response body is null');
 		}
 
 		yield* parseSSEStream<A2AResponse>(res.body, this._client.logger);

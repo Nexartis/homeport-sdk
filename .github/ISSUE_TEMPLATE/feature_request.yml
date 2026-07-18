@@ -1,5 +1,5 @@
 name: Feature request
-description: Propose a new capability or API for the NANDA Node SDK
+description: Propose a new capability or API for the Homeport SDK
 title: "feat: <short description>"
 labels: ["enhancement", "needs-triage"]
 body:

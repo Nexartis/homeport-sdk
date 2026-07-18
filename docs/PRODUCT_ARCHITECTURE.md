@@ -1,14 +1,14 @@
-# Nexartis NANDA Node SDK Product Architecture
+# Homeport SDK Product Architecture
 
 ## Executive summary
 
-`@nexartis/nexartis-nanda-node-sdk` is the official TypeScript client for the Nexartis NANDA Node. It helps agent builders, orchestrator developers, and edge-app teams register agents, discover peers, route A2A requests, run DAG workflows, inspect trust metadata, manage webhooks and developer keys, and interact with billing/payment endpoints exposed by a NANDA Node.
+`@nexartis/homeport-sdk` is the official TypeScript client for Homeport — the open-source, self-hostable NANDA node from Nexartis. It helps agent builders, orchestrator developers, and edge-app teams register agents, discover peers, route A2A requests, run DAG workflows, inspect trust metadata, manage webhooks and developer keys, and interact with billing/payment endpoints exposed by a Homeport node.
 
-The package is an SDK, not the NANDA Node runtime. It ships typed ESM output, declaration files, examples, and a generated TypeDoc site. The public docs site is deployed separately from the package as a Cloudflare Worker in `typedoc-site/`.
+The package is an SDK, not the Homeport runtime. It ships typed ESM output, declaration files, examples, and a generated TypeDoc site. The public docs site is deployed separately from the package as a Cloudflare Worker in `typedoc-site/`.
 
 ## Product overview
 
-Project NANDA provides a decentralized discovery and trust layer for AI agents. Nexartis NANDA Node is Nexartis' implementation of that protocol. This SDK is the consumer-facing TypeScript entry point for applications that need to talk to a NANDA Node without hand-writing HTTP calls.
+[Project NANDA](https://projectnanda.org) (Networked AI Agents in Decentralized Architecture), originated at MIT Media Lab, provides a decentralized discovery and trust layer for AI agents. **Homeport** is Nexartis' open-source, self-hostable implementation of that protocol. This SDK is the consumer-facing TypeScript entry point for applications that need to talk to a Homeport node without hand-writing HTTP calls.
 
 Primary audiences:
 
@@ -16,7 +16,7 @@ Primary audiences:
 - Orchestrator developers creating workflows, routing tasks, resolving protocol endpoints, and sending A2A requests.
 - Trust/compliance consumers reading scores, frameworks, behavior analytics, compliance scans, and trust graphs.
 - Platform developers managing webhooks, developer API keys, earnings actions, invoices, subscriptions, checkout sessions, and NP payment verification.
-- Documentation readers using the hosted TypeDoc site at `https://nnn-sdk.nexartis.com`.
+- Documentation readers using the hosted TypeDoc site at `https://homeport-sdk.nexartis.com`.
 
 ## Current capabilities
 
@@ -36,8 +36,8 @@ Primary audiences:
 
 ```mermaid
 flowchart LR
-  Developer[Developer app or Worker] --> SDK[NANDA Node SDK]
-  SDK --> Node[Nexartis NANDA Node API]
+  Developer[Developer app or Worker] --> SDK[Homeport SDK]
+  SDK --> Node[Homeport node API]
   SDK --> A2A[External A2A agents]
   SDK --> Hooks[Caller metrics and logging hooks]
   Node --> Index[NANDA Index and registry]
@@ -48,7 +48,7 @@ flowchart LR
 
 ## Delegation surface and A2A envelope (stability contract)
 
-Scoped delegation grants delivered with Voice-First 1.0 T1 are dispatched over the A2A JSON-RPC envelope, not a REST route. The SDK owns the wire helper (`_sendDelegationAction`) and exposes three methods on `client.orchestration`:
+Scoped delegation grants (delivered with Voice-First 1.0 T1 on the legacy `@nexartis/nexartis-nanda-node-sdk` line) are dispatched over the A2A JSON-RPC envelope, not a REST route. The SDK owns the wire helper (`_sendDelegationAction`) and exposes three methods on `client.orchestration`:
 
 - `grantDelegation({ granted_by_did, granted_to_did, granted_scope, expires_at, parent_delegation_id?, revocable?, proof? })` — POSTs an A2A envelope with method `delegation.grant` and returns `DelegationGrantResult` (`delegation_id`, `expires_at`, `kym_vc_id?`).
 - `revokeDelegation({ delegation_id, reason? })` — `delegation.revoke`. Cascades to all descendants via `parent_delegation_id`.
@@ -57,10 +57,10 @@ Scoped delegation grants delivered with Voice-First 1.0 T1 are dispatched over t
 Contract points:
 
 1. Task delegation via `POST /api/orchestration/delegate` (existing) remains supported for coarse task hand-off; the new scoped-grant surface is for authority delegation with PUH provenance.
-2. Parent/child invariants are enforced server-side by `nexartis-nanda-node`: `granted_scope` MUST be a subset of the parent's, `expires_at` MUST NOT exceed the parent's, and `revocable` cannot flip `true → false` between parent and child. Revocation cascades.
+2. Parent/child invariants are enforced server-side by the Homeport node: `granted_scope` MUST be a subset of the parent's, `expires_at` MUST NOT exceed the parent's, and `revocable` cannot flip `true → false` between parent and child. Revocation cascades.
 3. Types (`DelegationGrantRequest`, `DelegationGrantResult`, `DelegationRevokeRequest`, `DelegationRevokeResult`, `DelegationCheckResult`) are additive-only within the 1.x line; consumers must ignore unknown response fields.
 4. The envelope shape follows A2A v1.0 JSON-RPC with PascalCase method names; body wrapping/unwrapping is handled by the SDK.
-5. Authorization: NANDA requires the caller to be the delegator (or hold `operator`/`admin` scope). Passing a mismatched `granted_by_did` returns JSON-RPC error `-32001`. Off-domain A2A calls strip host/authorization headers per the existing envelope helper.
+5. Authorization: Homeport requires the caller to be the delegator (or hold `operator`/`admin` scope). Passing a mismatched `granted_by_did` returns JSON-RPC error `-32001`. Off-domain A2A calls strip host/authorization headers per the existing envelope helper.
 
 ## Main product flows
 
@@ -69,10 +69,11 @@ Contract points:
 ```mermaid
 sequenceDiagram
   participant App as Consumer app
-  participant SDK as NnnClient
-  participant Node as NANDA Node
+  participant SDK as HomeportClient
+  participant Node as Homeport node
   App->>SDK: agents.register(agent profile)
   SDK->>Node: POST /api/agents/register
+
   Node-->>SDK: registration response
   App->>SDK: agents.searchAll(filters)
   SDK->>Node: paginated registry reads
@@ -84,8 +85,8 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
   participant App as Orchestrator
-  participant SDK as NnnClient
-  participant Node as NANDA Node
+  participant SDK as HomeportClient
+  participant Node as Homeport node
   App->>SDK: orchestration.createWorkflow(dag)
   SDK->>Node: workflow create request
   App->>SDK: orchestration.runWorkflow(id, input)
@@ -97,7 +98,7 @@ sequenceDiagram
 
 ## Product boundaries
 
-- The SDK does not host a registry, store agent state, or process payments itself; it calls a NANDA Node API.
+- The SDK does not host a registry, store agent state, or process payments itself; it calls a Homeport node API.
 - The SDK does not own consumer authentication flows beyond forwarding an optional API key as a bearer token.
 - The SDK strips registry authorization headers for off-domain A2A calls to avoid leaking credentials.
 - The package has zero runtime dependencies and relies on platform `fetch`.
@@ -117,7 +118,7 @@ sequenceDiagram
 - API keys are passed through `Authorization: Bearer <key>` only for NANDA Node requests.
 - Off-domain A2A requests use external headers that remove authorization.
 - Webhook creation can return a signing secret; applications must store that outside logs and source control.
-- Local examples document `NNN_API_KEY` as a secret and do not require a token to install the public npm package.
+- Local examples document `HOMEPORT_API_KEY` as a secret and do not require a token to install the public npm package.
 - Release provenance and npm Trusted Publishing are part of the package integrity model.
 
 ## Lifecycle notes

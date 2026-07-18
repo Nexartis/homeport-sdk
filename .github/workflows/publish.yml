@@ -3,7 +3,7 @@
 #
 # Authentication (dual-path, whichever matches first):
 #   1. OIDC Trusted Publishing — if the npmjs Trusted Publisher config for
-#      this package matches (repo = Nexartis/nexartis-nanda-node-sdk,
+#      this package matches (repo = Nexartis/homeport-sdk,
 #      workflow = publish.yml, environment = <none>), the publish step will
 #      exchange GitHub's OIDC token for a short-lived npm publish credential
 #      automatically. No repository secret needed.
@@ -80,7 +80,7 @@ jobs:
       - name: Check if version already published
         id: check
         run: |
-          if npm view @nexartis/nexartis-nanda-node-sdk@${{ steps.version.outputs.version }} version 2>/dev/null; then
+          if npm view @nexartis/homeport-sdk@${{ steps.version.outputs.version }} version 2>/dev/null; then
             echo "already_published=true" >> $GITHUB_OUTPUT
           else
             echo "already_published=false" >> $GITHUB_OUTPUT

@@ -1,5 +1,5 @@
 name: Bug report
-description: Report a reproducible problem in the NANDA Node SDK
+description: Report a reproducible problem in the Homeport SDK
 title: "bug: <short description>"
 labels: ["bug", "needs-triage"]
 body:
@@ -16,7 +16,7 @@ body:
     id: sdk-version
     attributes:
       label: SDK version
-      description: Output of `pnpm why @nexartis/nexartis-nanda-node-sdk` or the `version` from your `package.json`.
+      description: Output of `pnpm why @nexartis/homeport-sdk` or the `version` from your `package.json`.
       placeholder: "1.2.3"
     validations:
       required: true
@@ -55,9 +55,9 @@ body:
         reliably reproduces the bug. Please remove any secrets or API keys.
       render: typescript
       placeholder: |
-        import { NnnClient } from "@nexartis/nexartis-nanda-node-sdk";
+        import { HomeportClient } from "@nexartis/homeport-sdk";
 
-        const client = new NnnClient({ baseUrl: "https://..." });
+        const client = new HomeportClient({ baseUrl: "https://..." });
         await client.agents.list();
     validations:
       required: true

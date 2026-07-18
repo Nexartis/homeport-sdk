@@ -1,75 +1,57 @@
-# @nexartis/nexartis-nanda-node-sdk
+# Homeport SDK
 
-[![npm version](https://img.shields.io/npm/v/%40nexartis%2Fnexartis-nanda-node-sdk.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk)
-[![npm downloads](https://img.shields.io/npm/dm/%40nexartis%2Fnexartis-nanda-node-sdk.svg)](https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk)
+[![npm version](https://img.shields.io/npm/v/%40nexartis%2Fhomeport-sdk.svg?color=cb3837&logo=npm)](https://www.npmjs.com/package/@nexartis/homeport-sdk)
+[![npm downloads](https://img.shields.io/npm/dm/%40nexartis%2Fhomeport-sdk.svg)](https://www.npmjs.com/package/@nexartis/homeport-sdk)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](./LICENSE)
-[![CI](https://github.com/Nexartis/nexartis-nanda-node-sdk/actions/workflows/ci.yml/badge.svg?branch=prod)](https://github.com/Nexartis/nexartis-nanda-node-sdk/actions/workflows/ci.yml)
-[![Bundle size](https://img.shields.io/bundlephobia/minzip/%40nexartis%2Fnexartis-nanda-node-sdk?label=min%2Bgzip)](https://bundlephobia.com/package/@nexartis/nexartis-nanda-node-sdk)
+[![CI](https://github.com/Nexartis/homeport-sdk/actions/workflows/ci.yml/badge.svg?branch=prod)](https://github.com/Nexartis/homeport-sdk/actions/workflows/ci.yml)
+[![Bundle size](https://img.shields.io/bundlephobia/minzip/%40nexartis%2Fhomeport-sdk?label=min%2Bgzip)](https://bundlephobia.com/package/@nexartis/homeport-sdk)
 [![Provenance](https://img.shields.io/badge/provenance-npmjs-success?logo=npm)](https://docs.npmjs.com/generating-provenance-statements)
 
-> The official TypeScript SDK for the **Nexartis NANDA Node** — agent
-> registration, A2A discovery, trust scoring, DAG workflow orchestration,
-> and NANDA Index resolution.
+> **Official TypeScript SDK for [Homeport](https://github.com/Nexartis/homeport)** — the open-source, self-hostable NANDA node from Nexartis. Register agents, discover peers, score trust, orchestrate DAG workflows, and resolve the NANDA Index from any modern JavaScript runtime.
 
 ---
 
-## What is NANDA Node?
+## What is Homeport?
 
-[**Project NANDA**](https://projectnanda.org) — *Networked AI Agents in
-Decentralized Architecture* — is an open agent discovery protocol that
-originated at **MIT Media Lab**. Think of it as *DNS for AI agents*:
-a decentralized layer for naming, trust, discovery, and orchestration on the
-agentic web.
+[**Project NANDA**](https://projectnanda.org) — *Networked AI Agents in Decentralized Architecture* — is an open agent discovery protocol that originated at **MIT Media Lab**. Think of it as *DNS for AI agents*: a decentralized layer for naming, trust, discovery, and orchestration on the agentic web.
 
-The **Nexartis NANDA Node (NNN)** is Nexartis' open-source implementation of
-the NANDA protocol, running on Cloudflare Workers. A single NNN instance
-provides the NANDA Index, `.well-known/agent-card.json` A2A discovery
-endpoints, agent certification and reputation scoring, compliance auditing,
-webhook delivery, federation (CRDT gossip) with peer nodes, and a DAG
-orchestration engine for multi-agent workflows.
+**Homeport** is Nexartis' open-source, self-hostable implementation of the NANDA protocol, running on Cloudflare Workers. A single Homeport instance provides the NANDA Index, `.well-known/agent-card.json` A2A discovery endpoints, agent certification and reputation scoring, compliance auditing, webhook delivery, federation (CRDT gossip) with peer nodes, and a DAG orchestration engine for multi-agent workflows.
 
-This SDK is the official TypeScript client for that API. It is published
-under **Apache-2.0**, has **zero runtime dependencies** (uses the platform
-`fetch`), runs on Node, Bun, Deno, Cloudflare Workers, and modern browsers,
-and exposes a namespaced, fully-typed surface with built-in retry, circuit
-breaking, response caching, request deduplication, OpenTelemetry trace
-propagation, and typed errors.
+This SDK is the official TypeScript client for that API. It is published under **Apache-2.0**, has **zero runtime dependencies** (uses the platform `fetch`), runs on Node, Bun, Deno, Cloudflare Workers, and modern browsers, and exposes a namespaced, fully-typed surface with built-in retry, circuit breaking, response caching, request deduplication, OpenTelemetry trace propagation, and typed errors.
 
 ## Install
 
 ```bash
-pnpm add @nexartis/nexartis-nanda-node-sdk
+pnpm add @nexartis/homeport-sdk
 ```
 
 <details><summary>npm / yarn / bun / deno</summary>
 
 ```bash
-npm install @nexartis/nexartis-nanda-node-sdk
-yarn  add @nexartis/nexartis-nanda-node-sdk
-bun   add @nexartis/nexartis-nanda-node-sdk
+npm install @nexartis/homeport-sdk
+yarn  add @nexartis/homeport-sdk
+bun   add @nexartis/homeport-sdk
 
 # Deno
-import { NnnClient } from 'npm:@nexartis/nexartis-nanda-node-sdk';
+import { HomeportClient } from 'npm:@nexartis/homeport-sdk';
 ```
 
 </details>
 
-The package is a public, scoped, provenance-signed publish on
-[npmjs.com](https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk).
-**No `.npmrc` or auth token is required** to install it.
+The package is a public, scoped, provenance-signed publish on [npmjs.com](https://www.npmjs.com/package/@nexartis/homeport-sdk). **No `.npmrc` or auth token is required** to install it.
 
 ## 30-second quickstart
 
 ```typescript
-import { NnnClient } from '@nexartis/nexartis-nanda-node-sdk';
+import { HomeportClient } from '@nexartis/homeport-sdk';
 
-const nnn = new NnnClient({
-  baseUrl: 'https://nanda.nexartis.com',
-  apiKey: process.env.NNN_API_KEY,
+const homeport = new HomeportClient({
+  baseUrl: 'https://homeport.example.com',
+  apiKey: process.env.HOMEPORT_API_KEY,
 });
 
 // Register an agent
-await nnn.agents.register({
+await homeport.agents.register({
   agent_id: 'my-agent',
   agent_url: 'https://my-agent.example.com',
   capabilities: ['text-generation', 'code-review'],
@@ -77,13 +59,13 @@ await nnn.agents.register({
 });
 
 // Search for agents
-const agents = await nnn.agents.search({
+const agents = await homeport.agents.search({
   capabilities: ['text-generation'],
   min_trust: 0.8,
 });
 
 // Create and run a DAG workflow
-await nnn.orchestration.createWorkflow({
+await homeport.orchestration.createWorkflow({
   name: 'review-pipeline',
   owner_id: 'orchestrator-1',
   dag: {
@@ -94,25 +76,25 @@ await nnn.orchestration.createWorkflow({
     edges: [{ source: 'analyze', target: 'review' }],
   },
 });
-const result = await nnn.orchestration.runWorkflow('workflow-123', { prompt: 'Analyze this PR' });
+const result = await homeport.orchestration.runWorkflow('workflow-123', { prompt: 'Analyze this PR' });
 
-// Scoped delegation grants (Voice-First 1.0 T1) — issued via the A2A JSON-RPC envelope.
-const grant = await nnn.orchestration.grantDelegation({
+// Scoped delegation grants — issued via the A2A JSON-RPC envelope.
+const grant = await homeport.orchestration.grantDelegation({
   granted_by_did: 'did:web:example-operator',
   granted_to_did: 'did:web:example-delegate',
   granted_scope: ['payments:send'],
   expires_at: Math.floor(Date.now() / 1000) + 300, // unix seconds; must not exceed parent's
 });
-const status = await nnn.orchestration.checkDelegation(grant.delegation_id);
-await nnn.orchestration.revokeDelegation({ delegation_id: grant.delegation_id });
+const status = await homeport.orchestration.checkDelegation(grant.delegation_id);
+await homeport.orchestration.revokeDelegation({ delegation_id: grant.delegation_id });
 
 // Auto-paginate
-for await (const agent of nnn.agents.searchAll({ capabilities: ['code-review'] })) {
+for await (const agent of homeport.agents.searchAll({ capabilities: ['code-review'] })) {
   console.log(agent.agent_id);
 }
 
 // Health check (never throws)
-const healthy = await nnn.isHealthy();
+const healthy = await homeport.isHealthy();
 ```
 
 ## Features
@@ -121,7 +103,7 @@ const healthy = await nnn.isHealthy();
 |---|---|
 | **Zero runtime deps** | Uses platform `fetch`. No transitive bloat. |
 | **Namespaced API** | 7 logical groupings: `agents`, `orchestration`, `trust`, `federation`, `webhooks`, `developers`, `billing`. |
-| **Typed errors** | `NnnError` with `NnnErrorCode` enum — branch on codes, not status numbers. |
+| **Typed errors** | `HomeportError` with `HomeportErrorCode` enum — branch on codes, not status numbers. |
 | **Retry + backoff** | Exponential backoff with jitter, caller abort-signal forwarding. |
 | **Circuit breaker** | Per-endpoint path-grouped breaker; external A2A calls scoped separately. |
 | **Response cache** | Opt-in LRU cache for GETs with TTL + pattern invalidation. |
@@ -135,8 +117,7 @@ const healthy = await nnn.isHealthy();
 
 ## API overview
 
-All methods live on namespaces under the client. The only direct methods on
-`NnnClient` are `health()`, `isHealthy()`, and `deepHealth()`.
+All methods live on namespaces under the client. The only direct methods on `HomeportClient` are `health()`, `isHealthy()`, and `deepHealth()`.
 
 | Namespace | Purpose |
 |---|---|
@@ -148,8 +129,27 @@ All methods live on namespaces under the client. The only direct methods on
 | `client.developers`    | API-key lifecycle + developer earnings. |
 | `client.billing`       | Subscriptions, invoices, checkout sessions, NP-payment verification. |
 
-Full generated reference (every type, every method, every example) is hosted
-at **<https://nnn-sdk.nexartis.com>**.
+Full generated reference (every type, every method, every example) is hosted at **<https://homeport-sdk.nexartis.com>**.
+
+## Migrating from `@nexartis/nexartis-nanda-node-sdk`
+
+Homeport SDK 1.0.0 is the successor to `@nexartis/nexartis-nanda-node-sdk` (last published as 1.2.1 on npm). The wire protocol and namespace shapes are unchanged — only names and env vars moved.
+
+```bash
+pnpm remove @nexartis/nexartis-nanda-node-sdk
+pnpm add @nexartis/homeport-sdk
+```
+
+| Old symbol / env | New symbol / env |
+|---|---|
+| `import { NnnClient } from '@nexartis/nexartis-nanda-node-sdk'` | `import { HomeportClient } from '@nexartis/homeport-sdk'` |
+| `NnnError`, `NnnErrorCode`, `NnnErrorContext` | `HomeportError`, `HomeportErrorCode`, `HomeportErrorContext` |
+| `createNnnLogger`, `NnnLogger` | `createHomeportLogger`, `HomeportLogger` |
+| `NNN_API_KEY` (env) | `HOMEPORT_API_KEY` (env) |
+| Log prefix `[nnn-sdk]` | Log prefix `[homeport-sdk]` |
+| Docs `nnn-sdk.nexartis.com` | Docs `homeport-sdk.nexartis.com` (legacy hostnames 301 for a deprecation window) |
+
+The legacy package is `npm deprecate`d with a pointer to this one. See [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md) for the pre-rebrand release history and [`docs/REBRAND-RUNBOOK.md`](./docs/REBRAND-RUNBOOK.md) for the operator-side migration checklist.
 
 ## Repository docs
 
@@ -160,6 +160,7 @@ Deeper current-state and audit documentation lives in the repo docs:
 - [E2E coverage matrix](./docs/E2E_COVERAGE_MATRIX.md)
 - [Known issues and audit findings](./docs/ISSUES.md)
 - [Roadmap](./docs/ROADMAP.md)
+- [Rebrand runbook](./docs/REBRAND-RUNBOOK.md)
 - [Document inventory](./docs/DOCUMENT_INVENTORY.md)
 
 ## Examples
@@ -172,8 +173,7 @@ Runnable examples live in the [`examples/`](./examples/README.md) directory:
 - [`health-monitoring.ts`](./examples/health-monitoring.ts) — hooks, circuit breaker, deep health.
 - [`workers-agent/`](./examples/workers-agent/README.md) — Cloudflare Workers consumer.
 
-See the [examples README](./examples/README.md) for prerequisites and how to
-run each one.
+See the [examples README](./examples/README.md) for prerequisites and how to run each one.
 
 ## Compatibility
 
@@ -183,44 +183,37 @@ This SDK targets the platform `fetch` API and has no Node-only dependencies.
 |---|---|---|
 | **Node.js 20+**         | ✅ | LTS. `fetch` is global as of Node 18 and stable in 20. |
 | **Bun**                 | ✅ | `fetch` + Web Streams built in. |
-| **Deno**                | ✅ | Install via `npm:@nexartis/nexartis-nanda-node-sdk`. |
+| **Deno**                | ✅ | Install via `npm:@nexartis/homeport-sdk`. |
 | **Cloudflare Workers**  | ✅ | See [`examples/workers-agent`](./examples/workers-agent/README.md). No `nodejs_compat` required for core calls. |
-| **Browsers with `fetch`** | ✅ | Any ES2022 target; CORS must be enabled on the NANDA Node. |
+| **Browsers with `fetch`** | ✅ | Any ES2022 target; CORS must be enabled on the Homeport node. |
 
 ES2022 module output, `"type": "module"`, ships `.d.ts` + sourcemaps.
 
 ## Contributing
 
-We welcome contributions from the community. Read
-[CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow, coding
-conventions, testing requirements, and review process.
+We welcome contributions from the community. Read [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow, coding conventions, testing requirements, and review process.
 
-The standard local gate is `pnpm run validate`. The docs site can be deployed
-to dev with `pnpm run deploy:dev`; use `pnpm run deploy:prod` only on the
-release-owner/final-audit path after validation has passed.
+The standard local gate is `pnpm run validate`. The docs site can be deployed to dev with `pnpm run deploy:dev`; use `pnpm run deploy:prod` only on the release-owner/final-audit path after validation has passed.
 
-All commits must be signed off under the
-[Developer Certificate of Origin](https://developercertificate.org/) — run
-`git commit -s` to add the required `Signed-off-by:` trailer. A DCO status
-check is enforced on every pull request.
+All commits must be signed off under the [Developer Certificate of Origin](https://developercertificate.org/) — run `git commit -s` to add the required `Signed-off-by:` trailer. A DCO status check is enforced on every pull request.
 
 Please also review our [Code of Conduct](./CODE_OF_CONDUCT.md).
 
 ## Governance
 
-Project direction, maintainer responsibilities, and the decision-making
-process are documented in [GOVERNANCE.md](./GOVERNANCE.md).
+Project direction, maintainer responsibilities, and the decision-making process are documented in [GOVERNANCE.md](./GOVERNANCE.md).
 
 ## Security
 
-To report a vulnerability, please follow the disclosure process in
-[SECURITY.md](./SECURITY.md). **Do not** file public GitHub issues for
-security reports.
+To report a vulnerability, please follow the disclosure process in [SECURITY.md](./SECURITY.md). **Do not** file public GitHub issues for security reports.
+
+## Managed Homeport
+
+Homeport is fully self-hostable and Apache-2.0. If you'd rather not run it yourself, Nexartis operates managed Homeport nodes at **[cubicube.com](https://cubicube.com)**.
 
 ## License
 
-Released under the **Apache License, Version 2.0**. See [LICENSE](./LICENSE)
-for the full text and [NOTICE](./NOTICE) for attribution requirements.
+Released under the **Apache License, Version 2.0**. See [LICENSE](./LICENSE) for the full text and [NOTICE](./NOTICE) for attribution requirements.
 
 ```
 Copyright (c) 2025-2026 Nexartis, LLC and contributors.

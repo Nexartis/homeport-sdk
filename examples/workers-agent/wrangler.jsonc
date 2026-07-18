@@ -2,14 +2,14 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	/*
 	 * Minimal Cloudflare Workers example consuming
-	 * @nexartis/nexartis-nanda-node-sdk from the edge.
+	 * @nexartis/homeport-sdk from the edge.
 	 *
 	 * Run locally: pnpm run dev        (→ http://localhost:8787/health)
 	 * Deploy dev:  pnpm run deploy:dev
 	 * Deploy prod: pnpm run deploy:prod
 	 *
 	 * Configure secrets before deploying:
-	 *   wrangler secret put NNN_API_KEY
+	 *   wrangler secret put HOMEPORT_API_KEY
 	 */
 	"name": "example-workers-agent",
 	"main": "src/index.ts",
@@ -19,19 +19,19 @@
 		"enabled": true
 	},
 	"vars": {
-		"NNN_BASE_URL": "https://nanda.nexartis.com"
+		"HOMEPORT_BASE_URL": "https://homeport.example.com"
 	},
 	"env": {
 		"dev": {
 			"name": "example-workers-agent-dev",
 			"vars": {
-				"NNN_BASE_URL": "https://nanda.nexartis.com"
+				"HOMEPORT_BASE_URL": "https://homeport.example.com"
 			}
 		},
 		"prod": {
 			"name": "example-workers-agent",
 			"vars": {
-				"NNN_BASE_URL": "https://nanda.nexartis.com"
+				"HOMEPORT_BASE_URL": "https://homeport.example.com"
 			}
 		}
 	}

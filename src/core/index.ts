@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * @nexartis/nexartis-nanda-node-sdk/core
+ * @nexartis/homeport-sdk/core
  *
- * Main entry point for the NNN SDK core module.
+ * Main entry point for the Homeport SDK core module.
  * Re-exports all public types, classes, and utility functions.
  */
 
 // Client
-export { NnnClient, SDK_VERSION } from './client.js';
+export { HomeportClient, SDK_VERSION } from './client.js';
 
 // Namespace classes
 export {
@@ -28,11 +28,11 @@ export type { CircuitBreakerState } from './circuit-breaker.js';
 
 // Types
 export type {
-	NnnConfig,
-	NnnRetryConfig,
-	NnnCacheConfig,
-	NnnHealthStatus,
-	NnnAgent,
+	HomeportConfig,
+	HomeportRetryConfig,
+	HomeportCacheConfig,
+	HomeportHealthStatus,
+	HomeportAgent,
 	RegisterAgentRequest,
 	RegisterAgentResponse,
 	SearchAgentsParams,
@@ -40,7 +40,7 @@ export type {
 	AgentCard,
 	AgentFacts,
 	NandaIndex,
-	NnnStats,
+	HomeportStats,
 	DagNode,
 	DagEdge,
 	DagDefinition,
@@ -61,8 +61,8 @@ export type {
 	IndexDiffResult,
 	IndexChangeCallback,
 	IndexChangeEvent,
-	NnnHooks,
-	NnnCircuitBreakerConfig,
+	HomeportHooks,
+	HomeportCircuitBreakerConfig,
 	PaginatedResponse,
 	WorkflowStep,
 	WorkflowDetail,
@@ -141,12 +141,12 @@ export type {
 } from './types.js';
 
 // Errors
-export { NnnError, NnnErrorCode } from './errors.js';
-export type { NnnErrorContext } from './errors.js';
+export { HomeportError, HomeportErrorCode } from './errors.js';
+export type { HomeportErrorContext } from './errors.js';
 
 // Logger
-export { createNnnLogger } from './logger.js';
-export type { NnnLogger } from './logger.js';
+export { createHomeportLogger } from './logger.js';
+export type { HomeportLogger } from './logger.js';
 
 // Retry (standalone utility)
 export { fetchWithRetry, normalizeBaseUrl, calculateBackoffDelay, isTransientError, DEFAULT_RETRY_CONFIG } from './retry.js';

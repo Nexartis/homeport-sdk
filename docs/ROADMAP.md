@@ -1,4 +1,4 @@
-# Nexartis NANDA Node SDK Roadmap
+# Homeport SDK Roadmap
 
 ## Executive summary
 
@@ -11,7 +11,7 @@ This roadmap captures future-facing work discovered during the full agentic audi
 | Documentation confidence | Add Playwright smoke checks for the docs landing page and generated API reference. | The repo now has a deployable public docs site but no browser-level regression coverage. |
 | Accessibility confidence | Add a lightweight accessibility smoke test for the docs landing page. | The public docs site has interactive install tabs and copy controls. |
 | Developer experience | Decide whether to add a dedicated formatter/linter or continue using TypeScript as the lightweight check gate. | Current CI is right-sized but does not enforce formatting beyond TypeScript compilation. |
-| Version automation | Generate `src/core/version.ts` from `package.json` during release or validation. | Avoid future drift between package metadata and runtime User-Agent/version exports. |
+| Version automation (resolved 1.0.0) | `scripts/gen-version.mjs` generates `src/core/version.ts` from `package.json`; wired as `prebuild`. | Resolved by the Homeport rebrand; kept here for provenance. |
 
 ## Later roadmap
 

@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Webhooks Namespace
+ * Homeport SDK — Webhooks Namespace
  *
  * Accessed via `client.webhooks.*`.
  *
  * @module core/namespaces/webhooks
  */
 
-import type { NnnClientInternals } from '../namespace-helpers.js';
+import type { HomeportClientInternals } from '../namespace-helpers.js';
 import type {
 	CreateWebhookRequest,
 	CreateWebhookResponse,
@@ -16,7 +16,7 @@ import type {
 
 export class WebhooksNamespace {
 	/** @internal */
-	constructor(private readonly _client: NnnClientInternals) {}
+	constructor(private readonly _client: HomeportClientInternals) {}
 
 	/** GET /api/webhooks — List webhook subscriptions. */
 	async list(): Promise<{ subscriptions: WebhookSubscription[] }> {

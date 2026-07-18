@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Type Definitions
+ * Homeport SDK — Type Definitions
  *
- * TypeScript contracts for the Nexartis NANDA Node REST + A2A API.
+ * TypeScript contracts for the Homeport REST + A2A API.
  * Portable — no framework dependencies.
  *
  * @module core/types
@@ -11,7 +11,7 @@
 // ── Client Configuration ────────────────────────────────────────────
 
 /** Lifecycle hooks for request/response interception. */
-export interface NnnHooks {
+export interface HomeportHooks {
 	/** Called before every request. Can inspect the URL and mutate `init` (e.g. headers). */
 	beforeRequest?: (url: string, init: RequestInit) => void | Promise<void>;
 	/**
@@ -30,7 +30,7 @@ export interface NnnHooks {
 }
 
 /** Circuit breaker configuration. */
-export interface NnnCircuitBreakerConfig {
+export interface HomeportCircuitBreakerConfig {
 	/** Number of consecutive failures before tripping the circuit. Default: 5. */
 	failureThreshold?: number;
 	/** Cooldown period in ms before allowing a probe request. Default: 30000. */
@@ -55,33 +55,33 @@ export interface NnnCircuitBreakerConfig {
 }
 
 /** Response cache configuration. */
-export interface NnnCacheConfig {
+export interface HomeportCacheConfig {
 	/** Default TTL in milliseconds. Default: 60000 (1 minute). */
 	defaultTtlMs?: number;
 	/** Maximum number of cached entries. Default: 256. Oldest entries are evicted when exceeded. */
 	maxEntries?: number;
 }
 
-export interface NnnConfig {
-	/** NNN base URL (e.g. 'https://nanda.nexartis.com') */
+export interface HomeportConfig {
+	/** Homeport base URL (e.g. 'https://homeport.example.com') */
 	baseUrl: string;
 	/** Bearer API key for authenticated endpoints */
 	apiKey?: string;
 	/** Enable debug logging */
 	verbose?: boolean;
 	/** Override default retry configuration */
-	retryConfig?: NnnRetryConfig;
+	retryConfig?: HomeportRetryConfig;
 	/** Request/response lifecycle hooks */
-	hooks?: NnnHooks;
+	hooks?: HomeportHooks;
 	/** Circuit breaker configuration. Pass `false` to disable. */
-	circuitBreaker?: NnnCircuitBreakerConfig | false;
+	circuitBreaker?: HomeportCircuitBreakerConfig | false;
 	/** OpenTelemetry trace context to propagate. */
 	traceContext?: { traceparent?: string; tracestate?: string };
 	/** Opt-in response caching for GET requests. */
-	cache?: NnnCacheConfig;
+	cache?: HomeportCacheConfig;
 }
 
-export interface NnnRetryConfig {
+export interface HomeportRetryConfig {
 	maxRetries?: number;
 	baseDelayMs?: number;
 	maxDelayMs?: number;
@@ -90,7 +90,7 @@ export interface NnnRetryConfig {
 
 // ── Health ───────────────────────────────────────────────────────────
 
-export interface NnnHealthStatus {
+export interface HomeportHealthStatus {
 	status: 'ok' | 'degraded';
 	timestamp: string;
 	environment: string;
@@ -105,7 +105,7 @@ export interface NnnHealthStatus {
 
 // ── Agent Registry ──────────────────────────────────────────────────
 
-export interface NnnAgent {
+export interface HomeportAgent {
 	agent_id: string;
 	agent_url: string;
 	api_url?: string;
@@ -202,7 +202,7 @@ export interface NandaIndex {
 
 // ── Stats ───────────────────────────────────────────────────────────
 
-export interface NnnStats {
+export interface HomeportStats {
 	totalAgents: number;
 	totalCapabilities: number;
 	recentRegistrations: number;
@@ -269,7 +269,7 @@ export interface RoutingRequest {
 }
 
 export interface RoutingResult {
-	targetAgent: NnnAgent;
+	targetAgent: HomeportAgent;
 	score: number;
 	protocol: string;
 	latencyEstimateMs?: number;
@@ -329,7 +329,7 @@ export interface UpdateAgentRequest {
 export interface AgentRefreshResult {
 	status: string;
 	message: string;
-	agent?: NnnAgent;
+	agent?: HomeportAgent;
 }
 
 // ── Workflow Execution & Monitoring ─────────────────────────────
@@ -371,17 +371,17 @@ export interface StepRun {
 
 export interface IndexDiffResult {
 	since: string;
-	added: NnnAgent[];
+	added: HomeportAgent[];
 	removed: string[];
-	updated: NnnAgent[];
+	updated: HomeportAgent[];
 }
 
 export type IndexChangeCallback = (event: IndexChangeEvent) => void | Promise<void>;
 
 /** Discriminated union for index change events. 'removed' only carries the agentId. */
 export type IndexChangeEvent =
-	| { type: 'added'; agent: NnnAgent; timestamp: string }
-	| { type: 'updated'; agent: NnnAgent; timestamp: string }
+	| { type: 'added'; agent: HomeportAgent; timestamp: string }
+	| { type: 'updated'; agent: HomeportAgent; timestamp: string }
 	| { type: 'removed'; agentId: string; timestamp: string };
 
 // ── Sprint 1: Orchestration CRUD ──────────────────────────────────

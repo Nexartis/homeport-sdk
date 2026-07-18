@@ -1,151 +1,45 @@
 # Changelog
 
-All notable changes to the Nexartis NANDA Node SDK will be documented in this file.
+All notable changes to the Homeport SDK will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
-and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
-## [1.3.0](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.2.2...v1.3.0) (2026-07-06)
+## [1.0.0] - 2026-07-18
 
+### Rebrand — `@nexartis/nexartis-nanda-node-sdk` → `@nexartis/homeport-sdk`
 
-### Features
+The SDK is republished as **`@nexartis/homeport-sdk`** 1.0.0. It supersedes `@nexartis/nexartis-nanda-node-sdk` (last published as 1.2.1 on npm; the internal 1.3.0 line never shipped). The wire protocol, namespace surface, and error semantics are unchanged — only names, env vars, log prefix, and docs domain moved.
 
-* Voice-First 1.0 T1 delivery and docs consolidation ([#42](https://github.com/Nexartis/nexartis-nanda-node-sdk/issues/42)) ([b222bb4](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/b222bb40728d074f50919e25cc53b3f640b63f9a))
+#### Added
 
-## [1.2.2](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.2.1...v1.2.2) (2026-06-19)
+- New package identity: `@nexartis/homeport-sdk` published on npmjs with SLSA provenance from `Nexartis/homeport-sdk`.
+- Public docs site at **<https://homeport-sdk.nexartis.com>** (dev: `homeport-sdk-dev.nexartis.com`).
+- `redirect-worker/` — Cloudflare Worker that 301-redirects legacy `nnn-sdk[-dev].nexartis.com` hostnames to the new docs origin for the announced deprecation window.
+- `.github/workflows/deploy-redirect.yml` — deploys the redirect worker on push to `prod`.
+- `scripts/gen-version.mjs` and `prebuild` script — `src/core/version.ts` is now regenerated from `package.json` on every build, eliminating the version-drift class of bugs.
+- Playwright coverage under `typedoc-site/tests/` for the public docs landing page and generated API reference (resolves `NNN-SDK-AUDIT-010`).
+- Namespace-level unit tests: `src/core/namespaces/{agents,orchestration,trust}.test.ts` — 202 tests green.
+- `docs/REBRAND-RUNBOOK.md` — operator checklist for the migration (repo rename, tag relocation, custom-domain provisioning, publish gate, deprecate, downstream doc updates).
 
+#### Changed — symbol and env migration
 
-### Bug Fixes
+| Old (pre-1.0.0) | New (1.0.0) |
+|---|---|
+| `NnnClient` | `HomeportClient` |
+| `NnnError` | `HomeportError` |
+| `NnnErrorCode` | `HomeportErrorCode` |
+| `NnnErrorContext` | `HomeportErrorContext` |
+| `createNnnLogger`, `NnnLogger` | `createHomeportLogger`, `HomeportLogger` |
+| `NNN_*` environment variables (e.g. `NNN_API_KEY`) | `HOMEPORT_*` (e.g. `HOMEPORT_API_KEY`) |
+| Log prefix `[nnn-sdk]` | `[homeport-sdk]` |
+| Docs domain `nnn-sdk.nexartis.com` | `homeport-sdk.nexartis.com` (legacy hostnames 301 during the deprecation window) |
+| Repository `github.com/Nexartis/nexartis-nanda-node-sdk` | `github.com/Nexartis/homeport-sdk` |
 
-* **RELEASE:** address SDK release review findings ([dad82d1](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/dad82d121ba50a0858e4654d3a6103f420f81983))
-* **RELEASE:** address SDK release review findings ([2874a01](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/2874a0165d08af1365b9391639cc08d536e89829))
+#### Deprecated
 
-## [1.2.1](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.2.0...v1.2.1) (2026-04-20)
+- `@nexartis/nexartis-nanda-node-sdk` on npm is marked deprecated with a pointer to `@nexartis/homeport-sdk`. See [`docs/REBRAND-RUNBOOK.md`](./docs/REBRAND-RUNBOOK.md) for the exact `npm deprecate` command and downstream update sequence.
 
+#### Notes
 
-### Bug Fixes
-
-* **ci:** add npm-publish environment to publish job for OIDC trusted publishing ([817575a](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/817575a32ce36831c722029f21a4e04a2807d2da))
-* **ci:** add npm-publish environment to publish job for OIDC trusted publishing ([f541c26](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/f541c2643dfa9509cb8215b7e5a26d123567d2ea))
-* **ci:** publish via NPM_TOKEN to unblock v1.2.0 release ([ea8ec21](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/ea8ec21837a1b034256b645ac55a15201b4b8e30))
-* **ci:** switch publish to 'npm publish' (not 'pnpm publish') for OIDC ([f162e4e](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/f162e4edc8aab7cb60be2daa7b408fc533b15952))
-* **ci:** switch to 'npm publish' for OIDC Trusted Publishing (with NPM_TOKEN fallback) ([08fdc4a](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/08fdc4a37b34c6241aa2ab8b2b1b5b937cabee0e))
-
-## [1.2.0](https://github.com/Nexartis/nexartis-nanda-node-sdk/compare/v1.1.0...v1.2.0) (2026-04-20)
-
-
-### Features
-
-* **docs-site:** switch docs domain to nnn-sdk.nexartis.com ([1a076d1](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/1a076d10ac1cf0d75a828f32526b3ad948689799))
-* **docs-site:** switch docs domain to nnn-sdk.nexartis.com ([2cd78d9](https://github.com/Nexartis/nexartis-nanda-node-sdk/commit/2cd78d9092586bbf08236aba0271f08ab50ad290))
-
-## [1.1.0] - 2026-04-19
-
-### Added
-- **Apache-2.0 licensing** — `LICENSE` (Apache 2.0 full text) and `NOTICE` at the
-  repo root; `SPDX-License-Identifier: Apache-2.0` headers on every `src/**/*.ts`.
-- **Community health files** — `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`,
-  `SECURITY.md`, `GOVERNANCE.md`, and GitHub issue + pull-request templates.
-- **Developer Certificate of Origin** — enforced via a `dco.yml` GitHub Actions
-  workflow; all commits require a `Signed-off-by:` trailer.
-- **CI and release-please workflows** — `ci.yml` (typecheck + test matrix on
-  Node 20 + 22, optional `size-limit` gate) and `release-please.yml`
-  (automated conventional-commit release PRs). CodeQL runs via the
-  org-level default setup and surfaces alerts on every PR.
-- **TypeDoc documentation site** — root `typedoc.json` generates the API
-  reference; an in-repo Cloudflare Worker (`typedoc-site/`) serves it at
-  `sdk.nandanetwork.link` (prod) and `sdk-dev.nandanetwork.link` (dev).
-  `deploy-docs.yml` builds + deploys the site on push to `prod`.
-- **`size-limit` bundle-size budgets** — `/core` ≤ 50 KB and root ≤ 80 KB
-  (min+gzip), enforced via `pnpm run size` and run in CI.
-- **`workers-agent` example** — `examples/workers-agent/` minimal Cloudflare
-  Workers consumer demonstrating `NnnClient` on the edge.
-- **Public README** — badges, install instructions, features/API matrices,
-  compatibility matrix (Node 20+, Bun, Deno, Workers, browsers), contributing
-  and governance pointers.
-
-### Changed
-- **`publishConfig` → public npmjs with provenance** — switched from GitHub
-  Packages (`npm.pkg.github.com`) to `registry.npmjs.org` with
-  `"access": "public"` and `"provenance": true`. CI publishes via OIDC trusted
-  publishing (no long-lived `NPM_TOKEN`).
-- **`license`** — `UNLICENSED` → `Apache-2.0`.
-- **`package.json` `files`** — now includes `LICENSE`, `NOTICE`, `README.md`,
-  and `CHANGELOG.md` so the published tarball carries the required legal
-  artifacts.
-- **`package.json` metadata** — polished public-facing `description`; added
-  `homepage` (`https://sdk.nandanetwork.link`), `bugs.url`, and `apache-2.0`,
-  `oss`, `cloudflare-workers` keywords.
-- **`package.json` scripts** — added `docs`, `docs:serve`, `size`, `size:why`,
-  and `prepack` (`clean && build`).
-- **Examples** — imports switched from `../src/core` to
-  `@nexartis/nexartis-nanda-node-sdk`; SPDX headers + extended JSDoc added.
-
-### Migration Notes
-- **Consumers of `@nexartis/nexartis-nanda-node-sdk` no longer need a
-  `.npmrc`** override for this package. If your `.npmrc` contained a line
-  like `@nexartis:registry=https://npm.pkg.github.com` solely for this SDK,
-  you can remove it — `pnpm add @nexartis/nexartis-nanda-node-sdk` now
-  resolves from the public npmjs registry with no auth. Keep the override
-  only if you still consume other `@nexartis/*` packages from GitHub Packages.
-- **No runtime API changes.** All namespaces, methods, types, and error codes
-  are source-compatible with `1.0.0`.
-
-## [1.0.0] - 2026-03-21
-
-### Added
-
-#### Sprint D — Namespace Refactor & Clean API
-- **Namespaced API** — all methods are now accessed through 7 namespace accessors:
-  `client.agents`, `client.orchestration`, `client.trust`, `client.federation`,
-  `client.webhooks`, `client.developers`, `client.billing`.
-- Namespace classes extend `BaseNamespace` and use `NnnClientInternals` bridge for
-  shared infrastructure (circuit breaker, caching, request dedup, idempotency).
-- Lazy-initialized singleton pattern — namespaces are created on first access.
-- Only `health()`, `isHealthy()`, and `deepHealth()` remain as direct methods on `NnnClient`.
-
-#### Sprint C — Missing Endpoint Coverage
-- `listWorkflowRuns()`, `listDeveloperKeys()`, `createDeveloperKey()`, `revokeDeveloperKey()`.
-- `deprecateAgent()`, `tombstoneAgent()`, `listAgentVersions()`, `createAgentVersion()`.
-- `scanCompliance()`, `getTrustGraph()`, `getTrustPath()`, `getBehaviorAnalytics()`.
-- `verifyNpPayment()`.
-
-#### Sprint B — Convention Alignment
-- Standardized all query params and payloads to `snake_case`.
-- `Idempotency-Key` header on all mutating requests.
-- In-flight GET request deduplication.
-- Opt-in `ResponseCache` with TTL and pattern invalidation.
-- Standalone `CircuitBreaker` module.
-- Standardized `User-Agent` format with `SDK_VERSION` from `version.ts`.
-
-#### Phase 0 — Immediate Hardening
-- Centralized `SDK_VERSION` constant — no more hardcoded version strings.
-- `runWorkflow()` method for executing DAG workflows.
-- `putJson()` and `deleteJson()` private HTTP helpers.
-- `@planned` JSDoc annotations for future-phase types.
-- Re-exported `DEFAULT_RETRY_CONFIG` and `SDK_VERSION` from core barrel.
-
-#### Phase 1 — Complete NANDA Protocol Surface
-- **A2A JSON-RPC Client** — `sendA2ARequest()` with auto-discovery and optional SSE streaming.
-- **Agent Lifecycle** — `updateAgent()`, `deleteAgent()`, `refreshAgent()` CRUD methods.
-- **Routing Engine** — `routeRequest()` with skill, trust, and strategy parameters.
-- **Workflow Monitoring** — `getWorkflowStatus()`, `cancelWorkflowRun()`, `streamWorkflowEvents()`.
-- **Index Sync** — `subscribeToIndex()` (polling) and `diffIndex()` for change detection.
-
-#### Phase 2 — Enterprise Reliability
-- **Request/Response Hooks** — `beforeRequest`, `afterResponse`, `onError` lifecycle hooks on `NnnConfig`.
-- **OpenTelemetry Tracing** — `traceparent`/`tracestate` header propagation via config and `setTraceContext()`.
-- **Circuit Breaker** — Auto-trip after N consecutive failures with configurable cooldown.
-- **Structured Error Context** — `NnnError.context` carries `durationMs` on all errors.
-- **Deep Health** — `deepHealth()` returns per-subsystem check status and a `degradedChecks` array.
-
-#### Phase 3 — Developer Experience
-- **Pagination Iterators** — `searchAgentsAll()` and `listAgentsAll()` `AsyncGenerator` methods for auto-pagination.
-- **Code Examples** — `examples/` directory with register-and-discover, orchestrate-workflow, a2a-routing, and health-monitoring examples.
-- This changelog.
-
-### Changed
-- `NnnConfig` now accepts `hooks`, `circuitBreaker`, and `traceContext` options.
-- `NnnError` constructor accepts optional `NnnErrorContext` parameter.
-- `NnnError.fromStatus()` and `NnnError.fromNetworkError()` accept optional context.
-- `SearchAgentsParams` now includes `limit` and `cursor` for pagination.
+- Version number resets. `1.0.0` reflects the fresh package identity on npm, not a rewrite of the underlying code — consumers migrating from `@nexartis/nexartis-nanda-node-sdk@1.2.1` will find the runtime API source-compatible after applying the symbol migration above.
+- Historical audit findings keep their `NNN-SDK-AUDIT-###` IDs in `docs/ISSUES.md` for provenance.

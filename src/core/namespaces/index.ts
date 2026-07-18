@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Namespace barrel export.
+ * Homeport SDK — Namespace barrel export.
  * @module core/namespaces
  */
 

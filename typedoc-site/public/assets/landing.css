@@ -1,5 +1,5 @@
 /* ====================================================================
- * Nexartis NANDA Node SDK — landing page styles
+ * Homeport SDK — landing page styles
  * Palette: primary #6942e6 · accent #0cd3da · bg #0a0a0f
  * ==================================================================== */
 :root {
@@ -232,6 +232,9 @@ h1 { font-size: clamp(2.25rem, 5vw, 3.75rem); font-weight: 800; margin: 0 0 1rem
 }
 .deploy-bullets li { color: var(--text-muted); font-size: 0.95rem; display: flex; align-items: flex-start; gap: 0.65rem; }
 .deploy-ico { font-size: 1.1rem; line-height: 1.4; flex-shrink: 0; }
+.deploy-managed { color: var(--text-dim); font-size: 0.92rem; margin: 1.5rem 0 0; padding-top: 1.25rem; border-top: 1px solid var(--border); max-width: 48rem; line-height: 1.65; }
+.deploy-managed a { color: var(--accent-400); text-decoration: none; }
+.deploy-managed a:hover { text-decoration: underline; }
 
 /* ---------- footer ---------- */
 .site-footer { border-top: 1px solid var(--border); padding: 3rem 0 2.5rem; margin-top: 2rem; background: rgba(10, 10, 15, 0.6); }

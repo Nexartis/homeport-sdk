@@ -1,9 +1,9 @@
-// Nexartis NANDA Node SDK — landing page enhancements
+// Homeport SDK — landing page enhancements
 // Small, dependency-free: install-command tab switcher + copy-to-clipboard.
 (function () {
 	'use strict';
 
-	var PKG = '@nexartis/nexartis-nanda-node-sdk';
+	var PKG = '@nexartis/homeport-sdk';
 	var COMMANDS = {
 		pnpm: 'pnpm add ' + PKG,
 		npm: 'npm install ' + PKG,
