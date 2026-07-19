@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Cloudflare Worker that 301-redirects the legacy nnn-sdk[-dev].nexartis.com hostnames to homeport-sdk[-dev].nexartis.com for the announced deprecation window.",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --env dev",
     "deploy:dev": "wrangler deploy --env dev",
     "deploy:prod": "wrangler deploy --env prod"
   },

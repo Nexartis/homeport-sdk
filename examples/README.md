@@ -43,4 +43,4 @@ npx tsx examples/<example>.ts
 ## Full API reference
 
 Generated TypeDoc for every public export is hosted at
-<https://homeport.nexartis.com>.
+<https://homeport-sdk.nexartis.com>.
