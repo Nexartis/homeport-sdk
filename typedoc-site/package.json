@@ -12,7 +12,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.48.0",
-    "vitest": "^2.1.0",
+    "vitest": "^3.2.6",
     "wrangler": "^4.103.0"
   },
   "packageManager": "pnpm@10.28.1",
