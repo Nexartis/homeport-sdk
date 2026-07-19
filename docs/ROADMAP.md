@@ -4,6 +4,19 @@
 
 This roadmap captures future-facing work discovered during the full agentic audit. Current product behavior belongs in `PRODUCT_ARCHITECTURE.md`; current gaps and risks belong in `ISSUES.md`.
 
+## 1.1.0 (planned)
+
+Additive, non-breaking SDK coverage for node surfaces shipped in Homeport 1.0. Planned and subject to change; endpoint shapes will be confirmed against the node's route handlers before implementation.
+
+- New `admission` namespace — Yanez proof-of-human delegated admission: `startChallenge`, `submitCallback`, `getStatus`.
+- `agents.getSigningKeys(version)` — public signing-key sets from `/.well-known/keys/[version]` (verify attestations and signatures client-side).
+- `agents.getUcp()` — the `/.well-known/ucp` capability descriptor.
+- `orchestration.streamRunEvents(runId, onEvent)` — SSE streaming of workflow run progress.
+- New `switchboard` namespace — `discover`, `resync`, `export`, `getAdapters`.
+- `billing` FX + wallets — `listCurrencies`, `getRates`, `convert`, `getWallet`.
+- `trust.getCrossRegistry()` and orchestration conflict detail/resolve.
+- Reconcile or remove the orphan `agents.updateStatus` / `agents.refresh` methods against the current node surface.
+
 ## Near-term roadmap
 
 | Theme | Candidate work | Why it matters |
