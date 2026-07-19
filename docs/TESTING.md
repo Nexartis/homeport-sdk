@@ -1,4 +1,4 @@
-# Nexartis NANDA Node SDK Testing Strategy
+# Homeport SDK Testing Strategy
 
 ## Executive summary
 

@@ -2,7 +2,7 @@
   "name": "@example/workers-agent",
   "version": "0.0.0",
   "private": true,
-  "description": "Minimal Cloudflare Workers consumer of @nexartis/nexartis-nanda-node-sdk.",
+  "description": "Minimal Cloudflare Workers consumer of @nexartis/homeport-sdk.",
   "type": "module",
   "scripts": {
     "dev": "wrangler dev",
@@ -11,7 +11,7 @@
     "deploy:prod": "wrangler deploy --env prod"
   },
   "dependencies": {
-    "@nexartis/nexartis-nanda-node-sdk": "^1.2.2"
+    "@nexartis/homeport-sdk": "^1.0.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260418.1",

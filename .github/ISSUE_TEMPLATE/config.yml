@@ -1,8 +1,8 @@
 blank_issues_enabled: false
 contact_links:
   - name: 💬 Questions & discussions
-    url: https://github.com/Nexartis/nexartis-nanda-node-sdk/discussions
+    url: https://github.com/Nexartis/homeport-sdk/discussions
     about: For usage questions, integration help, and open-ended discussion.
   - name: 🔒 Report a security vulnerability
-    url: https://github.com/Nexartis/nexartis-nanda-node-sdk/security/advisories/new
+    url: https://github.com/Nexartis/homeport-sdk/security/advisories/new
     about: Coordinated disclosure via GitHub Private Vulnerability Reporting, or email security@nexartis.com. See SECURITY.md.

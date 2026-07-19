@@ -1,5 +1,5 @@
 <!--
-Thanks for contributing to the Nexartis NANDA Node SDK.
+Thanks for contributing to the Homeport SDK.
 
 Please fill in the sections below and tick the checklist. Items that do not
 apply can be marked with `n/a` rather than removed.

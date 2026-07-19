@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Developers Namespace
+ * Homeport SDK — Developers Namespace
  *
  * Accessed via `client.developers.*`.
  * Covers developer key management and earnings.
@@ -8,7 +8,7 @@
  * @module core/namespaces/developers
  */
 
-import type { NnnClientInternals } from '../namespace-helpers.js';
+import type { HomeportClientInternals } from '../namespace-helpers.js';
 import type {
 	DeveloperApiKey,
 	CreateDeveloperKeyRequest,
@@ -19,7 +19,7 @@ import type {
 
 export class DevelopersNamespace {
 	/** @internal */
-	constructor(private readonly _client: NnnClientInternals) {}
+	constructor(private readonly _client: HomeportClientInternals) {}
 
 	// ── API Keys ──────────────────────────────────────────────────────
 

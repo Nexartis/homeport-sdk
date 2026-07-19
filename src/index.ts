@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * @nexartis/nexartis-nanda-node-sdk
+ * @nexartis/homeport-sdk
  *
  * Root entry point — re-exports core for convenience.
  */

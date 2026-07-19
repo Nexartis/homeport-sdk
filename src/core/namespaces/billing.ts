@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Billing Namespace
+ * Homeport SDK — Billing Namespace
  *
  * Accessed via `client.billing.*`.
  * Covers subscriptions, invoices, checkout sessions, and NP payment verification.
@@ -8,7 +8,7 @@
  * @module core/namespaces/billing
  */
 
-import type { NnnClientInternals } from '../namespace-helpers.js';
+import type { HomeportClientInternals } from '../namespace-helpers.js';
 import type {
 	CreateSubscriptionRequest,
 	CreateInvoiceRequest,
@@ -20,7 +20,7 @@ import type {
 
 export class BillingNamespace {
 	/** @internal */
-	constructor(private readonly _client: NnnClientInternals) {}
+	constructor(private readonly _client: HomeportClientInternals) {}
 
 	// ── Subscriptions ───────────────────────────────────────────
 

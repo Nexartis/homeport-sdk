@@ -5,7 +5,7 @@
   "excludePrivate": true,
   "excludeInternal": true,
   "readme": "./README.md",
-  "name": "@nexartis/nexartis-nanda-node-sdk",
+  "name": "@nexartis/homeport-sdk",
   "plugin": ["typedoc-plugin-mdn-links"],
   "navigation": {
     "includeCategories": true

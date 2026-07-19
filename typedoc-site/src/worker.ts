@@ -1,5 +1,9 @@
 /**
- * Cloudflare Worker entrypoint for the Nexartis NANDA Node SDK docs site.
+ * Cloudflare Worker entrypoint for the Homeport SDK docs site.
+ *
+ * Homeport is the open-source self-hostable NANDA node published by
+ * Nexartis. This worker serves the @nexartis/homeport-sdk API reference
+ * at homeport-sdk.nexartis.com (prod) / homeport-sdk-dev.nexartis.com (dev).
  *
  * Responsibilities:
  *   - Serve the static assets produced by TypeDoc + the branded landing page
@@ -49,13 +53,13 @@ function withSecurityHeaders(response: Response): Response {
 }
 
 function renderNotFound(env: Env): Response {
-	const canonical = env.DOCS_CANONICAL_URL ?? "https://nnn-sdk.nexartis.com";
+	const canonical = env.DOCS_CANONICAL_URL ?? "https://homeport-sdk.nexartis.com";
 	const body = `<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>404 · Nexartis NANDA Node SDK docs</title>
+<title>404 · Homeport SDK docs</title>
 <meta name="theme-color" content="#0a0a0f" />
 <link rel="preconnect" href="https://rsms.me/" />
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />

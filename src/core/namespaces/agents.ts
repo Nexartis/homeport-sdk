@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Agents Namespace
+ * Homeport SDK — Agents Namespace
  *
  * Accessed via `client.agents.*`.
  * Covers registration, lookup, search, lifecycle, facts, and versioning.
@@ -8,9 +8,9 @@
  * @module core/namespaces/agents
  */
 
-import type { NnnClientInternals } from '../namespace-helpers.js';
+import type { HomeportClientInternals } from '../namespace-helpers.js';
 import type {
-	NnnAgent,
+	HomeportAgent,
 	RegisterAgentRequest,
 	RegisterAgentResponse,
 	SearchAgentsParams,
@@ -29,7 +29,7 @@ import type {
 
 export class AgentsNamespace {
 	/** @internal */
-	constructor(private readonly _client: NnnClientInternals) {}
+	constructor(private readonly _client: HomeportClientInternals) {}
 
 	// ── Registration & Lookup ──────────────────────────────────────
 
@@ -40,12 +40,12 @@ export class AgentsNamespace {
 	}
 
 	/** GET /lookup/:id — Lookup a single agent by ID. */
-	async lookup(agentId: string): Promise<NnnAgent> {
+	async lookup(agentId: string): Promise<HomeportAgent> {
 		return this._client.getJson(`/lookup/${encodeURIComponent(agentId)}`, 'agents.lookup');
 	}
 
 	/** GET /search?q=&capabilities=&tags= — Search agents. */
-	async search(params: SearchAgentsParams = {}): Promise<NnnAgent[]> {
+	async search(params: SearchAgentsParams = {}): Promise<HomeportAgent[]> {
 		const sp = new URLSearchParams();
 		if (params.q) sp.set('q', params.q);
 		if (params.capabilities?.length) sp.set('capabilities', params.capabilities.join(','));
@@ -60,7 +60,7 @@ export class AgentsNamespace {
 	}
 
 	/** GET /list — List all registered agents. */
-	async list(): Promise<NnnAgent[]> {
+	async list(): Promise<HomeportAgent[]> {
 		return this._client.getJson('/list', 'agents.list');
 	}
 
@@ -72,7 +72,7 @@ export class AgentsNamespace {
 	}
 
 	/** Auto-paginating search — yields agents one at a time across all pages. */
-	async *searchAll(params: SearchAgentsParams = {}): AsyncGenerator<NnnAgent> {
+	async *searchAll(params: SearchAgentsParams = {}): AsyncGenerator<HomeportAgent> {
 		let cursor: string | undefined = params.cursor;
 		let hasMore = true;
 		while (hasMore) {
@@ -86,7 +86,7 @@ export class AgentsNamespace {
 			if (params.limit !== undefined) sp.set('limit', String(params.limit));
 			if (cursor) sp.set('cursor', cursor);
 			const qs = sp.toString();
-			const raw = await this._client.getJson<NnnAgent[] | PaginatedResponse<NnnAgent>>(
+			const raw = await this._client.getJson<HomeportAgent[] | PaginatedResponse<HomeportAgent>>(
 				`/search${qs ? `?${qs}` : ''}`, 'agents.searchAll'
 			);
 			const page = this.normalizePage(raw);
@@ -98,7 +98,7 @@ export class AgentsNamespace {
 	}
 
 	/** Auto-paginating list — yields all registered agents across pages. */
-	async *listAll(params: { limit?: number; cursor?: string } = {}): AsyncGenerator<NnnAgent> {
+	async *listAll(params: { limit?: number; cursor?: string } = {}): AsyncGenerator<HomeportAgent> {
 		let cursor: string | undefined = params.cursor;
 		let hasMore = true;
 		while (hasMore) {
@@ -106,7 +106,7 @@ export class AgentsNamespace {
 			if (params.limit !== undefined) sp.set('limit', String(params.limit));
 			if (cursor) sp.set('cursor', cursor);
 			const qs = sp.toString();
-			const raw = await this._client.getJson<NnnAgent[] | PaginatedResponse<NnnAgent>>(
+			const raw = await this._client.getJson<HomeportAgent[] | PaginatedResponse<HomeportAgent>>(
 				`/list${qs ? `?${qs}` : ''}`, 'agents.listAll'
 			);
 			const page = this.normalizePage(raw);
@@ -137,7 +137,7 @@ export class AgentsNamespace {
 	// ── Lifecycle ────────────────────────────────────────────────
 
 	/** PUT /agents/:id — Update an existing agent. */
-	async update(agentId: string, updates: UpdateAgentRequest): Promise<NnnAgent> {
+	async update(agentId: string, updates: UpdateAgentRequest): Promise<HomeportAgent> {
 		this._client.logger.debug('Updating agent', { agentId });
 		return this._client.putJson(`/agents/${encodeURIComponent(agentId)}`, updates, 'agents.update');
 	}

@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Nexartis NANDA Node SDK · TypeScript client for the open agentic web</title>
-<meta name="description" content="Official open-source TypeScript SDK for the Nexartis NANDA Node — agent registry, A2A discovery, trust scoring, DAG workflow orchestration, and NANDA Index resolution. Apache-2.0, zero runtime dependencies, edge-ready." />
+<title>Homeport SDK · TypeScript client for the open agentic web</title>
+<meta name="description" content="Official open-source TypeScript SDK for Homeport — the self-hostable NANDA node. Agent registry, A2A discovery, trust scoring, DAG workflow orchestration, and NANDA Index resolution. Apache-2.0, zero runtime dependencies, edge-ready." />
 <meta name="theme-color" content="#0a0a0f" />
-<meta property="og:title" content="Nexartis NANDA Node SDK · TypeScript client for the open agentic web" />
-<meta property="og:description" content="Typed TypeScript client for the Nexartis NANDA Node — agent registration, A2A discovery, trust scoring, DAG orchestration, and NANDA Index resolution." />
+<meta property="og:title" content="Homeport SDK · TypeScript client for the open agentic web" />
+<meta property="og:description" content="Typed TypeScript client for Homeport (the open-source self-hostable NANDA node) — agent registration, A2A discovery, trust scoring, DAG orchestration, and NANDA Index resolution." />
 <meta property="og:type" content="website" />
-<meta property="og:url" content="https://nnn-sdk.nexartis.com/" />
+<meta property="og:url" content="https://homeport-sdk.nexartis.com/" />
 <meta name="twitter:card" content="summary_large_image" />
-<link rel="canonical" href="https://nnn-sdk.nexartis.com/" />
+<link rel="canonical" href="https://homeport-sdk.nexartis.com/" />
 <link rel="preconnect" href="https://rsms.me/" />
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css" />
 <link rel="stylesheet" href="/assets/landing.css" />
@@ -19,15 +19,15 @@
 <body>
 <header class="site-header">
 	<div class="wrap header-inner">
-		<a class="brand" href="/" aria-label="Nexartis NANDA Node SDK home">
+		<a class="brand" href="/" aria-label="Homeport SDK home">
 			<span class="brand-mark" aria-hidden="true"></span>
-			<span class="brand-name">Nexartis <span class="brand-dim">/</span> NNN SDK</span>
+			<span class="brand-name">Homeport <span class="brand-dim">/</span> SDK</span>
 		</a>
 		<nav class="site-nav">
 			<a href="#what">About</a>
 			<a href="#features">Features</a>
 			<a href="#quickstart">Quickstart</a>
-			<a href="#deploy">Deploy a Node</a>
+			<a href="#deploy">Deploy</a>
 			<a href="/api/" class="nav-cta">API reference &rarr;</a>
 		</nav>
 	</div>
@@ -37,23 +37,26 @@
 	<section class="hero">
 		<div class="wrap">
 			<span class="badge"><span class="badge-dot"></span>Apache-2.0 · Open Source · on npm</span>
-			<h1><span class="gradient-text">Nexartis NANDA Node SDK</span></h1>
+			<h1><span class="gradient-text">Homeport SDK</span></h1>
 			<p class="tagline">
-				The official TypeScript client for the <strong>Nexartis NANDA Node</strong> &mdash; agent registration,
-				A2A discovery, trust scoring, DAG workflow orchestration, and NANDA Index resolution on the
-				open agentic web. Zero runtime dependencies. Edge-ready. Fully typed.
+				The official TypeScript client for <strong>Homeport</strong> &mdash; the open-source, self-hostable
+				<a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer">NANDA</a> node.
+				Agent registration, A2A discovery, trust scoring, DAG workflow orchestration, and NANDA Index
+				resolution on the open agentic web. Zero runtime dependencies. Edge-ready. Fully typed.
 			</p>
 			<div class="cta-row">
 				<a class="cta cta-primary" href="/api/">Open API reference</a>
-				<a class="cta cta-ghost" href="https://github.com/Nexartis/nexartis-nanda-node-sdk" target="_blank" rel="noopener noreferrer">View on GitHub &#x2197;</a>
-				<a class="cta cta-ghost" href="https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk" target="_blank" rel="noopener noreferrer">View on npm &#x2197;</a>
+				<a class="cta cta-ghost" href="https://github.com/Nexartis/homeport-sdk" target="_blank" rel="noopener noreferrer">View on GitHub &#x2197;</a>
+				<a class="cta cta-ghost" href="https://www.npmjs.com/package/@nexartis/homeport-sdk" target="_blank" rel="noopener noreferrer">View on npm &#x2197;</a>
 			</div>
-			<div class="install-group" role="tablist" aria-label="Install command">
-				<button class="install-tab is-active" role="tab" aria-selected="true" data-pkg="pnpm">pnpm</button>
-				<button class="install-tab" role="tab" aria-selected="false" data-pkg="npm">npm</button>
-				<button class="install-tab" role="tab" aria-selected="false" data-pkg="yarn">yarn</button>
-				<button class="install-tab" role="tab" aria-selected="false" data-pkg="bun">bun</button>
-				<div class="install-cmd"><code id="install-cmd">pnpm add @nexartis/nexartis-nanda-node-sdk</code><button class="copy-btn" type="button" aria-label="Copy install command" data-target="install-cmd">Copy</button></div>
+			<div class="install-group">
+				<div class="install-tabs" role="tablist" aria-label="Install command">
+					<button class="install-tab is-active" role="tab" aria-selected="true" aria-controls="install-panel" data-pkg="pnpm">pnpm</button>
+					<button class="install-tab" role="tab" aria-selected="false" aria-controls="install-panel" data-pkg="npm">npm</button>
+					<button class="install-tab" role="tab" aria-selected="false" aria-controls="install-panel" data-pkg="yarn">yarn</button>
+					<button class="install-tab" role="tab" aria-selected="false" aria-controls="install-panel" data-pkg="bun">bun</button>
+				</div>
+				<div class="install-cmd" id="install-panel" role="tabpanel" aria-label="Install command"><code id="install-cmd">pnpm add @nexartis/homeport-sdk</code><button class="copy-btn" type="button" aria-label="Copy install command" data-target="install-cmd">Copy</button></div>
 			</div>
 		</div>
 	</section>
@@ -61,16 +64,17 @@
 	<section id="what" class="section">
 		<div class="wrap two-col">
 			<div>
-				<h2 class="section-title">What is a NANDA Node?</h2>
-				<p><a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer"><strong>Project NANDA</strong> &#x2197;</a> &mdash; <em>Networked AI Agents in Decentralized Architecture</em> &mdash; is an open agent-discovery protocol that originated at <a href="https://nanda.media.mit.edu/" target="_blank" rel="noopener noreferrer">MIT Media Lab &#x2197;</a>. Think of it as <em>DNS for AI agents</em>: a decentralized layer for naming, trust, discovery, and orchestration on the agentic web.</p>
-				<p>The <strong>Nexartis NANDA Node (NNN)</strong> is Nexartis&rsquo; open-source implementation of the protocol, running on Cloudflare Workers. A single NNN instance provides the NANDA Index, <code>.well-known/agent-card.json</code> A2A endpoints, agent certification and reputation scoring, compliance auditing, webhook delivery, federation (CRDT gossip) with peer nodes, and a DAG orchestration engine for multi-agent workflows.</p>
-				<p>This SDK is the official TypeScript client for that API.</p>
+				<h2 class="section-title">What is Homeport?</h2>
+				<p><strong>Homeport</strong> is the open-source, self-hostable <a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer"><strong>NANDA</strong> &#x2197;</a> node published by Nexartis. <em>Networked AI Agents in Decentralized Architecture</em> &mdash; the protocol that originated at <a href="https://nanda.media.mit.edu/" target="_blank" rel="noopener noreferrer">MIT Media Lab &#x2197;</a> &mdash; is <em>DNS for AI agents</em>: a decentralized layer for naming, trust, discovery, and orchestration on the agentic web.</p>
+				<p>A single Homeport instance provides the NANDA Index, <code>.well-known/agent-card.json</code> A2A endpoints, agent certification and reputation scoring, compliance auditing, webhook delivery, federation (CRDT gossip) with peer nodes, and a DAG orchestration engine for multi-agent workflows &mdash; all on Cloudflare Workers.</p>
+				<p>The Homeport runtime lives at <a href="https://github.com/Nexartis/homeport" target="_blank" rel="noopener noreferrer">github.com/Nexartis/homeport &#x2197;</a>. This SDK is the official TypeScript client for its API.</p>
 			</div>
 			<aside class="side-card">
 				<h3>Origin &amp; governance</h3>
 				<ul class="bullets">
-					<li><strong>Protocol:</strong> Project NANDA (MIT Media Lab)</li>
-					<li><strong>Implementation:</strong> Nexartis, LLC</li>
+					<li><strong>Product:</strong> Homeport (open source)</li>
+					<li><strong>Protocol:</strong> NANDA (MIT Media Lab)</li>
+					<li><strong>Publisher:</strong> Nexartis, LLC</li>
 					<li><strong>License:</strong> Apache-2.0</li>
 					<li><strong>Runtime:</strong> Node · Bun · Deno · Cloudflare Workers · Browser</li>
 					<li><strong>Dependencies:</strong> zero &mdash; platform <code>fetch</code></li>
@@ -85,7 +89,7 @@
 			<div class="feature-grid">
 					<article class="feature"><h3>Zero runtime deps</h3><p>Uses the platform <code>fetch</code>. Nothing to bundle, nothing to audit. Ships as typed ESM.</p></article>
 				<article class="feature"><h3>Edge-native</h3><p>Runs on Cloudflare Workers, Node 20+, Bun, Deno, and modern browsers &mdash; no shims required.</p></article>
-				<article class="feature"><h3>Fully typed</h3><p>End-to-end TypeScript with discriminated-union errors and namespaced APIs per NNN capability.</p></article>
+				<article class="feature"><h3>Fully typed</h3><p>End-to-end TypeScript with discriminated-union errors and namespaced APIs per Homeport capability.</p></article>
 				<article class="feature"><h3>Resilient by default</h3><p>Automatic retries with backoff, per-endpoint circuit breaker, request deduplication, response caching.</p></article>
 				<article class="feature"><h3>OpenTelemetry ready</h3><p>W3C Trace Context propagation out of the box. Drop it in a traced Worker and spans light up for free.</p></article>
 				<article class="feature"><h3>Transparent provenance</h3><p>Published via OIDC Trusted Publishing with SLSA provenance attestations. No long-lived npm tokens.</p></article>
@@ -96,12 +100,12 @@
 	<section id="quickstart" class="section">
 		<div class="wrap">
 			<h2 class="section-title">Quickstart</h2>
-			<p class="section-sub">Register an agent and discover others on the network. Runnable examples live in the <a href="https://github.com/Nexartis/nexartis-nanda-node-sdk/tree/prod/examples" target="_blank" rel="noopener noreferrer"><code>examples/</code> directory &#x2197;</a>.</p>
-<pre class="code"><code><span class="tk-k">import</span> { <span class="tk-i">NnnClient</span> } <span class="tk-k">from</span> <span class="tk-s">'@nexartis/nexartis-nanda-node-sdk'</span>;
+			<p class="section-sub">Register an agent and discover others on the network. Runnable examples live in the <a href="https://github.com/Nexartis/homeport-sdk/tree/prod/examples" target="_blank" rel="noopener noreferrer"><code>examples/</code> directory &#x2197;</a>.</p>
+<pre class="code"><code><span class="tk-k">import</span> { <span class="tk-i">HomeportClient</span> } <span class="tk-k">from</span> <span class="tk-s">'@nexartis/homeport-sdk'</span>;
 
-<span class="tk-k">const</span> client <span class="tk-o">=</span> <span class="tk-k">new</span> <span class="tk-i">NnnClient</span>({
-  baseUrl: <span class="tk-s">'https://nanda.nexartis.com'</span>,
-  apiKey: process.env.<span class="tk-i">NNN_API_KEY</span>,
+<span class="tk-k">const</span> client <span class="tk-o">=</span> <span class="tk-k">new</span> <span class="tk-i">HomeportClient</span>({
+  baseUrl: <span class="tk-s">'https://homeport.example.com'</span>,
+  apiKey: process.env.<span class="tk-i">HOMEPORT_API_KEY</span>,
 });
 
 <span class="tk-c">// Register an agent on the NANDA network</span>
@@ -123,19 +127,21 @@
 	<section id="deploy" class="section section-deploy">
 		<div class="wrap">
 			<div class="deploy-card">
-				<span class="deploy-badge">Deploy your own NANDA Node</span>
-				<h2>Stand up a production NANDA Node on <span class="gradient-text">Cubicube<sup>&reg;</sup></span></h2>
-				<p>Cubicube is the Nexartis platform for deploying full-stack edge applications. Register a custom <code>.link</code> domain, get automatic SSL via Cloudflare for SaaS, and spin up an isolated NANDA Node on Workers for Platforms &mdash; all from one console.</p>
+				<span class="deploy-badge">Deploy Homeport</span>
+				<h2>Self-host Homeport, or let <span class="gradient-text">Cubicube</span> run it for you</h2>
+				<p>Homeport is open source: clone <a href="https://github.com/Nexartis/homeport" target="_blank" rel="noopener noreferrer">github.com/Nexartis/homeport &#x2197;</a> and deploy it to your own Cloudflare account in minutes. Everything you need to stand up a NANDA node &mdash; index, A2A endpoints, federation, orchestrator &mdash; is in the box.</p>
 				<ul class="deploy-bullets">
-					<li><span class="deploy-ico">&#x1F310;</span> Custom <code>.link</code> domain via Name.com, auto-provisioned SSL</li>
-					<li><span class="deploy-ico">&#x26A1;</span> Isolated Worker per tenant on Cloudflare Workers for Platforms</li>
+					<li><span class="deploy-ico">&#x1F310;</span> Bring your own domain &amp; Cloudflare account</li>
+					<li><span class="deploy-ico">&#x26A1;</span> Runs on Cloudflare Workers &mdash; edge-native by default</li>
 					<li><span class="deploy-ico">&#x1F510;</span> Passwordless auth + role-based access control out of the box</li>
-					<li><span class="deploy-ico">&#x1F4E6;</span> NANDA Node runtime ready to connect to this SDK on day one</li>
+					<li><span class="deploy-ico">&#x1F4E6;</span> This SDK connects on day one &mdash; same typed client, hosted or self-hosted</li>
 				</ul>
 				<div class="cta-row">
-					<a class="cta cta-primary" href="https://cubicube.com" target="_blank" rel="noopener noreferrer">Visit Cubicube.com &#x2197;</a>
-					<a class="cta cta-ghost" href="https://github.com/Nexartis/nexartis-nanda-node-sdk#readme" target="_blank" rel="noopener noreferrer">Connect the SDK &#x2197;</a>
+					<a class="cta cta-primary" href="https://github.com/Nexartis/homeport" target="_blank" rel="noopener noreferrer">Self-host Homeport &#x2197;</a>
+					<a class="cta cta-ghost" href="https://github.com/Nexartis/homeport-sdk#readme" target="_blank" rel="noopener noreferrer">Connect the SDK &#x2197;</a>
 				</div>
+				<p class="deploy-managed">Prefer a managed node with custom domain &amp; SSL provisioning, isolated tenants on Workers for Platforms, and one-click upgrades? <a href="https://cubicube.com" target="_blank" rel="noopener noreferrer">Explore managed hosting on Cubicube &#x2197;</a></p>
+				<p class="deploy-managed">Customizing the node itself? Homeport ships as a <strong>Cubicube Core Cubi</strong> &mdash; a manifest-honest fork stays one-command deployable, and a customization you build can be offered to Cubicube's customers. <a href="https://github.com/Nexartis/homeport/blob/dev/docs/CUBICUBE-DISTRIBUTION.md" target="_blank" rel="noopener noreferrer">Read the distribution guide &#x2197;</a></p>
 			</div>
 		</div>
 	</section>
@@ -144,18 +150,19 @@
 <footer class="site-footer">
 	<div class="wrap footer-inner">
 		<div class="footer-col">
-			<div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Nexartis NNN SDK</span></div>
-			<p class="footer-note">Powered by <a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer">Project NANDA</a>. Maintained by <a href="https://nexartis.com" target="_blank" rel="noopener noreferrer">Nexartis, LLC</a>. Licensed under <a href="https://github.com/Nexartis/nexartis-nanda-node-sdk/blob/prod/LICENSE" target="_blank" rel="noopener noreferrer">Apache-2.0</a>.</p>
+			<div class="brand"><span class="brand-mark" aria-hidden="true"></span><span class="brand-name">Homeport SDK</span></div>
+			<p class="footer-note">Homeport implements the <a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer">NANDA</a> protocol. Published by <a href="https://nexartis.com" target="_blank" rel="noopener noreferrer">Nexartis, LLC</a>. Licensed under <a href="https://github.com/Nexartis/homeport-sdk/blob/prod/LICENSE" target="_blank" rel="noopener noreferrer">Apache-2.0</a>.</p>
 		</div>
 		<div class="footer-col">
-			<h4>Package</h4>
-			<a href="https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk" target="_blank" rel="noopener noreferrer">npm &#x2197;</a>
-			<a href="https://github.com/Nexartis/nexartis-nanda-node-sdk" target="_blank" rel="noopener noreferrer">GitHub &#x2197;</a>
-			<a href="https://github.com/Nexartis/nexartis-nanda-node-sdk/issues" target="_blank" rel="noopener noreferrer">Issues &#x2197;</a>
+			<h3>Package</h3>
+			<a href="https://www.npmjs.com/package/@nexartis/homeport-sdk" target="_blank" rel="noopener noreferrer">npm &#x2197;</a>
+			<a href="https://github.com/Nexartis/homeport-sdk" target="_blank" rel="noopener noreferrer">GitHub &#x2197;</a>
+			<a href="https://github.com/Nexartis/homeport-sdk/issues" target="_blank" rel="noopener noreferrer">Issues &#x2197;</a>
 			<a href="/api/">API reference</a>
 		</div>
 		<div class="footer-col">
-			<h4>Ecosystem</h4>
+			<h3>Ecosystem</h3>
+			<a href="https://github.com/Nexartis/homeport" target="_blank" rel="noopener noreferrer">Homeport runtime &#x2197;</a>
 			<a href="https://projectnanda.org" target="_blank" rel="noopener noreferrer">Project NANDA &#x2197;</a>
 			<a href="https://nanda.media.mit.edu/" target="_blank" rel="noopener noreferrer">MIT Media Lab &#x2197;</a>
 			<a href="https://cubicube.com" target="_blank" rel="noopener noreferrer">Cubicube &#x2197;</a>

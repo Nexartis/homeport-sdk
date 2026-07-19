@@ -1,8 +1,8 @@
 # Security Policy
 
-The Nexartis NANDA Node SDK is used in production systems that route agent
-traffic, broker payments, and maintain trust metadata. Vulnerabilities are
-taken seriously. Please follow this policy when reporting them.
+The Homeport SDK is used in production systems that route agent traffic,
+broker payments, and maintain trust metadata. Vulnerabilities are taken
+seriously. Please follow this policy when reporting them.
 
 ## Reporting a vulnerability
 
@@ -10,9 +10,8 @@ Email `security@nexartis.com` with:
 
 - A description of the issue and its impact.
 - A minimal reproduction (code, request payload, or steps).
-- The SDK version (`@nexartis/nexartis-nanda-node-sdk` version from
-  `package.json` or `pnpm why`) and runtime (Node, Workers, Bun, Deno,
-  browser).
+- The SDK version (`@nexartis/homeport-sdk` version from `package.json` or
+  `pnpm why`) and runtime (Node, Workers, Bun, Deno, browser).
 - Your preferred contact info for follow-up.
 
 If the report contains sensitive details, request our PGP public key in the
@@ -21,7 +20,9 @@ channel.
 
 **Do not** open a public GitHub issue, discussion, or pull request for
 suspected vulnerabilities. GitHub Private Vulnerability Reporting is also
-enabled on the repository and is an acceptable alternative channel.
+enabled on the repository and is an acceptable alternative channel — open a
+report directly at
+<https://github.com/Nexartis/homeport-sdk/security/advisories/new>.
 
 ## Coordinated disclosure
 
@@ -58,7 +59,7 @@ repository's GitHub Actions workflow and ship with **npm provenance
 attestations**. Verify a release before installing:
 
 ```bash
-npm view @nexartis/nexartis-nanda-node-sdk@<version> --json | jq .dist
+npm view @nexartis/homeport-sdk@1.0.0 --json | jq .dist
 npm audit signatures
 ```
 

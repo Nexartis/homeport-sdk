@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Retry with Exponential Backoff
+ * Homeport SDK — Retry with Exponential Backoff
  *
  * Provides fetchWithRetry() used by all NNN API operations.
  * Handles transient errors (network, 5xx, 429) with
@@ -9,8 +9,8 @@
  * @module core/retry
  */
 
-import type { NnnRetryConfig } from './types.js';
-import { NnnError, NnnErrorCode } from './errors.js';
+import type { HomeportRetryConfig } from './types.js';
+import { HomeportError, HomeportErrorCode } from './errors.js';
 
 /**
  * Strip trailing slashes from an API base URL to prevent double-slash paths.
@@ -28,7 +28,7 @@ export function normalizeBaseUrl(url: string): string {
 	return end === url.length ? url : url.slice(0, end);
 }
 
-const DEFAULT_RETRY_CONFIG: Required<NnnRetryConfig> = {
+const DEFAULT_RETRY_CONFIG: Required<HomeportRetryConfig> = {
 	maxRetries: 3,
 	baseDelayMs: 1000,
 	maxDelayMs: 10000,
@@ -38,7 +38,7 @@ const DEFAULT_RETRY_CONFIG: Required<NnnRetryConfig> = {
 /**
  * Calculate exponential backoff delay with jitter (±25%).
  */
-export function calculateBackoffDelay(attempt: number, config: Required<NnnRetryConfig>): number {
+export function calculateBackoffDelay(attempt: number, config: Required<HomeportRetryConfig>): number {
 	const exponentialDelay = Math.pow(2, attempt) * config.baseDelayMs;
 	const jitter = exponentialDelay * (0.75 + Math.random() * 0.5);
 	return Math.min(jitter, config.maxDelayMs);
@@ -93,9 +93,9 @@ export async function fetchWithRetry(
 	url: string,
 	options: RequestInit = {},
 	context = 'request',
-	retryConfig?: NnnRetryConfig
+	retryConfig?: HomeportRetryConfig
 ): Promise<Response> {
-	const config = { ...DEFAULT_RETRY_CONFIG, ...retryConfig } as Required<NnnRetryConfig>;
+	const config = { ...DEFAULT_RETRY_CONFIG, ...retryConfig } as Required<HomeportRetryConfig>;
 	const { maxRetries, timeoutMs } = config;
 	let lastError: unknown;
 
@@ -131,7 +131,7 @@ export async function fetchWithRetry(
 					/* body drain best-effort — non-critical */
 				}
 
-				const error = NnnError.fromStatus(
+				const error = HomeportError.fromStatus(
 					response.status,
 					`[${context}] HTTP ${response.status}: ${bodyText || '(no body)'}`
 				);
@@ -155,8 +155,8 @@ export async function fetchWithRetry(
 			const isLastAttempt = attempt >= maxRetries;
 
 			if (!isTransient || isLastAttempt) {
-				if (!(err instanceof NnnError)) {
-					throw NnnError.fromNetworkError(err);
+				if (!(err instanceof HomeportError)) {
+					throw HomeportError.fromNetworkError(err);
 				}
 				throw err;
 			}

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Typed Error Classes
+ * Homeport SDK — Typed Error Classes
  *
  * Following sentinel-sdk pattern for typed error handling.
  * Provides specific error codes for NNN API failures so consumers
@@ -9,7 +9,7 @@
  * @module core/errors
  */
 
-export enum NnnErrorCode {
+export enum HomeportErrorCode {
 	NETWORK_ERROR = 'NETWORK_ERROR',
 	UNAUTHORIZED = 'UNAUTHORIZED',
 	FORBIDDEN = 'FORBIDDEN',
@@ -22,7 +22,7 @@ export enum NnnErrorCode {
 }
 
 /** Structured error context for observability. */
-export interface NnnErrorContext {
+export interface HomeportErrorContext {
 	/** Request ID from response headers (e.g. x-request-id). */
 	requestId?: string;
 	/** Number of retry attempts made before failure. */
@@ -33,9 +33,9 @@ export interface NnnErrorContext {
 	agentId?: string;
 }
 
-export class NnnError extends Error {
+export class HomeportError extends Error {
 	/** Structured context for observability. */
-	context: NnnErrorContext;
+	context: HomeportErrorContext;
 
 	/**
 	 * Clone of the last HTTP response that caused this error, if available.
@@ -45,53 +45,53 @@ export class NnnError extends Error {
 	lastResponse?: Response;
 
 	constructor(
-		public code: NnnErrorCode,
+		public code: HomeportErrorCode,
 		message: string,
 		public statusCode?: number,
 		public originalError?: unknown,
-		context?: NnnErrorContext
+		context?: HomeportErrorContext
 	) {
 		super(message);
-		this.name = 'NnnError';
+		this.name = 'HomeportError';
 		this.context = context ?? {};
 	}
 
 	/**
-	 * Create an NnnError from an HTTP response status code.
+	 * Create an HomeportError from an HTTP response status code.
 	 */
-	static fromStatus(status: number, message: string, context?: NnnErrorContext): NnnError {
+	static fromStatus(status: number, message: string, context?: HomeportErrorContext): HomeportError {
 		const code = statusToErrorCode(status);
-		return new NnnError(code, message, status, undefined, context);
+		return new HomeportError(code, message, status, undefined, context);
 	}
 
 	/**
-	 * Create an NnnError from a caught network/fetch error.
+	 * Create an HomeportError from a caught network/fetch error.
 	 */
-	static fromNetworkError(err: unknown, context?: NnnErrorContext): NnnError {
+	static fromNetworkError(err: unknown, context?: HomeportErrorContext): HomeportError {
 		const message = err instanceof Error ? err.message : String(err);
-		return new NnnError(NnnErrorCode.NETWORK_ERROR, `Network error: ${message}`, undefined, err, context);
+		return new HomeportError(HomeportErrorCode.NETWORK_ERROR, `Network error: ${message}`, undefined, err, context);
 	}
 }
 
 /**
- * Map an HTTP status code to an NnnErrorCode.
+ * Map an HTTP status code to an HomeportErrorCode.
  */
-function statusToErrorCode(status: number): NnnErrorCode {
+function statusToErrorCode(status: number): HomeportErrorCode {
 	switch (status) {
 		case 401:
-			return NnnErrorCode.UNAUTHORIZED;
+			return HomeportErrorCode.UNAUTHORIZED;
 		case 403:
-			return NnnErrorCode.FORBIDDEN;
+			return HomeportErrorCode.FORBIDDEN;
 		case 404:
-			return NnnErrorCode.NOT_FOUND;
+			return HomeportErrorCode.NOT_FOUND;
 		case 422:
-			return NnnErrorCode.VALIDATION_ERROR;
+			return HomeportErrorCode.VALIDATION_ERROR;
 		case 429:
-			return NnnErrorCode.RATE_LIMITED;
+			return HomeportErrorCode.RATE_LIMITED;
 		default:
-			if (status >= 500) return NnnErrorCode.SERVER_ERROR;
-			if (status >= 400) return NnnErrorCode.VALIDATION_ERROR;
-			return NnnErrorCode.NETWORK_ERROR;
+			if (status >= 500) return HomeportErrorCode.SERVER_ERROR;
+			if (status >= 400) return HomeportErrorCode.VALIDATION_ERROR;
+			return HomeportErrorCode.NETWORK_ERROR;
 	}
 }
 

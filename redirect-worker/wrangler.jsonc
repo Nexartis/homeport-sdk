@@ -1,0 +1,74 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	/*
+	 * ===================================================================
+	 * HOMEPORT SDK — LEGACY DOMAIN REDIRECT WORKER
+	 * ===================================================================
+	 *
+	 * The @nexartis/homeport-sdk docs site was previously published at
+	 * nnn-sdk[-dev].nexartis.com. This worker serves 301 redirects from
+	 * the legacy hostnames to the current homeport-sdk[-dev].nexartis.com
+	 * origin for the announced deprecation window (6–12 months from cut-over).
+	 *
+	 * Custom domains (intentional legacy references):
+	 *   env.dev  → nnn-sdk-dev.nexartis.com  → https://homeport-sdk-dev.nexartis.com
+	 *   env.prod → nnn-sdk.nexartis.com      → https://homeport-sdk.nexartis.com
+	 *
+	 * Deploy from THIS directory (owned by the sibling docs worker only for
+	 * its own dist/):
+	 *   pnpm run deploy:dev    or    pnpm run deploy:prod
+	 * ===================================================================
+	 */
+	"name": "homeport-sdk-legacy-redirect",
+	"main": "src/worker.ts",
+	"compatibility_date": "2025-01-01",
+	"compatibility_flags": ["nodejs_compat"],
+
+	// Observability — logs only.
+	"observability": {
+		"enabled": true,
+		"logs": {
+			"enabled": true,
+			"head_sampling_rate": 1.0
+		}
+	},
+
+	// ===================================================================
+	// DEPLOYMENT ENVIRONMENTS
+	// ===================================================================
+	"env": {
+		// ===================================================================
+		// 🧪 DEVELOPMENT — nnn-sdk-dev.nexartis.com → homeport-sdk-dev
+		// ===================================================================
+		"dev": {
+			"name": "homeport-sdk-legacy-redirect-dev",
+			"routes": [
+				{
+					"pattern": "nnn-sdk-dev.nexartis.com",
+					"custom_domain": true
+				}
+			],
+			"vars": {
+				"ENVIRONMENT": "development",
+				"TARGET": "https://homeport-sdk-dev.nexartis.com"
+			}
+		},
+
+		// ===================================================================
+		// 🚀 PRODUCTION — nnn-sdk.nexartis.com → homeport-sdk
+		// ===================================================================
+		"prod": {
+			"name": "homeport-sdk-legacy-redirect",
+			"routes": [
+				{
+					"pattern": "nnn-sdk.nexartis.com",
+					"custom_domain": true
+				}
+			],
+			"vars": {
+				"ENVIRONMENT": "production",
+				"TARGET": "https://homeport-sdk.nexartis.com"
+			}
+		}
+	}
+}

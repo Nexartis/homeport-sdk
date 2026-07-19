@@ -1,4 +1,4 @@
-# Nexartis NANDA Node SDK Document Inventory
+# Homeport SDK Document Inventory
 
 ## Inventory summary
 

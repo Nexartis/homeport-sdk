@@ -1,8 +1,8 @@
 # Examples
 
-Runnable examples for `@nexartis/nexartis-nanda-node-sdk`. Each `.ts` file is
+Runnable examples for `@nexartis/homeport-sdk`. Each `.ts` file is
 self-contained and uses the public package name, so you can copy it into your
-own project verbatim after `pnpm add @nexartis/nexartis-nanda-node-sdk`.
+own project verbatim after `pnpm add @nexartis/homeport-sdk`.
 
 All examples are licensed under **Apache-2.0** (see SPDX header at top of
 each file).
@@ -10,10 +10,10 @@ each file).
 ## Prerequisites
 
 - Node 20+ (or Bun / Deno with `fetch`)
-- An API key for a reachable NANDA Node — export as `NNN_API_KEY`
+- An API key for a reachable Homeport — export as `HOMEPORT_API_KEY`
 
 ```bash
-export NNN_API_KEY="nnn_..."
+export HOMEPORT_API_KEY="nnn_..."
 ```
 
 ## Running locally from a checkout
@@ -26,7 +26,7 @@ pnpm run build      # compiles src/ to dist/
 npx tsx examples/<example>.ts
 ```
 
-> The examples import from `@nexartis/nexartis-nanda-node-sdk`. When running
+> The examples import from `@nexartis/homeport-sdk`. When running
 > from inside this repo, pnpm workspace resolution points that specifier at
 > the local package, so no extra setup is required.
 
@@ -43,4 +43,4 @@ npx tsx examples/<example>.ts
 ## Full API reference
 
 Generated TypeDoc for every public export is hosted at
-<https://nnn-sdk.nexartis.com>.
+<https://homeport-sdk.nexartis.com>.

@@ -1,4 +1,4 @@
-# Nexartis NANDA Node SDK Issues and Audit Findings
+# Homeport SDK Issues and Audit Findings
 
 ## Executive summary
 
@@ -8,7 +8,7 @@ This register tracks remaining open gaps, blockers, and post-merge verification 
 
 | ID | Status | Area | Finding | Follow-up |
 | --- | --- | --- | --- | --- |
-| NNN-SDK-AUDIT-010 | Open | Issue register | No Playwright coverage exists for the public docs site. | Add lightweight public docs-site smoke tests before treating browser E2E as complete. |
+| NNN-SDK-AUDIT-010 | Resolved (Homeport 1.0.0 rebrand) | Issue register | No Playwright coverage exists for the public docs site. | Resolved: `typedoc-site/tests/` Playwright suite plus `typedoc-site/playwright.config.ts` added alongside the rebrand; runs against `homeport-sdk-dev.nexartis.com`. |
 | NNN-SDK-AUDIT-011 | Open | Issue register | No automated accessibility smoke coverage exists for the docs landing page. | Add keyboard/role/label smoke checks for install tabs, copy button, navigation, and API link. |
 | NNN-SDK-AUDIT-012 | Open | Issue register | There is no dedicated lint or format check; current lightweight gate is TypeScript typecheck plus tests. | Decide whether to add a formatter/linter or document typecheck-only as intentional. |
 | NNN-SDK-AUDIT-013 | Open | Issue register | Tests mock SDK behavior but do not verify against a published server contract fixture. | Add contract tests once a canonical NANDA Node API contract is published. |

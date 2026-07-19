@@ -11,7 +11,7 @@ body:
         The issue tracker is reserved for bug reports and actionable feature
         requests. Usage questions, integration help, and open-ended
         discussion belong in
-        **[GitHub Discussions](https://github.com/Nexartis/nexartis-nanda-node-sdk/discussions)**,
+        **[GitHub Discussions](https://github.com/Nexartis/homeport-sdk/discussions)**,
         where maintainers and other community members can help.
 
         If you have already searched Discussions and existing issues and
@@ -37,7 +37,7 @@ body:
     attributes:
       label: Before filing
       options:
-        - label: I searched [Discussions](https://github.com/Nexartis/nexartis-nanda-node-sdk/discussions) and existing issues for a similar question.
+        - label: I searched [Discussions](https://github.com/Nexartis/homeport-sdk/discussions) and existing issues for a similar question.
           required: true
         - label: I agree to follow this project's [Code of Conduct](../../CODE_OF_CONDUCT.md).
           required: true

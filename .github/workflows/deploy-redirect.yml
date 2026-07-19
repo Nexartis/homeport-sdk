@@ -1,0 +1,73 @@
+# Deploys the legacy-hostname redirect Worker (redirect-worker/) to
+# Cloudflare. The worker serves 301 redirects from
+# nnn-sdk[-dev].nexartis.com → homeport-sdk[-dev].nexartis.com for the
+# announced deprecation window after the Homeport SDK rebrand.
+#
+# Triggers:
+#   - Pushes to the `prod` branch that touch `redirect-worker/**`.
+#   - Manual dispatch via the Actions tab (for re-publishing without a
+#     source change).
+#
+# Required repository secrets (identical to deploy-docs.yml):
+#   - CLOUDFLARE_API_TOKEN  (Workers Scripts:Edit, Workers Routes:Edit,
+#                            Account Settings:Read, zone-scoped to
+#                            nexartis.com is sufficient for the custom
+#                            legacy domains)
+#   - CLOUDFLARE_ACCOUNT_ID (the Nexartis Cloudflare account ID)
+name: Deploy redirect worker
+
+on:
+  push:
+    branches:
+      - prod
+    paths:
+      - 'redirect-worker/**'
+      - '.github/workflows/deploy-redirect.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-redirect-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy homeport-sdk-legacy-redirect
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: production
+      url: https://homeport-sdk.nexartis.com
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          cache: pnpm
+
+      - name: Install redirect-worker dependencies
+        working-directory: redirect-worker
+        run: pnpm install --frozen-lockfile || pnpm install
+
+      - name: Deploy to Cloudflare (dev)
+        working-directory: redirect-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm exec wrangler deploy --env dev
+
+      - name: Deploy to Cloudflare (prod)
+        working-directory: redirect-worker
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: pnpm exec wrangler deploy --env prod

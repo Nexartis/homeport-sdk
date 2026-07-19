@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Trust Namespace
+ * Homeport SDK — Trust Namespace
  *
  * Accessed via `client.trust.*`.
  * Covers resolution, reputation, trust scores/frameworks/graph, compliance, and analytics.
@@ -8,7 +8,7 @@
  * @module core/namespaces/trust
  */
 
-import type { NnnClientInternals } from '../namespace-helpers.js';
+import type { HomeportClientInternals } from '../namespace-helpers.js';
 import type {
 	AgentAddr,
 	ResolutionContext,
@@ -24,7 +24,7 @@ import type {
 
 export class TrustNamespace {
 	/** @internal */
-	constructor(private readonly _client: NnnClientInternals) {}
+	constructor(private readonly _client: HomeportClientInternals) {}
 
 	// ── Resolution ──────────────────────────────────────────────
 
