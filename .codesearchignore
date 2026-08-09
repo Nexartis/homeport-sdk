@@ -1,0 +1,13 @@
+node_modules/
+.svelte-kit/
+build/
+dist/
+vendor/
+.ozzydev/
+.codesearch/
+.codesearch.db/
+.codesearch.db
+.chunkhound/
+.serena/
+.wrangler/
+pnpm-lock.yaml
