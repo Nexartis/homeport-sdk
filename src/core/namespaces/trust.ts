@@ -19,7 +19,8 @@ import type {
 	ComplianceScanResult,
 	TrustGraphResponse,
 	TrustPathResponse,
-	BehaviorAnalyticsResponse
+	BehaviorAnalyticsResponse,
+	TrustBadgeResponse
 } from '../types.js';
 
 export class TrustNamespace {
@@ -76,6 +77,16 @@ export class TrustNamespace {
 			'trust.syncCrossRegistry'
 		);
 		return this._client.safeParseJson<Record<string, unknown>>(res, 'trust.syncCrossRegistry', false, requestUrl);
+	}
+
+	// ── Trust Badges ────────────────────────────────────────────
+
+	/** GET /trust/badges — Get trust badges computed from reputation data. */
+	async getBadges(agentId?: string): Promise<TrustBadgeResponse> {
+		const sp = new URLSearchParams();
+		if (agentId) sp.set('agent', agentId);
+		const qs = sp.toString();
+		return this._client.getJson(`/trust/badges${qs ? `?${qs}` : ''}`, 'trust.getBadges');
 	}
 
 	// ── Graph ───────────────────────────────────────────────────

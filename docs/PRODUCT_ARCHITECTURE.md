@@ -62,6 +62,48 @@ Contract points:
 4. The envelope shape follows A2A v1.0 JSON-RPC with PascalCase method names; body wrapping/unwrapping is handled by the SDK.
 5. Authorization: Homeport requires the caller to be the delegator (or hold `operator`/`admin` scope). Passing a mismatched `granted_by_did` returns JSON-RPC error `-32001`. Off-domain A2A calls strip host/authorization headers per the existing envelope helper.
 
+## Visibility lifecycle + agent metadata (Sprint D)
+
+Sprint D (Open-Core Convergence) adds a visibility lifecycle and structured commercial metadata to agent records. All Sprint D fields are additive and optional on `HomeportAgent`, `RegisterAgentRequest`, and `UpdateAgentRequest`; consumers must ignore unknown response fields, and omitting a field defers to node policy.
+
+### Visibility states
+
+| State | Meaning |
+|---|---|
+| `private` | Hidden from discovery; direct lookup returns 404. |
+| `unlisted` | Not shown in search/list, but resolvable by direct lookup. |
+| `public` | Fully discoverable. |
+| `for_hire` | Discoverable and flagged as available for paid engagement. |
+
+### Discovery matrix
+
+| Surface | `private` | `unlisted` | `public` | `for_hire` |
+|---|---|---|---|---|
+| Search / list | – | – | returned | returned |
+| Lookup by ID | 404 | served | served | served |
+| Federation gossip | – | – | propagated | propagated |
+
+`agents.search()` accepts `visibility` and `for_hire` filters (serialized as query params when present); the node enforces the discovery matrix server-side.
+
+### Metadata descriptors
+
+- `PricingDescriptor` — `{ model: 'free' | 'per_request' | 'subscription' | 'usage', currency?, price?, unit? }`. Attaches to agents, capability-manifest entries, and individual MCP tools.
+- `CapabilityManifestEntry` — `{ id, name?, description?, auth?, pricing? }` with `auth` in `'none' | 'bearer' | 'oauth2' | 'api_key' | 'custom'`.
+- `McpMetadata` — `{ endpoint?, transport?, authentication?, tools? }` with `transport` in `'streamable-http' | 'sse' | 'stdio'` and per-tool `McpToolMetadata` (`{ name, description?, auth_required?, pricing? }`).
+- Wire fields are snake_case: `visibility`, `capability_manifest`, `mcp_metadata`, `pricing`.
+
+### Signed registration passthrough
+
+`RegisterAgentRequest` additionally accepts the signed-AgentAddr fields `public_key_hex`, `signature_hex`, `signer_id`, and `ttl_seconds`; the node's `/register` route accepts signed AgentAddr records and persists these verbatim.
+
+### Trust badges
+
+`trust.getBadges(agentId?)` reads `GET /trust/badges` (with `?agent=<id>` when an agent ID is given) — Bronze/Silver/Gold badges computed on the fly from reputation snapshots (`TrustBadgeResponse`: `{ agents, total, badge_distribution, fetchedAt }`). Badges are a read-only projection; no additional node state is required.
+
+### Stability
+
+All Sprint D types are additive-only within the 1.x line, mirroring the delegation-grants contract: optional fields only, no renames or removals without a major bump.
+
 ## Main product flows
 
 ### Register and discover an agent

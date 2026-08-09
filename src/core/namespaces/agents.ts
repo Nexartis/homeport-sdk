@@ -44,7 +44,7 @@ export class AgentsNamespace {
 		return this._client.getJson(`/lookup/${encodeURIComponent(agentId)}`, 'agents.lookup');
 	}
 
-	/** GET /search?q=&capabilities=&tags= — Search agents. */
+	/** GET /search?q=&capabilities=&tags=&visibility=&for_hire= — Search agents. */
 	async search(params: SearchAgentsParams = {}): Promise<HomeportAgent[]> {
 		const sp = new URLSearchParams();
 		if (params.q) sp.set('q', params.q);
@@ -53,6 +53,8 @@ export class AgentsNamespace {
 		if (params.min_trust !== undefined) sp.set('min_trust', String(params.min_trust));
 		if (params.jurisdiction) sp.set('jurisdiction', params.jurisdiction);
 		if (params.protocol) sp.set('protocol', params.protocol);
+		if (params.visibility) sp.set('visibility', params.visibility);
+		if (params.for_hire !== undefined) sp.set('for_hire', String(params.for_hire));
 		if (params.limit !== undefined) sp.set('limit', String(params.limit));
 		if (params.cursor) sp.set('cursor', params.cursor);
 		const qs = sp.toString();
@@ -83,6 +85,8 @@ export class AgentsNamespace {
 			if (params.min_trust !== undefined) sp.set('min_trust', String(params.min_trust));
 			if (params.jurisdiction) sp.set('jurisdiction', params.jurisdiction);
 			if (params.protocol) sp.set('protocol', params.protocol);
+			if (params.visibility) sp.set('visibility', params.visibility);
+			if (params.for_hire !== undefined) sp.set('for_hire', String(params.for_hire));
 			if (params.limit !== undefined) sp.set('limit', String(params.limit));
 			if (cursor) sp.set('cursor', cursor);
 			const qs = sp.toString();

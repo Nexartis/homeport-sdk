@@ -119,6 +119,41 @@ describe('HomeportClient', () => {
 			const result = await client.agents.lookup('agent-1');
 			expect(result.agent_id).toBe('agent-1');
 		});
+
+		it('round-trips Sprint D metadata fields on the lookup response', async () => {
+			const agent = {
+				agent_id: 'agent-1',
+				agent_url: 'https://example.com',
+				visibility: 'for_hire',
+				capability_manifest: [
+					{
+						id: 'summarize',
+						name: 'Summarize',
+						auth: 'bearer',
+						pricing: { model: 'per_request', currency: 'USD', price: 0.01 }
+					}
+				],
+				mcp_metadata: {
+					endpoint: 'https://example.com/mcp',
+					transport: 'streamable-http',
+					authentication: 'bearer',
+					tools: [{ name: 'summarize', auth_required: true, pricing: { model: 'free' } }]
+				},
+				pricing: { model: 'subscription', currency: 'USD', price: 9.99, unit: 'month' }
+			};
+			mockFetch({ status: 200, body: agent });
+
+			const client = new HomeportClient(BASE_CONFIG);
+			const result = await client.agents.lookup('agent-1');
+			expect(result.visibility).toBe('for_hire');
+			expect(result.capability_manifest).toHaveLength(1);
+			expect(result.capability_manifest?.[0].id).toBe('summarize');
+			expect(result.capability_manifest?.[0].pricing?.model).toBe('per_request');
+			expect(result.mcp_metadata?.transport).toBe('streamable-http');
+			expect(result.mcp_metadata?.tools?.[0].auth_required).toBe(true);
+			expect(result.pricing?.model).toBe('subscription');
+			expect(result.pricing?.price).toBe(9.99);
+		});
 	});
 
 	describe('agents.search()', () => {

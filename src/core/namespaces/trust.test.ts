@@ -156,4 +156,55 @@ describe('TrustNamespace', () => {
 			expect(url).toContain('limit=7');
 		});
 	});
+
+	describe('getBadges()', () => {
+		it('GETs /trust/badges without a query string when no agentId is given', async () => {
+			mockFetch({
+				status: 200,
+				body: {
+					agents: [],
+					total: 0,
+					badge_distribution: { none: 0, bronze: 0, silver: 0, gold: 0 },
+					fetchedAt: '2026-01-01T00:00:00.000Z'
+				}
+			});
+			const client = new HomeportClient(BASE_CONFIG);
+			const res = await client.trust.getBadges();
+			expect(res.total).toBe(0);
+			expect(res.agents).toEqual([]);
+			const [url] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(url as string).toMatch(/\/trust\/badges$/);
+		});
+
+		it('passes agentId as the agent query param', async () => {
+			mockFetch({
+				status: 200,
+				body: {
+					agents: [
+						{
+							agent_id: 'agent-1',
+							badge: {
+								tier: 'gold',
+								reputation: 0.92,
+								label: 'Gold',
+								emoji: '',
+								requirements_met: ['reputation >= 0.85'],
+								next_tier: null,
+								next_tier_gap: null
+							},
+							reputation_snapshot: { reputation: 0.92, cert_score: 0.8 }
+						}
+					],
+					total: 1
+				}
+			});
+			const client = new HomeportClient(BASE_CONFIG);
+			const res = await client.trust.getBadges('agent-1');
+			expect(res.agents).toHaveLength(1);
+			expect(res.agents[0].badge.tier).toBe('gold');
+			const [url] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(url).toContain('/trust/badges?');
+			expect(url).toContain('agent=agent-1');
+		});
+	});
 });
