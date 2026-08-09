@@ -38,7 +38,7 @@ Repo-specific rules layer on top of the workspace `AGENTS.md` when this repo is 
 - `pnpm run build` — emit `dist/` via `tsc` (runs `prebuild` → `gen-version.mjs` first).
 - `pnpm run docs` — TypeDoc → `typedoc-site/dist/api/`.
 - `pnpm run size` — enforce `.size-limit.json` budgets against `dist/**` (root ≤ 80 KB, `/core` ≤ 50 KB).
-- `pnpm run validate` — the full local gate: `typecheck && test && build && docs && size`. Run this before opening a PR.
+- `pnpm run validate` — the full local gate: `test && build && docs && size`. Run this before opening a PR. The emitting `build` performs the identical type check, so `typecheck` is not run separately in the gate; it remains available as a manual diagnostic.
 
 `prepack` runs `clean && build`; `prepublishOnly` runs `build`. Do not remove either — npm provenance publishes from a clean build.
 

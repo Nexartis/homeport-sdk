@@ -84,7 +84,7 @@ PR will block merges that are missing the trailer.
 - `pnpm run test` — full suite (vitest, run-once).
 - `pnpm run test:watch` — watch mode during development.
 - `pnpm run typecheck` — TypeScript project check, no emit.
-- `pnpm run validate` — standard local gate: typecheck, tests, build, docs, and size.
+- `pnpm run validate` — standard local gate: tests, build, docs, and size (the emitting build performs the type check; `pnpm run typecheck` remains available as a manual diagnostic).
 - `pnpm run size` — bundle size check via `size-limit`.
 
 Please add or update tests for any behavior change. PRs that touch runtime

@@ -51,7 +51,7 @@
     "prepublishOnly": "npm run build",
     "check": "pnpm run typecheck",
     "docs:stage": "pnpm run docs && mkdir -p typedoc-site/dist && cp -R typedoc-site/public/. typedoc-site/dist/",
-    "validate": "pnpm run typecheck && pnpm run test && pnpm run build && pnpm run docs && pnpm run size",
+    "validate": "pnpm run test && pnpm run build && pnpm run docs && pnpm run size",
     "deploy:dev": "pnpm run build && pnpm run docs:stage && pnpm run docs-site:install && cd typedoc-site && pnpm run deploy:dev",
     "deploy:prod": "pnpm run build && pnpm run docs:stage && pnpm run docs-site:install && cd typedoc-site && pnpm run deploy:prod",
     "docs-site:install": "cd typedoc-site && (pnpm install --frozen-lockfile || pnpm install)"
