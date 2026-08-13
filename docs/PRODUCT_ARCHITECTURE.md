@@ -48,7 +48,7 @@ flowchart LR
 
 ## Delegation surface and A2A envelope (stability contract)
 
-Scoped delegation grants (delivered with Voice-First 1.0 T1 on the legacy `@nexartis/nexartis-nanda-node-sdk` line) are dispatched over the A2A JSON-RPC envelope, not a REST route. The SDK owns the wire helper (`_sendDelegationAction`) and exposes three methods on `client.orchestration`:
+Scoped delegation grants (Voice-First 1.0 T1) are dispatched over the A2A JSON-RPC envelope, not a REST route. The SDK owns the wire helper (`_sendDelegationAction`) and exposes three methods on `client.orchestration`:
 
 - `grantDelegation({ granted_by_did, granted_to_did, granted_scope, expires_at, parent_delegation_id?, revocable?, proof? })` — POSTs an A2A envelope with method `delegation.grant` and returns `DelegationGrantResult` (`delegation_id`, `expires_at`, `kym_vc_id?`).
 - `revokeDelegation({ delegation_id, reason? })` — `delegation.revoke`. Cascades to all descendants via `parent_delegation_id`.

@@ -3,7 +3,7 @@ name: release-please
 on:
   push:
     branches:
-      - prod
+      - dev
 
 permissions:
   contents: write
@@ -19,4 +19,4 @@ jobs:
           package-name: '@nexartis/homeport-sdk'
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-          target-branch: prod
+          target-branch: dev
