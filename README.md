@@ -127,7 +127,7 @@ All methods live on namespaces under the client. The only direct methods on `Hom
 |---|---|
 | `client.agents`        | Register, update, delete, lookup, search, list, version, deprecate, tombstone. Includes `searchAll` / `listAll` async iterators. |
 | `client.orchestration` | Create / update / run / cancel DAG workflows; intelligent routing; pattern + delegation + conflict management; index diff + subscribe. Includes scoped delegation grants — `grantDelegation`, `revokeDelegation`, `checkDelegation` — dispatched over the A2A JSON-RPC envelope with PUH proofs and cascading revocation. |
-| `client.trust`         | Lean-Index resolution, trust scores, frameworks, behaviour analytics, compliance scans, trust-graph + path queries. |
+| `client.trust`         | Lean-Index resolution, trust scores, frameworks, behaviour analytics, compliance scans, trust-graph + path queries, `getBadges`. |
 | `client.federation`    | Peer discovery, gossip status, federated agent listing, A2A JSON-RPC. |
 | `client.webhooks`      | CRUD for subscriptions (create returns a signing `secret`). |
 | `client.developers`    | API-key lifecycle + developer earnings. |
@@ -137,7 +137,7 @@ Full generated reference (every type, every method, every example) is hosted at 
 
 ## Migrating from `@nexartis/nexartis-nanda-node-sdk`
 
-Homeport SDK 1.0.0 is the successor to `@nexartis/nexartis-nanda-node-sdk` (last published as 1.2.1 on npm). The wire protocol and namespace shapes are unchanged — only names and env vars moved.
+Current release is `@nexartis/homeport-sdk@1.1.0`. It supersedes `@nexartis/nexartis-nanda-node-sdk` (last published as 1.2.1). The wire protocol is unchanged — names and env vars moved at 1.0.0; 1.1.0 adds visibility / capability / MCP / pricing / trust-badge contracts.
 
 ```bash
 pnpm remove @nexartis/nexartis-nanda-node-sdk

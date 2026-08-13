@@ -59,7 +59,7 @@ repository's GitHub Actions workflow and ship with **npm provenance
 attestations**. Verify a release before installing:
 
 ```bash
-npm view @nexartis/homeport-sdk@1.0.0 --json | jq .dist
+npm view @nexartis/homeport-sdk@1.1.0 --json | jq .dist
 npm audit signatures
 ```
 

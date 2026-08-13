@@ -11,7 +11,7 @@
     "deploy:prod": "wrangler deploy --env prod"
   },
   "dependencies": {
-    "@nexartis/homeport-sdk": "^1.0.0"
+    "@nexartis/homeport-sdk": "^1.1.0"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260418.1",

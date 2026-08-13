@@ -65,9 +65,9 @@ OIDC and npm returns **404** on the publish PUT (observed 2026-08-13
 on run `31675079695`). Delete the secret unless it is a current
 Automation token that can publish this package.
 
-`release-please.yml` still targets nanda `prod`. Do not retarget it to
-`dev` until a Homeport `v*.*.*` tag already exists on `dev` (otherwise
-it opens a competing next-minor PR that races the hand tag).
+`release-please.yml` targets Homeport `dev` once a Homeport `v*.*.*`
+tag already exists on that history (`v1.1.0` is the anchor). Do not
+retarget it in the same PR as a hand version bump.
 
 ## Fallback path — local web session (used for 1.1.0)
 
@@ -86,7 +86,7 @@ In a real terminal (interactive — agents cannot complete the browser
 step):
 
 ```bash
-cd /path/to/nexartis-nanda-node-sdk
+cd /path/to/homeport-sdk
 git fetch origin dev --tags
 git checkout dev
 git pull --ff-only origin dev
