@@ -27,6 +27,8 @@ This inventory was created during the 2026-06-19 full agentic audit. Existing do
 | `docs/ISSUES.md` | Known gaps register | New canonical doc | All audit findings, fixed items, and open follow-ups. |
 | `docs/TESTING.md` | Testing strategy | New canonical doc | Validation matrix, unit strategy, E2E applicability, and gaps. |
 | `docs/E2E_COVERAGE_MATRIX.md` | Browser coverage matrix | New canonical doc | Docs-site public journey coverage and authenticated N/A statement. |
+| `docs/PUBLISH.md` | Current publish process | Canonical for Homeport releases | Tag-from-`dev` path, Trusted Publisher, local `--auth-type=web` fallback, 1.1.0 record. Rebrand one-shot steps stay in `REBRAND-RUNBOOK.md`. |
+| `docs/REBRAND-RUNBOOK.md` | Rebrand one-shot | Keep; §(e) points at `PUBLISH.md` | Repo rename, `legacy/*` tags, domain rewiring. Not the recurring publish path. |
 
 ## Consolidation notes
 
