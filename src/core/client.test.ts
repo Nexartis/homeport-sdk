@@ -54,6 +54,16 @@ describe('HomeportClient', () => {
 		});
 	});
 
+	describe('public surface', () => {
+		it('does not export deprecated Nnn* aliases', async () => {
+			const barrel = await import('../index.js');
+			expect(barrel).not.toHaveProperty('NnnClient');
+			expect(barrel).not.toHaveProperty('NnnError');
+			expect(barrel).not.toHaveProperty('NnnErrorCode');
+			expect(typeof barrel.HomeportClient).toBe('function');
+		});
+	});
+
 	describe('health()', () => {
 		it('returns health status', async () => {
 			const healthData = { status: 'ok', timestamp: '2026-01-01', environment: 'test', agents: 5, checks: { db: 'ok', r2: 'ok', kv: 'ok', queues: 'ok' } };
