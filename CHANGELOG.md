@@ -4,6 +4,18 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.1.0] - 2026-08-13
+
+### Added
+
+- Visibility lifecycle, capability/MCP/pricing metadata, and trust-badge contracts (Set C / `#50`): `AgentVisibility`, `PricingDescriptor`, `CapabilityManifestEntry`, `McpMetadata`, `TrustBadge*` types; `trust.getBadges()`; `visibility` / `for_hire` search filters; signed AgentAddr passthrough on `RegisterAgentRequest`.
+- Tag-from-`dev` publish path for `@nexartis/homeport-sdk`. `publish.yml` runs only on a `v*.*.*` tag that matches `package.json` version, refuses any other package name, and creates the GitHub Release for that tag. `release-please.yml` stays on nanda `prod` until a follow-up after `v1.1.0` exists.
+
+### Notes
+
+- npmjs already has `@nexartis/homeport-sdk@1.0.0` (2026-07-18, pre-#50). This minor republishes the current `dev` surface. Do not merge Homeport `dev` onto nanda `prod` to ship it.
+- Public exports stay Homeport-named (`HomeportClient`, `HomeportError`). There is no deprecated `Nnn*` alias.
+
 ## [1.0.0] - 2026-07-18
 
 ### Rebrand — `@nexartis/nexartis-nanda-node-sdk` → `@nexartis/homeport-sdk`

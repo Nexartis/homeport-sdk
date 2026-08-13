@@ -81,22 +81,46 @@ pnpm dlx @arethetypeswrong/cli --pack .
 
 Also typecheck a consumer fixture that installs `@nexartis/homeport-sdk` from the tarball produced by `npm pack` and calls `HomeportClient`, `HomeportError`, `HomeportErrorCode`.
 
-## (e) Merge dev → prod
+## (e) Publish Homeport from `dev` — do not merge onto nanda `prod`
 
-With the wave PRs merged to `dev` and QA gate 1 green, promote `dev` → `prod`. That push triggers:
+`origin/dev` is `@nexartis/homeport-sdk`. `origin/prod` is still
+`@nexartis/nexartis-nanda-node-sdk@1.3.0`. The two histories have **no
+merge-base**. PR #49 (`dev`→`prod`) is closed and must stay closed —
+merging would overwrite the nanda line.
 
-- `deploy-docs.yml` → builds and deploys `typedoc-site/` to `homeport-sdk.nexartis.com`.
-- `deploy-redirect.yml` → deploys `redirect-worker/` (dev + prod).
-- `release-please.yml` → opens the 1.0.0 release PR.
+`@nexartis/homeport-sdk@1.0.0` is already on npmjs (2026-07-18, pre-#50).
+Ship the current `dev` surface as **1.1.0** from a tag on `dev`:
 
-Approve and merge the release PR (human, per workspace policy). `publish.yml` then publishes `@nexartis/homeport-sdk@1.0.0` to npmjs with SLSA provenance via OIDC Trusted Publishing.
+1. Merge the publish-path PR to `dev` (human). Full gate: `pnpm run validate`.
+2. Cut the tag on the merged `dev` HEAD (do not reuse bare `v1.0.0`–`v1.3.0`; those are `legacy/*`):
+
+   ```bash
+   git checkout dev
+   git pull --ff-only origin dev
+   git tag v1.1.0
+   git push origin v1.1.0
+   ```
+
+3. That tag push is the only `publish.yml` trigger. The job fails unless
+   `package.json` name is `@nexartis/homeport-sdk` **and** the tag equals
+   `v${version}` (so `v1.1.0` cannot publish a 1.2.0 tree). It then
+   publishes and creates the GitHub Release for that tag.
+4. Leave `release-please.yml` on nanda `prod` for this cut — retargeting
+   it to `dev` before `v1.1.0` exists would open a competing 1.2.0
+   release PR. After the tag is on `dev`, a follow-up PR may point
+   release-please at `dev` for later Homeport minors.
+5. Docs/redirect Workers still deploy from `prod` today
+   (`deploy-docs.yml` / `deploy-redirect.yml`). Do not retarget those by
+   merging Homeport onto nanda `prod`. After verify (f), dispatch
+   `deploy-docs.yml` on a Homeport checkout (or a later dedicated
+   docs-from-dev change) so `homeport-sdk.nexartis.com` matches 1.1.0.
 
 ## (f) Verify the npm publish
 
 ```bash
-npm view @nexartis/homeport-sdk version        # expect: 1.0.0
-npm view @nexartis/homeport-sdk@1.0.0 --json | jq '.dist, .repository, .homepage'
-npm audit signatures --package @nexartis/homeport-sdk@1.0.0
+npm view @nexartis/homeport-sdk version        # expect: 1.1.0
+npm view @nexartis/homeport-sdk@1.1.0 --json | jq '.dist, .repository, .homepage'
+npm audit signatures --package @nexartis/homeport-sdk@1.1.0
 ```
 
 Expected values: `homepage` = `https://homeport-sdk.nexartis.com`, `repository.url` → `github.com/Nexartis/homeport-sdk`, provenance attestation present.
