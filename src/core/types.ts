@@ -116,6 +116,14 @@ export interface HomeportAgent {
 	protocols?: string[];
 	created_at?: string;
 	updated_at?: string;
+	/** Visibility lifecycle state (Sprint D). */
+	visibility?: AgentVisibility;
+	/** Structured capability manifest (Sprint D). */
+	capability_manifest?: CapabilityManifestEntry[];
+	/** MCP server metadata (Sprint D). */
+	mcp_metadata?: McpMetadata;
+	/** Pricing descriptor (Sprint D). */
+	pricing?: PricingDescriptor;
 }
 
 export interface RegisterAgentRequest {
@@ -125,6 +133,22 @@ export interface RegisterAgentRequest {
 	facts_url?: string;
 	capabilities?: string[];
 	tags?: string[];
+	/** Visibility lifecycle state (Sprint D). */
+	visibility?: AgentVisibility;
+	/** Structured capability manifest (Sprint D). */
+	capability_manifest?: CapabilityManifestEntry[];
+	/** MCP server metadata (Sprint D). */
+	mcp_metadata?: McpMetadata;
+	/** Pricing descriptor (Sprint D). */
+	pricing?: PricingDescriptor;
+	/** Signed AgentAddr passthrough - Ed25519 public key of the record signer (hex). */
+	public_key_hex?: string;
+	/** Signed AgentAddr passthrough - Ed25519 signature over the canonical record (hex). */
+	signature_hex?: string;
+	/** Signed AgentAddr passthrough - DID or registry ID of the signer. */
+	signer_id?: string;
+	/** Signed AgentAddr passthrough - record TTL in seconds. */
+	ttl_seconds?: number;
 }
 
 export interface RegisterAgentResponse {
@@ -139,6 +163,10 @@ export interface SearchAgentsParams {
 	min_trust?: number;
 	jurisdiction?: string;
 	protocol?: string;
+	/** Filter by visibility lifecycle state (Sprint D). */
+	visibility?: AgentVisibility;
+	/** Filter to agents available for hire (Sprint D). */
+	for_hire?: boolean;
 	/** Pagination: number of results per page. */
 	limit?: number;
 	/** Pagination: cursor or offset for the next page. */
@@ -324,6 +352,14 @@ export interface UpdateAgentRequest {
 	facts_url?: string;
 	capabilities?: string[];
 	tags?: string[];
+	/** Visibility lifecycle state (Sprint D). */
+	visibility?: AgentVisibility;
+	/** Structured capability manifest (Sprint D). */
+	capability_manifest?: CapabilityManifestEntry[];
+	/** MCP server metadata (Sprint D). */
+	mcp_metadata?: McpMetadata;
+	/** Pricing descriptor (Sprint D). */
+	pricing?: PricingDescriptor;
 }
 
 export interface AgentRefreshResult {
@@ -879,6 +915,115 @@ export interface VerifyNpPaymentResponse {
 	verified: boolean;
 	settlement_id?: string;
 	recon?: unknown | null;
+}
+
+// ── Sprint D: Open-Core Convergence (visibility + agent metadata) ──
+
+/**
+ * Agent visibility lifecycle state.
+ *
+ * Node discovery rules:
+ * - Search/list surfaces return only `public` and `for_hire` agents.
+ * - Lookup serves `public`, `unlisted`, and `for_hire` agents; `private` resolves to 404.
+ * - Federation gossip propagates only `public` and `for_hire` agents.
+ */
+export type AgentVisibility = 'private' | 'unlisted' | 'public' | 'for_hire';
+
+/** Pricing model descriptor for an agent, capability, or MCP tool. */
+export interface PricingDescriptor {
+	/** Pricing model. */
+	model: 'free' | 'per_request' | 'subscription' | 'usage';
+	/** Currency code (e.g. 'USD'). */
+	currency?: string;
+	/** Numeric price in the given currency. */
+	price?: number;
+	/** Pricing unit (e.g. 'request', 'month', '1k_tokens'). */
+	unit?: string;
+}
+
+/** Authentication scheme required by a capability. */
+export type CapabilityAuthScheme = 'none' | 'bearer' | 'oauth2' | 'api_key' | 'custom';
+
+/** A single entry in an agent's structured capability manifest. */
+export interface CapabilityManifestEntry {
+	/** Stable capability identifier. */
+	id: string;
+	/** Human-readable name. */
+	name?: string;
+	/** Human-readable description. */
+	description?: string;
+	/** Authentication scheme required to invoke the capability. */
+	auth?: CapabilityAuthScheme;
+	/** Per-capability pricing. */
+	pricing?: PricingDescriptor;
+}
+
+/** Metadata for a single MCP tool exposed by an agent. */
+export interface McpToolMetadata {
+	/** Tool name. */
+	name: string;
+	/** Human-readable description. */
+	description?: string;
+	/** Whether invoking the tool requires authentication. */
+	auth_required?: boolean;
+	/** Per-tool pricing. */
+	pricing?: PricingDescriptor;
+}
+
+/** MCP server metadata descriptor attached to an agent. */
+export interface McpMetadata {
+	/** MCP endpoint URL. */
+	endpoint?: string;
+	/** MCP transport. */
+	transport?: 'streamable-http' | 'sse' | 'stdio';
+	/** MCP endpoint authentication scheme. */
+	authentication?: 'none' | 'bearer' | 'oauth2' | 'api_key' | 'custom';
+	/** Tool-level metadata. */
+	tools?: McpToolMetadata[];
+}
+
+/** Trust badge tier identifiers (GET /trust/badges). */
+export type TrustBadgeTier = 'none' | 'bronze' | 'silver' | 'gold';
+
+/** Computed trust badge with gamification data. */
+export interface TrustBadge {
+	/** Badge tier. */
+	tier: TrustBadgeTier;
+	/** The agent's reputation score. */
+	reputation: number;
+	/** Human-readable tier label. */
+	label: string;
+	/** Emoji for the badge tier. */
+	emoji: string;
+	/** Requirements that are currently satisfied. */
+	requirements_met: string[];
+	/** Next tier to aim for, or null if already at the top tier. */
+	next_tier: TrustBadgeTier | null;
+	/** Gap to the next tier threshold, or null if already at the top tier. */
+	next_tier_gap: number | null;
+	[key: string]: unknown;
+}
+
+/** A single agent's badge entry as served by GET /trust/badges. */
+export interface TrustBadgeEntry {
+	agent_id: string;
+	badge: TrustBadge;
+	/** Point-in-time reputation snapshot used for badge computation. */
+	reputation_snapshot?: Record<string, unknown>;
+	[key: string]: unknown;
+}
+
+/** Response from GET /trust/badges. */
+export interface TrustBadgeResponse {
+	/** Badge entries (filtered by `?agent=` when requested). */
+	agents: TrustBadgeEntry[];
+	/** Number of entries in `agents`. */
+	total: number;
+	/** Badge tier distribution across all agents (unfiltered). */
+	badge_distribution?: Partial<Record<TrustBadgeTier, number>>;
+	/** ISO timestamp of the response. */
+	fetchedAt?: string;
+	[key: string]: unknown;
 }
 
 // ── Compatibility Types: Switchboard / Payments ───────────────────────

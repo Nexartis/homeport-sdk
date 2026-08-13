@@ -180,4 +180,80 @@ describe('AgentsNamespace', () => {
 			expect(seen).toEqual(['only']);
 		});
 	});
+
+	describe('search() — Sprint D params', () => {
+		it('serializes visibility and for_hire when present', async () => {
+			mockFetch({ status: 200, body: [] });
+			const client = new HomeportClient(BASE_CONFIG);
+			await client.agents.search({ visibility: 'for_hire', for_hire: true });
+			const [url] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(url).toContain('visibility=for_hire');
+			expect(url).toContain('for_hire=true');
+		});
+
+		it('omits visibility and for_hire when absent', async () => {
+			mockFetch({ status: 200, body: [] });
+			const client = new HomeportClient(BASE_CONFIG);
+			await client.agents.search({ q: 'x' });
+			const [url] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(url).not.toContain('visibility');
+			expect(url).not.toContain('for_hire');
+		});
+
+		it('serializes for_hire=false explicitly', async () => {
+			mockFetch({ status: 200, body: [] });
+			const client = new HomeportClient(BASE_CONFIG);
+			await client.agents.search({ for_hire: false });
+			const [url] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(url).toContain('for_hire=false');
+		});
+
+		it('passes visibility and for_hire through searchAll pagination', async () => {
+			mockFetch({ status: 200, body: { data: [{ agent_id: 'a' }], hasMore: false } });
+			const client = new HomeportClient(BASE_CONFIG);
+			const seen: string[] = [];
+			for await (const a of client.agents.searchAll({ visibility: 'public', for_hire: true })) {
+				seen.push((a as { agent_id: string }).agent_id);
+			}
+			expect(seen).toEqual(['a']);
+			const [url] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(url).toContain('visibility=public');
+			expect(url).toContain('for_hire=true');
+		});
+	});
+
+	describe('register() — Sprint D metadata', () => {
+		it('posts visibility, manifests, pricing, and signed AgentAddr fields verbatim', async () => {
+			mockFetch({ status: 200, body: { status: 'success', message: 'registered' } });
+			const client = new HomeportClient(BASE_CONFIG);
+			const req = {
+				agent_id: 'agent-1',
+				agent_url: 'https://a.example.com',
+				visibility: 'for_hire' as const,
+				capability_manifest: [
+					{
+						id: 'summarize',
+						name: 'Summarize',
+						auth: 'bearer' as const,
+						pricing: { model: 'per_request' as const, currency: 'USD', price: 0.01, unit: 'request' }
+					}
+				],
+				mcp_metadata: {
+					endpoint: 'https://a.example.com/mcp',
+					transport: 'streamable-http' as const,
+					authentication: 'bearer' as const,
+					tools: [{ name: 'summarize', auth_required: true, pricing: { model: 'free' as const } }]
+				},
+				pricing: { model: 'subscription' as const, currency: 'USD', price: 9.99, unit: 'month' },
+				public_key_hex: 'ab'.repeat(32),
+				signature_hex: 'cd'.repeat(64),
+				signer_id: 'did:web:node.example.com',
+				ttl_seconds: 300
+			};
+			await client.agents.register(req);
+			const [url, init] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
+			expect(url).toBe('https://homeport.test.com/register');
+			expect(JSON.parse((init as RequestInit).body as string)).toEqual(req);
+		});
+	});
 });

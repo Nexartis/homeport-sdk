@@ -137,7 +137,18 @@ export type {
 	ConvertCurrencyResponse,
 	WalletBalancesResponse,
 	ExchangeRateMatrixResponse,
-	CurrenciesResponse
+	CurrenciesResponse,
+	// Sprint D types
+	AgentVisibility,
+	PricingDescriptor,
+	CapabilityAuthScheme,
+	CapabilityManifestEntry,
+	McpToolMetadata,
+	McpMetadata,
+	TrustBadgeTier,
+	TrustBadge,
+	TrustBadgeEntry,
+	TrustBadgeResponse
 } from './types.js';
 
 // Errors

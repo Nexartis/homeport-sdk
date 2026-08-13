@@ -197,7 +197,7 @@ ES2022 module output, `"type": "module"`, ships `.d.ts` + sourcemaps.
 
 We welcome contributions from the community. Read [CONTRIBUTING.md](./CONTRIBUTING.md) for the development workflow, coding conventions, testing requirements, and review process.
 
-The standard local gate is `pnpm run validate`. The docs site can be deployed to dev with `pnpm run deploy:dev`; use `pnpm run deploy:prod` only on the release-owner/final-audit path after validation has passed.
+The standard local gate is `pnpm run validate` (tests, build, docs, and size). The docs site can be deployed to dev with `pnpm run deploy:dev`; use `pnpm run deploy:prod` only on the release-owner/final-audit path after validation has passed.
 
 All commits must be signed off under the [Developer Certificate of Origin](https://developercertificate.org/) — run `git commit -s` to add the required `Signed-off-by:` trailer. A DCO status check is enforced on every pull request.
 
