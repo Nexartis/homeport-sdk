@@ -83,6 +83,11 @@ Also typecheck a consumer fixture that installs `@nexartis/homeport-sdk` from th
 
 ## (e) Publish Homeport from `dev` — do not merge onto nanda `prod`
 
+**Current process:** `docs/PUBLISH.md`. The 1.1.0 cut is done
+(`@nexartis/homeport-sdk@1.1.0` on npmjs, `gitHead=ea08a57`). Use that
+file for the next release. The rest of this section is the 1.1.0
+historical checklist.
+
 `origin/dev` is `@nexartis/homeport-sdk`. `origin/prod` is still
 `@nexartis/nexartis-nanda-node-sdk@1.3.0`. The two histories have **no
 merge-base**. PR #49 (`dev`→`prod`) is closed and must stay closed —
