@@ -1,19 +1,19 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Example — Cloudflare Workers consumer of @nexartis/nexartis-nanda-node-sdk.
+ * Example — Cloudflare Workers consumer of @nexartis/homeport-sdk.
  *
- * Exposes a single route, `GET /health`, that uses NnnClient to call the
- * NANDA Node health endpoint from the edge and returns the result as JSON.
+ * Exposes a single route, `GET /health`, that uses HomeportClient to call the
+ * Homeport health endpoint from the edge and returns the result as JSON.
  *
  * Run locally: `pnpm run dev`, then `curl http://localhost:8787/health`.
  */
 
-import { NnnClient, NnnError } from '@nexartis/nexartis-nanda-node-sdk';
+import { HomeportClient, HomeportError } from '@nexartis/homeport-sdk';
 
 interface Env {
-	NNN_BASE_URL: string;
-	/** Provide via `wrangler secret put NNN_API_KEY`. */
-	NNN_API_KEY?: string;
+	HOMEPORT_BASE_URL: string;
+	/** Provide via `wrangler secret put HOMEPORT_API_KEY`. */
+	HOMEPORT_API_KEY?: string;
 }
 
 export default {
@@ -24,9 +24,9 @@ export default {
 			return new Response('Not Found', { status: 404 });
 		}
 
-		const client = new NnnClient({
-			baseUrl: env.NNN_BASE_URL,
-			apiKey: env.NNN_API_KEY,
+		const client = new HomeportClient({
+			baseUrl: env.HOMEPORT_BASE_URL,
+			apiKey: env.HOMEPORT_API_KEY,
 		});
 
 		try {
@@ -36,7 +36,7 @@ export default {
 				headers: { 'Cache-Control': 'no-store' },
 			});
 		} catch (err) {
-			const code = err instanceof NnnError ? err.code : 'UNKNOWN';
+			const code = err instanceof HomeportError ? err.code : 'UNKNOWN';
 			const message = err instanceof Error ? err.message : String(err);
 			return Response.json({ error: code, message }, { status: 502 });
 		}

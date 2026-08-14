@@ -1,5 +1,5 @@
 <!--
-Thanks for contributing to the Nexartis NANDA Node SDK.
+Thanks for contributing to the Homeport SDK.
 
 Please fill in the sections below and tick the checklist. Items that do not
 apply can be marked with `n/a` rather than removed.
@@ -29,8 +29,7 @@ Fixes #
       Conventional Commit that `release-please` will pick up).
 - [ ] I added or updated **tests** that cover the change
       (`pnpm run test`).
-- [ ] `pnpm run typecheck` is clean.
-- [ ] `pnpm run size` (size-limit bundle check) is clean.
+- [ ] `pnpm run validate` (tests, build, docs, and size) is clean.
 - [ ] Public API changes have an **issue / RFC** referenced above — see
       [GOVERNANCE.md](../GOVERNANCE.md#rfc-process-for-breaking-changes).
 - [ ] Documentation (README, typedoc comments, guides) updated as needed.

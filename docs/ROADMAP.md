@@ -1,8 +1,21 @@
-# Nexartis NANDA Node SDK Roadmap
+# Homeport SDK Roadmap
 
 ## Executive summary
 
 This roadmap captures future-facing work discovered during the full agentic audit. Current product behavior belongs in `PRODUCT_ARCHITECTURE.md`; current gaps and risks belong in `ISSUES.md`.
+
+## 1.1.0 (planned)
+
+Additive, non-breaking SDK coverage for node surfaces shipped in Homeport 1.0. Planned and subject to change; endpoint shapes will be confirmed against the node's route handlers before implementation.
+
+- New `admission` namespace — Yanez proof-of-human delegated admission: `startChallenge`, `submitCallback`, `getStatus`.
+- `agents.getSigningKeys(version)` — public signing-key sets from `/.well-known/keys/[version]` (verify attestations and signatures client-side).
+- `agents.getUcp()` — the `/.well-known/ucp` capability descriptor.
+- `orchestration.streamRunEvents(runId, onEvent)` — SSE streaming of workflow run progress.
+- New `switchboard` namespace — `discover`, `resync`, `export`, `getAdapters`.
+- `billing` FX + wallets — `listCurrencies`, `getRates`, `convert`, `getWallet`.
+- `trust.getCrossRegistry()` and orchestration conflict detail/resolve.
+- Reconcile or remove the orphan `agents.updateStatus` / `agents.refresh` methods against the current node surface.
 
 ## Near-term roadmap
 
@@ -11,7 +24,7 @@ This roadmap captures future-facing work discovered during the full agentic audi
 | Documentation confidence | Add Playwright smoke checks for the docs landing page and generated API reference. | The repo now has a deployable public docs site but no browser-level regression coverage. |
 | Accessibility confidence | Add a lightweight accessibility smoke test for the docs landing page. | The public docs site has interactive install tabs and copy controls. |
 | Developer experience | Decide whether to add a dedicated formatter/linter or continue using TypeScript as the lightweight check gate. | Current CI is right-sized but does not enforce formatting beyond TypeScript compilation. |
-| Version automation | Generate `src/core/version.ts` from `package.json` during release or validation. | Avoid future drift between package metadata and runtime User-Agent/version exports. |
+| Version automation (resolved 1.0.0) | `scripts/gen-version.mjs` generates `src/core/version.ts` from `package.json`; wired as `prebuild`. | Resolved by the Homeport rebrand; kept here for provenance. |
 
 ## Later roadmap
 

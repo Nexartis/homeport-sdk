@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — NnnClient
+ * Homeport SDK — HomeportClient
  *
- * Typed HTTP client for the Nexartis NANDA Node.
+ * Typed HTTP client for the Homeport.
  * Wraps registry, orchestration, health, stats, agent facts,
  * and NANDA index endpoints with retry logic.
  *
@@ -12,18 +12,18 @@
  */
 
 import type {
-	NnnConfig,
-	NnnHealthStatus,
-	NnnHooks
+	HomeportConfig,
+	HomeportHealthStatus,
+	HomeportHooks
 } from './types.js';
 
 import { fetchWithRetry, normalizeBaseUrl } from './retry.js';
-import { createNnnLogger, type NnnLogger } from './logger.js';
-import { NnnError, NnnErrorCode } from './errors.js';
+import { createHomeportLogger, type HomeportLogger } from './logger.js';
+import { HomeportError, HomeportErrorCode } from './errors.js';
 import { SDK_VERSION } from './version.js';
 import { CircuitBreaker } from './circuit-breaker.js';
 import { generateRequestId } from './sse.js';
-import type { NnnClientInternals } from './namespace-helpers.js';
+import type { HomeportClientInternals } from './namespace-helpers.js';
 import {
 	AgentsNamespace,
 	OrchestrationNamespace,
@@ -131,12 +131,12 @@ class ResponseCache {
 	}
 }
 
-export class NnnClient {
+export class HomeportClient {
 	readonly baseUrl: string;
 	private apiKey: string | null;
-	private logger: NnnLogger;
-	private retryConfig: NnnConfig['retryConfig'];
-	private hooks: NnnHooks;
+	private logger: HomeportLogger;
+	private retryConfig: HomeportConfig['retryConfig'];
+	private hooks: HomeportHooks;
 	private traceContext: { traceparent?: string; tracestate?: string };
 	private circuitBreaker: CircuitBreaker;
 
@@ -156,15 +156,15 @@ export class NnnClient {
 	private _billing: BillingNamespace | null = null;
 
 	/** Internal bridge object shared with namespace classes. */
-	private _internals: NnnClientInternals | null = null;
+	private _internals: HomeportClientInternals | null = null;
 
-	constructor(config: NnnConfig) {
+	constructor(config: HomeportConfig) {
 		if (!config.baseUrl) {
-			throw new NnnError(NnnErrorCode.CONFIGURATION_ERROR, 'NnnClient requires config.baseUrl');
+			throw new HomeportError(HomeportErrorCode.CONFIGURATION_ERROR, 'HomeportClient requires config.baseUrl');
 		}
 		this.baseUrl = normalizeBaseUrl(config.baseUrl);
 		this.apiKey = config.apiKey ?? null;
-		this.logger = createNnnLogger(config.verbose ?? false);
+		this.logger = createHomeportLogger(config.verbose ?? false);
 		this.retryConfig = config.retryConfig;
 		this.hooks = config.hooks ?? {};
 		this.traceContext = config.traceContext ?? {};
@@ -184,7 +184,7 @@ export class NnnClient {
 	// ── Namespace accessors (Sprint D) ────────────────────────────────
 
 	/** @internal — Lazily build the internals bridge. */
-	private internals(): NnnClientInternals {
+	private internals(): HomeportClientInternals {
 		if (!this._internals) {
 			this._internals = {
 				getJson: this.getJson.bind(this),
@@ -256,7 +256,7 @@ export class NnnClient {
 		const h: Record<string, string> = {
 			Accept: 'application/json',
 			'Content-Type': 'application/json',
-			'User-Agent': `@nexartis/nexartis-nanda-node-sdk/${SDK_VERSION}`
+			'User-Agent': `@nexartis/homeport-sdk/${SDK_VERSION}`
 		};
 		if (this.apiKey) h['Authorization'] = `Bearer ${this.apiKey}`;
 		// OpenTelemetry trace context propagation (2.2)
@@ -318,7 +318,7 @@ export class NnnClient {
 				// not client errors (4xx) which indicate caller issues, not
 				// service degradation.
 				const bodyText = await response.text();
-				const error = NnnError.fromStatus(
+				const error = HomeportError.fromStatus(
 					response.status,
 					`${context} failed (${response.status}): ${bodyText}`
 				);
@@ -337,24 +337,24 @@ export class NnnClient {
 			return response;
 		} catch (err) {
 			// Re-throw errors already handled above (HTTP errors)
-			if (err instanceof NnnError && err.context.durationMs !== undefined) {
+			if (err instanceof HomeportError && err.context.durationMs !== undefined) {
 				throw err;
 			}
 			const durationMs = Date.now() - startTime;
 
 			// 429 (rate-limit) is a client-side throttle, not a server failure —
 			// don't let it trip the circuit breaker.
-			const is429 = err instanceof NnnError && err.statusCode === 429;
+			const is429 = err instanceof HomeportError && err.statusCode === 429;
 			if (!skipBreaker && !is429) this.circuitBreaker.recordFailure(url);
 
-			// Enrich NnnError with duration context before firing onError
+			// Enrich HomeportError with duration context before firing onError
 			// so hook consumers can access timing information
-			if (err instanceof NnnError) {
+			if (err instanceof HomeportError) {
 				err.context.durationMs = durationMs;
 
 				// Fire afterResponse for retried-out 5xx/429 errors that carry
 				// the last HTTP response, honouring the "fires for every response"
-				// contract documented on NnnHooks.afterResponse.
+				// contract documented on HomeportHooks.afterResponse.
 				// Clone the response so afterResponse body consumption doesn't
 				// prevent onError from inspecting the same response.
 				if (err.lastResponse) {
@@ -482,8 +482,8 @@ export class NnnClient {
 			return data;
 		} catch (err) {
 			if (!skipBreaker) this.circuitBreaker.recordFailure(cbUrl);
-			const parseError = new NnnError(
-				NnnErrorCode.SERVER_ERROR,
+			const parseError = new HomeportError(
+				HomeportErrorCode.SERVER_ERROR,
 				`${ctx}: failed to parse response body as JSON`
 			);
 			await this.hooks.onError?.(cbUrl, parseError);
@@ -494,7 +494,7 @@ export class NnnClient {
 	// ── Health ────────────────────────────────────────────────────────
 
 	/** GET /health */
-	async health(): Promise<NnnHealthStatus> {
+	async health(): Promise<HomeportHealthStatus> {
 		return this.getJson('/health', 'health');
 	}
 
@@ -516,7 +516,7 @@ export class NnnClient {
 	 * Deep health check — returns full health status including individual subsystem checks.
 	 * Unlike health(), this provides a summary `healthy` boolean and per-check details.
 	 */
-	async deepHealth(): Promise<NnnHealthStatus & { healthy: boolean; degradedChecks: string[] }> {
+	async deepHealth(): Promise<HomeportHealthStatus & { healthy: boolean; degradedChecks: string[] }> {
 		const h = await this.health();
 		const degradedChecks = Object.entries(h.checks ?? {})
 			.filter(([, v]) => v !== 'ok')

@@ -10,9 +10,9 @@
  * @module core/circuit-breaker
  */
 
-import type { NnnCircuitBreakerConfig } from './types.js';
-import { NnnError, NnnErrorCode } from './errors.js';
-import type { NnnLogger } from './logger.js';
+import type { HomeportCircuitBreakerConfig } from './types.js';
+import { HomeportError, HomeportErrorCode } from './errors.js';
+import type { HomeportLogger } from './logger.js';
 
 export interface CircuitBreakerState {
 	failures: number;
@@ -20,7 +20,7 @@ export interface CircuitBreakerState {
 	state: 'closed' | 'open' | 'half-open';
 }
 
-export const DEFAULT_CIRCUIT_BREAKER: Required<NnnCircuitBreakerConfig> = {
+export const DEFAULT_CIRCUIT_BREAKER: Required<HomeportCircuitBreakerConfig> = {
 	failureThreshold: 5,
 	cooldownMs: 30_000,
 	groupingDepth: 2,
@@ -29,8 +29,8 @@ export const DEFAULT_CIRCUIT_BREAKER: Required<NnnCircuitBreakerConfig> = {
 
 export class CircuitBreaker {
 	private endpoints = new Map<string, CircuitBreakerState>();
-	private config: Required<NnnCircuitBreakerConfig> | null;
-	private logger: NnnLogger;
+	private config: Required<HomeportCircuitBreakerConfig> | null;
+	private logger: HomeportLogger;
 	/**
 	 * Maximum number of endpoint keys tracked simultaneously.
 	 * When exceeded, the oldest (least-recently-created) entries are evicted.
@@ -38,8 +38,8 @@ export class CircuitBreaker {
 	private readonly maxEndpoints: number;
 
 	constructor(
-		config: NnnCircuitBreakerConfig | false | undefined,
-		logger: NnnLogger
+		config: HomeportCircuitBreakerConfig | false | undefined,
+		logger: HomeportLogger
 	) {
 		if (config === false) {
 			this.config = null;
@@ -54,7 +54,7 @@ export class CircuitBreaker {
 	/**
 	 * Derive a circuit key from a URL (scheme + host + leading path segments).
 	 * The number of path segments used is controlled by `groupingDepth` (default: 2).
-	 * e.g. with depth 2: `https://nanda.nexartis.com/api/agents/search` → `https://nanda.nexartis.com/api/agents`
+	 * e.g. with depth 2: `https://homeport.example.com/api/agents/search` → `https://homeport.example.com/api/agents`
 	 */
 	private keyFor(url: string): string {
 		try {
@@ -97,8 +97,8 @@ export class CircuitBreaker {
 				cb.state = 'half-open';
 				this.logger.debug('Circuit breaker half-open, allowing probe request', { key });
 			} else {
-				throw new NnnError(
-					NnnErrorCode.NETWORK_ERROR,
+				throw new HomeportError(
+					HomeportErrorCode.NETWORK_ERROR,
 					`Circuit breaker is open for ${key}. ${cfg.cooldownMs - elapsed}ms remaining in cooldown.`
 				);
 			}

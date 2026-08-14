@@ -1,6 +1,6 @@
 # Deploys the TypeDoc-generated API reference for
-# @nexartis/nexartis-nanda-node-sdk to the Cloudflare Worker at
-# nnn-sdk.nexartis.com.
+# @nexartis/homeport-sdk to the Cloudflare Worker at
+# homeport-sdk.nexartis.com.
 #
 # Triggers:
 #   - Pushes to the `prod` branch (runs after the release-please release PR
@@ -33,12 +33,12 @@ permissions:
 
 jobs:
   deploy:
-    name: Build and deploy to nnn-sdk.nexartis.com
+    name: Build and deploy to homeport-sdk.nexartis.com
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment:
       name: production
-      url: https://nnn-sdk.nexartis.com
+      url: https://homeport-sdk.nexartis.com
 
     steps:
       - name: Checkout

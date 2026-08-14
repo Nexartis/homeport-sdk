@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — SSE (Server-Sent Events) Parser
+ * Homeport SDK — SSE (Server-Sent Events) Parser
  *
  * Shared async generator for parsing `text/event-stream` responses.
  * Used by both orchestration (workflow event streams) and federation (A2A streaming).
@@ -9,7 +9,7 @@
  * @module core/sse
  */
 
-import type { NnnLogger } from './logger.js';
+import type { HomeportLogger } from './logger.js';
 
 /**
  * Parse an SSE stream into JSON objects.
@@ -19,7 +19,7 @@ import type { NnnLogger } from './logger.js';
  */
 export async function* parseSSEStream<T = Record<string, unknown>>(
 	body: ReadableStream<Uint8Array>,
-	logger: NnnLogger
+	logger: HomeportLogger
 ): AsyncGenerator<T, void, unknown> {
 	const reader = body.getReader();
 	const decoder = new TextDecoder();

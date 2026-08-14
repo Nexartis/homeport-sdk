@@ -1,16 +1,16 @@
 # workers-agent
 
 Minimal [Cloudflare Workers](https://developers.cloudflare.com/workers/) consumer
-of [`@nexartis/nexartis-nanda-node-sdk`](https://www.npmjs.com/package/@nexartis/nexartis-nanda-node-sdk).
+of [`@nexartis/homeport-sdk`](https://www.npmjs.com/package/@nexartis/homeport-sdk).
 
-One route — `GET /health` — uses `NnnClient` to call the NANDA Node
+One route — `GET /health` — uses `HomeportClient` to call the Homeport
 `deepHealth()` endpoint from the edge and returns the JSON result.
 
 ## Prerequisites
 
 - Node 20+ and `pnpm`
 - A Cloudflare account authenticated locally (`wrangler login`)
-- A NANDA Node API key
+- A Homeport API key
 
 ## Install
 
@@ -24,12 +24,12 @@ pnpm install
 Set the API key as a secret (not committed to the repo):
 
 ```bash
-wrangler secret put NNN_API_KEY
+wrangler secret put HOMEPORT_API_KEY
 ```
 
-The base URL defaults to `https://nanda.nexartis.com` via `wrangler.jsonc`
+The base URL defaults to `https://homeport.example.com` via `wrangler.jsonc`
 `vars`. Override it per-environment by adding an `env.*` block or by running
-`wrangler dev --var NNN_BASE_URL:https://your-node`.
+`wrangler dev --var HOMEPORT_BASE_URL:https://your-node`.
 
 ## Run locally
 

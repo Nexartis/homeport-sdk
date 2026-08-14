@@ -1,4 +1,4 @@
-# Nexartis NANDA Node SDK Testing Strategy
+# Homeport SDK Testing Strategy
 
 ## Executive summary
 
@@ -9,14 +9,14 @@ The SDK uses Vitest for unit tests, TypeScript for type safety, TypeDoc generati
 | Command | Purpose | Expected use |
 |---|---|---|
 | `pnpm install --frozen-lockfile` | Install exact root dependencies. | CI and clean local setup. |
-| `pnpm run typecheck` | TypeScript check without emitting files. | Local and CI quality gate. |
+| `pnpm run typecheck` | TypeScript check without emitting files. | Manual diagnostic; the emitting build performs the identical check inside `validate`. |
 | `pnpm run check` | Standard alias for `typecheck`. | Cross-repo convention. |
 | `pnpm run test` | Run Vitest unit tests once. | Local and CI quality gate. |
 | `pnpm run build` | Emit ESM JavaScript, declarations, and sourcemaps into `dist/`. | Before packaging, docs, and deploys. |
 | `pnpm run docs` | Generate TypeDoc output into `typedoc-site/dist/api`. | Before docs-site deploys. |
 | `pnpm run docs:stage` | Generate TypeDoc and copy the landing page assets into `typedoc-site/dist/`. | Before docs-site deploys. |
 | `pnpm run size` | Check configured min+gzip size budgets. | CI and release readiness. |
-| `pnpm run validate` | Safe local audit gate: typecheck, tests, build, docs, and size. | Before PR, push, and dev deploy. |
+| `pnpm run validate` | Safe local audit gate: tests, build, docs, and size (the emitting build performs the type check). | Before PR, push, and dev deploy. |
 | `pnpm run deploy:dev` | Build, stage, and deploy the docs site to dev. | Audit/dev validation only. |
 | `pnpm run deploy:prod` | Build, stage, and deploy the docs site to prod. | Release-owner/final-audit path only after validation passes. |
 

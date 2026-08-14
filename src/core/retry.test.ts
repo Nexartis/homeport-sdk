@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { normalizeBaseUrl, calculateBackoffDelay, isTransientError, fetchWithRetry } from './retry';
-import { NnnError, NnnErrorCode } from './errors';
+import { HomeportError, HomeportErrorCode } from './errors';
 
 describe('normalizeBaseUrl', () => {
 	it('strips trailing slashes', () => {
@@ -103,7 +103,7 @@ describe('fetchWithRetry', () => {
 		expect(globalThis.fetch).toHaveBeenCalledTimes(2);
 	});
 
-	it('throws NnnError with lastResponse after exhausting retries on 5xx', async () => {
+	it('throws HomeportError with lastResponse after exhausting retries on 5xx', async () => {
 		globalThis.fetch = vi.fn().mockImplementation(() =>
 			Promise.resolve(new Response('server error', { status: 500 }))
 		);
@@ -122,8 +122,8 @@ describe('fetchWithRetry', () => {
 			caughtError = err;
 		}
 
-		expect(caughtError).toBeInstanceOf(NnnError);
-		const nnnErr = caughtError as NnnError;
+		expect(caughtError).toBeInstanceOf(HomeportError);
+		const nnnErr = caughtError as HomeportError;
 		expect(nnnErr.statusCode).toBe(500);
 		// lastResponse is attached so upstream hooks (e.g. afterResponse) can inspect it
 		expect(nnnErr.lastResponse).toBeDefined();

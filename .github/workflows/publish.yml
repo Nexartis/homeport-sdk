@@ -1,9 +1,18 @@
 # ------------------------------------------------------------------------------
-# Publish to npmjs with SLSA provenance.
+# Publish @nexartis/homeport-sdk to npmjs with SLSA provenance.
+#
+# Homeport publishes only from a matching v*.*.* tag (cut on `dev` today).
+# Do NOT merge Homeport `dev` onto nanda `prod` to publish — those histories
+# have no merge-base, and `prod` is still @nexartis/nexartis-nanda-node-sdk
+# 1.3.0. Do not reuse bare v1.0.0–v1.3.0 (those are legacy/*).
+#
+# The job refuses any tree whose package.json name is not
+# @nexartis/homeport-sdk, and refuses a tag that does not equal
+# v${package.json version}. workflow_dispatch is not a publish trigger.
 #
 # Authentication (dual-path, whichever matches first):
 #   1. OIDC Trusted Publishing — if the npmjs Trusted Publisher config for
-#      this package matches (repo = Nexartis/nexartis-nanda-node-sdk,
+#      this package matches (repo = Nexartis/homeport-sdk,
 #      workflow = publish.yml, environment = <none>), the publish step will
 #      exchange GitHub's OIDC token for a short-lived npm publish credential
 #      automatically. No repository secret needed.
@@ -16,25 +25,14 @@
 #
 # Note on the CLI: we deliberately invoke `npm publish` (not `pnpm publish`).
 # pnpm's publish wrapper does not perform the npm-specific OIDC token
-# exchange that Trusted Publishing requires, which caused repeated 404s on
-# the publish PUT in prior runs even though provenance signing succeeded:
-#   - Run 24647311587 (no env):       pnpm publish -> 404
-#   - Run 24647530233 (env=npm-publish): pnpm publish -> 404
-# See https://github.com/pnpm/pnpm/issues/ (tracking issue) and
-# https://docs.npmjs.com/trusted-publishers for background.
-#
-# Requires one manual bootstrap `npm publish` to claim the package name on
-# npmjs before the first CI publish can succeed (already done for 1.1.0).
+# exchange that Trusted Publishing requires.
 # ------------------------------------------------------------------------------
 name: Publish to npmjs
 
 on:
   push:
-    branches:
-      - prod
     tags:
       - 'v*.*.*'
-  workflow_dispatch:
 
 jobs:
   publish:
@@ -42,14 +40,31 @@ jobs:
     permissions:
       # `id-token: write` lets npm fetch an OIDC token from GitHub both for
       # Trusted Publishing auth (preferred) and for SLSA provenance signing
-      # via sigstore. `contents: write` is needed for the git-tag + release
-      # fallback steps below.
+      # via sigstore. `contents: write` is needed to create the GitHub Release
+      # for the triggering tag.
       id-token: write
       contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Guard package identity and tag
+        id: identity
+        run: |
+          NAME=$(jq -r .name package.json)
+          VERSION=$(jq -r .version package.json)
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [ "$NAME" != "@nexartis/homeport-sdk" ]; then
+            echo "::error::publish.yml refuses to publish '$NAME'. This workflow is Homeport-only. nanda prod stays @nexartis/nexartis-nanda-node-sdk and must not use this job."
+            exit 1
+          fi
+          EXPECTED="v${VERSION}"
+          if [ "${GITHUB_REF_TYPE}" != "tag" ] || [ "${GITHUB_REF_NAME}" != "${EXPECTED}" ]; then
+            echo "::error::tag '${GITHUB_REF_NAME}' does not match package.json version '${VERSION}' (expected '${EXPECTED}')."
+            exit 1
+          fi
 
       - uses: pnpm/action-setup@v4
 
@@ -73,14 +88,10 @@ jobs:
         continue-on-error: true
         run: pnpm dlx -p size-limit -p @size-limit/preset-small-lib size-limit
 
-      - name: Get package version
-        id: version
-        run: echo "version=$(jq -r .version package.json)" >> $GITHUB_OUTPUT
-
       - name: Check if version already published
         id: check
         run: |
-          if npm view @nexartis/nexartis-nanda-node-sdk@${{ steps.version.outputs.version }} version 2>/dev/null; then
+          if npm view @nexartis/homeport-sdk@${{ steps.identity.outputs.version }} version 2>/dev/null; then
             echo "already_published=true" >> $GITHUB_OUTPUT
           else
             echo "already_published=false" >> $GITHUB_OUTPUT
@@ -110,23 +121,9 @@ jobs:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance --access public
 
-      - name: Create git tag
-        if: github.ref == 'refs/heads/prod'
-        run: |
-          TAG="v${{ steps.version.outputs.version }}"
-          if git ls-remote --tags origin "refs/tags/$TAG" | grep -qF "refs/tags/$TAG"; then
-            echo "Tag $TAG already exists on remote, skipping"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git tag "$TAG"
-            git push origin "$TAG"
-          fi
-
       - name: Create GitHub Release
-        if: github.ref == 'refs/heads/prod'
         run: |
-          TAG="v${{ steps.version.outputs.version }}"
+          TAG="v${{ steps.identity.outputs.version }}"
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "Release $TAG already exists, skipping"
           else

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Orchestration Namespace
+ * Homeport SDK — Orchestration Namespace
  *
  * Accessed via `client.orchestration.*`.
  * Covers workflows, runs, delegation, patterns, conflicts, routing, and index sync.
@@ -8,7 +8,7 @@
  * @module core/namespaces/orchestration
  */
 
-import type { NnnClientInternals } from '../namespace-helpers.js';
+import type { HomeportClientInternals } from '../namespace-helpers.js';
 import type {
 	CreateWorkflowRequest,
 	WorkflowRecord,
@@ -37,19 +37,19 @@ import type {
 	IndexDiffResult,
 	IndexChangeCallback,
 	IndexChangeEvent,
-	NnnStats
+	HomeportStats
 } from '../types.js';
-import { NnnError, NnnErrorCode } from '../errors.js';
+import { HomeportError, HomeportErrorCode } from '../errors.js';
 import { parseSSEStream, generateRequestId } from '../sse.js';
 
 export class OrchestrationNamespace {
 	/** @internal */
-	constructor(private readonly _client: NnnClientInternals) {}
+	constructor(private readonly _client: HomeportClientInternals) {}
 
 	// ── Stats ────────────────────────────────────────────────────
 
 	/** GET /stats — Get registry statistics. */
-	async stats(): Promise<NnnStats> {
+	async stats(): Promise<HomeportStats> {
 		return this._client.getJson('/stats', 'orchestration.stats');
 	}
 
@@ -124,7 +124,7 @@ export class OrchestrationNamespace {
 		const headers = { ...this._client.headers(), Accept: 'text/event-stream' };
 		const res = await this._client.fetch(url, { headers }, 'orchestration.streamWorkflowEvents');
 		if (!res.body) {
-			throw new NnnError(NnnErrorCode.NETWORK_ERROR, 'streamWorkflowEvents: response body is null');
+			throw new HomeportError(HomeportErrorCode.NETWORK_ERROR, 'streamWorkflowEvents: response body is null');
 		}
 		yield* parseSSEStream(res.body, this._client.logger);
 	}
@@ -176,7 +176,7 @@ export class OrchestrationNamespace {
 	/** POST /a2a — Check a delegation's validity (A2A action `delegation.check`). */
 	async checkDelegation(delegationId: string): Promise<DelegationCheckResult> {
 		if (!delegationId) {
-			throw new NnnError(NnnErrorCode.CONFIGURATION_ERROR, 'checkDelegation: delegationId is required');
+			throw new HomeportError(HomeportErrorCode.CONFIGURATION_ERROR, 'checkDelegation: delegationId is required');
 		}
 		return this._sendDelegationAction<DelegationCheckResult>(
 			{ action: 'delegation.check', delegation_id: delegationId },
@@ -203,21 +203,21 @@ export class OrchestrationNamespace {
 		};
 		const rpc = await this._client.postJson<A2AResponse>('/a2a', envelope, ctx);
 		if (rpc.error) {
-			throw new NnnError(
-				NnnErrorCode.SERVER_ERROR,
+			throw new HomeportError(
+				HomeportErrorCode.SERVER_ERROR,
 				`${ctx}: ${rpc.error.message} (code ${rpc.error.code})`
 			);
 		}
 		const result = rpc.result as { parts?: Array<{ text?: string }> } | undefined;
 		const text = result?.parts?.[0]?.text;
 		if (typeof text !== 'string') {
-			throw new NnnError(NnnErrorCode.VALIDATION_ERROR, `${ctx}: malformed A2A response (missing text part)`);
+			throw new HomeportError(HomeportErrorCode.VALIDATION_ERROR, `${ctx}: malformed A2A response (missing text part)`);
 		}
 		try {
 			return JSON.parse(text) as T;
 		} catch (err) {
-			throw new NnnError(
-				NnnErrorCode.VALIDATION_ERROR,
+			throw new HomeportError(
+				HomeportErrorCode.VALIDATION_ERROR,
 				`${ctx}: failed to parse delegation result: ${(err as Error).message}`
 			);
 		}

@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * NNN SDK — Type Definitions
+ * Homeport SDK — Type Definitions
  *
- * TypeScript contracts for the Nexartis NANDA Node REST + A2A API.
+ * TypeScript contracts for the Homeport REST + A2A API.
  * Portable — no framework dependencies.
  *
  * @module core/types
@@ -11,7 +11,7 @@
 // ── Client Configuration ────────────────────────────────────────────
 
 /** Lifecycle hooks for request/response interception. */
-export interface NnnHooks {
+export interface HomeportHooks {
 	/** Called before every request. Can inspect the URL and mutate `init` (e.g. headers). */
 	beforeRequest?: (url: string, init: RequestInit) => void | Promise<void>;
 	/**
@@ -30,7 +30,7 @@ export interface NnnHooks {
 }
 
 /** Circuit breaker configuration. */
-export interface NnnCircuitBreakerConfig {
+export interface HomeportCircuitBreakerConfig {
 	/** Number of consecutive failures before tripping the circuit. Default: 5. */
 	failureThreshold?: number;
 	/** Cooldown period in ms before allowing a probe request. Default: 30000. */
@@ -55,33 +55,33 @@ export interface NnnCircuitBreakerConfig {
 }
 
 /** Response cache configuration. */
-export interface NnnCacheConfig {
+export interface HomeportCacheConfig {
 	/** Default TTL in milliseconds. Default: 60000 (1 minute). */
 	defaultTtlMs?: number;
 	/** Maximum number of cached entries. Default: 256. Oldest entries are evicted when exceeded. */
 	maxEntries?: number;
 }
 
-export interface NnnConfig {
-	/** NNN base URL (e.g. 'https://nanda.nexartis.com') */
+export interface HomeportConfig {
+	/** Homeport base URL (e.g. 'https://homeport.example.com') */
 	baseUrl: string;
 	/** Bearer API key for authenticated endpoints */
 	apiKey?: string;
 	/** Enable debug logging */
 	verbose?: boolean;
 	/** Override default retry configuration */
-	retryConfig?: NnnRetryConfig;
+	retryConfig?: HomeportRetryConfig;
 	/** Request/response lifecycle hooks */
-	hooks?: NnnHooks;
+	hooks?: HomeportHooks;
 	/** Circuit breaker configuration. Pass `false` to disable. */
-	circuitBreaker?: NnnCircuitBreakerConfig | false;
+	circuitBreaker?: HomeportCircuitBreakerConfig | false;
 	/** OpenTelemetry trace context to propagate. */
 	traceContext?: { traceparent?: string; tracestate?: string };
 	/** Opt-in response caching for GET requests. */
-	cache?: NnnCacheConfig;
+	cache?: HomeportCacheConfig;
 }
 
-export interface NnnRetryConfig {
+export interface HomeportRetryConfig {
 	maxRetries?: number;
 	baseDelayMs?: number;
 	maxDelayMs?: number;
@@ -90,7 +90,7 @@ export interface NnnRetryConfig {
 
 // ── Health ───────────────────────────────────────────────────────────
 
-export interface NnnHealthStatus {
+export interface HomeportHealthStatus {
 	status: 'ok' | 'degraded';
 	timestamp: string;
 	environment: string;
@@ -105,7 +105,7 @@ export interface NnnHealthStatus {
 
 // ── Agent Registry ──────────────────────────────────────────────────
 
-export interface NnnAgent {
+export interface HomeportAgent {
 	agent_id: string;
 	agent_url: string;
 	api_url?: string;
@@ -116,6 +116,14 @@ export interface NnnAgent {
 	protocols?: string[];
 	created_at?: string;
 	updated_at?: string;
+	/** Visibility lifecycle state (Sprint D). */
+	visibility?: AgentVisibility;
+	/** Structured capability manifest (Sprint D). */
+	capability_manifest?: CapabilityManifestEntry[];
+	/** MCP server metadata (Sprint D). */
+	mcp_metadata?: McpMetadata;
+	/** Pricing descriptor (Sprint D). */
+	pricing?: PricingDescriptor;
 }
 
 export interface RegisterAgentRequest {
@@ -125,6 +133,22 @@ export interface RegisterAgentRequest {
 	facts_url?: string;
 	capabilities?: string[];
 	tags?: string[];
+	/** Visibility lifecycle state (Sprint D). */
+	visibility?: AgentVisibility;
+	/** Structured capability manifest (Sprint D). */
+	capability_manifest?: CapabilityManifestEntry[];
+	/** MCP server metadata (Sprint D). */
+	mcp_metadata?: McpMetadata;
+	/** Pricing descriptor (Sprint D). */
+	pricing?: PricingDescriptor;
+	/** Signed AgentAddr passthrough - Ed25519 public key of the record signer (hex). */
+	public_key_hex?: string;
+	/** Signed AgentAddr passthrough - Ed25519 signature over the canonical record (hex). */
+	signature_hex?: string;
+	/** Signed AgentAddr passthrough - DID or registry ID of the signer. */
+	signer_id?: string;
+	/** Signed AgentAddr passthrough - record TTL in seconds. */
+	ttl_seconds?: number;
 }
 
 export interface RegisterAgentResponse {
@@ -139,6 +163,10 @@ export interface SearchAgentsParams {
 	min_trust?: number;
 	jurisdiction?: string;
 	protocol?: string;
+	/** Filter by visibility lifecycle state (Sprint D). */
+	visibility?: AgentVisibility;
+	/** Filter to agents available for hire (Sprint D). */
+	for_hire?: boolean;
 	/** Pagination: number of results per page. */
 	limit?: number;
 	/** Pagination: cursor or offset for the next page. */
@@ -202,7 +230,7 @@ export interface NandaIndex {
 
 // ── Stats ───────────────────────────────────────────────────────────
 
-export interface NnnStats {
+export interface HomeportStats {
 	totalAgents: number;
 	totalCapabilities: number;
 	recentRegistrations: number;
@@ -269,7 +297,7 @@ export interface RoutingRequest {
 }
 
 export interface RoutingResult {
-	targetAgent: NnnAgent;
+	targetAgent: HomeportAgent;
 	score: number;
 	protocol: string;
 	latencyEstimateMs?: number;
@@ -324,12 +352,20 @@ export interface UpdateAgentRequest {
 	facts_url?: string;
 	capabilities?: string[];
 	tags?: string[];
+	/** Visibility lifecycle state (Sprint D). */
+	visibility?: AgentVisibility;
+	/** Structured capability manifest (Sprint D). */
+	capability_manifest?: CapabilityManifestEntry[];
+	/** MCP server metadata (Sprint D). */
+	mcp_metadata?: McpMetadata;
+	/** Pricing descriptor (Sprint D). */
+	pricing?: PricingDescriptor;
 }
 
 export interface AgentRefreshResult {
 	status: string;
 	message: string;
-	agent?: NnnAgent;
+	agent?: HomeportAgent;
 }
 
 // ── Workflow Execution & Monitoring ─────────────────────────────
@@ -371,17 +407,17 @@ export interface StepRun {
 
 export interface IndexDiffResult {
 	since: string;
-	added: NnnAgent[];
+	added: HomeportAgent[];
 	removed: string[];
-	updated: NnnAgent[];
+	updated: HomeportAgent[];
 }
 
 export type IndexChangeCallback = (event: IndexChangeEvent) => void | Promise<void>;
 
 /** Discriminated union for index change events. 'removed' only carries the agentId. */
 export type IndexChangeEvent =
-	| { type: 'added'; agent: NnnAgent; timestamp: string }
-	| { type: 'updated'; agent: NnnAgent; timestamp: string }
+	| { type: 'added'; agent: HomeportAgent; timestamp: string }
+	| { type: 'updated'; agent: HomeportAgent; timestamp: string }
 	| { type: 'removed'; agentId: string; timestamp: string };
 
 // ── Sprint 1: Orchestration CRUD ──────────────────────────────────
@@ -879,6 +915,115 @@ export interface VerifyNpPaymentResponse {
 	verified: boolean;
 	settlement_id?: string;
 	recon?: unknown | null;
+}
+
+// ── Sprint D: Open-Core Convergence (visibility + agent metadata) ──
+
+/**
+ * Agent visibility lifecycle state.
+ *
+ * Node discovery rules:
+ * - Search/list surfaces return only `public` and `for_hire` agents.
+ * - Lookup serves `public`, `unlisted`, and `for_hire` agents; `private` resolves to 404.
+ * - Federation gossip propagates only `public` and `for_hire` agents.
+ */
+export type AgentVisibility = 'private' | 'unlisted' | 'public' | 'for_hire';
+
+/** Pricing model descriptor for an agent, capability, or MCP tool. */
+export interface PricingDescriptor {
+	/** Pricing model. */
+	model: 'free' | 'per_request' | 'subscription' | 'usage';
+	/** Currency code (e.g. 'USD'). */
+	currency?: string;
+	/** Numeric price in the given currency. */
+	price?: number;
+	/** Pricing unit (e.g. 'request', 'month', '1k_tokens'). */
+	unit?: string;
+}
+
+/** Authentication scheme required by a capability. */
+export type CapabilityAuthScheme = 'none' | 'bearer' | 'oauth2' | 'api_key' | 'custom';
+
+/** A single entry in an agent's structured capability manifest. */
+export interface CapabilityManifestEntry {
+	/** Stable capability identifier. */
+	id: string;
+	/** Human-readable name. */
+	name?: string;
+	/** Human-readable description. */
+	description?: string;
+	/** Authentication scheme required to invoke the capability. */
+	auth?: CapabilityAuthScheme;
+	/** Per-capability pricing. */
+	pricing?: PricingDescriptor;
+}
+
+/** Metadata for a single MCP tool exposed by an agent. */
+export interface McpToolMetadata {
+	/** Tool name. */
+	name: string;
+	/** Human-readable description. */
+	description?: string;
+	/** Whether invoking the tool requires authentication. */
+	auth_required?: boolean;
+	/** Per-tool pricing. */
+	pricing?: PricingDescriptor;
+}
+
+/** MCP server metadata descriptor attached to an agent. */
+export interface McpMetadata {
+	/** MCP endpoint URL. */
+	endpoint?: string;
+	/** MCP transport. */
+	transport?: 'streamable-http' | 'sse' | 'stdio';
+	/** MCP endpoint authentication scheme. */
+	authentication?: 'none' | 'bearer' | 'oauth2' | 'api_key' | 'custom';
+	/** Tool-level metadata. */
+	tools?: McpToolMetadata[];
+}
+
+/** Trust badge tier identifiers (GET /trust/badges). */
+export type TrustBadgeTier = 'none' | 'bronze' | 'silver' | 'gold';
+
+/** Computed trust badge with gamification data. */
+export interface TrustBadge {
+	/** Badge tier. */
+	tier: TrustBadgeTier;
+	/** The agent's reputation score. */
+	reputation: number;
+	/** Human-readable tier label. */
+	label: string;
+	/** Emoji for the badge tier. */
+	emoji: string;
+	/** Requirements that are currently satisfied. */
+	requirements_met: string[];
+	/** Next tier to aim for, or null if already at the top tier. */
+	next_tier: TrustBadgeTier | null;
+	/** Gap to the next tier threshold, or null if already at the top tier. */
+	next_tier_gap: number | null;
+	[key: string]: unknown;
+}
+
+/** A single agent's badge entry as served by GET /trust/badges. */
+export interface TrustBadgeEntry {
+	agent_id: string;
+	badge: TrustBadge;
+	/** Point-in-time reputation snapshot used for badge computation. */
+	reputation_snapshot?: Record<string, unknown>;
+	[key: string]: unknown;
+}
+
+/** Response from GET /trust/badges. */
+export interface TrustBadgeResponse {
+	/** Badge entries (filtered by `?agent=` when requested). */
+	agents: TrustBadgeEntry[];
+	/** Number of entries in `agents`. */
+	total: number;
+	/** Badge tier distribution across all agents (unfiltered). */
+	badge_distribution?: Partial<Record<TrustBadgeTier, number>>;
+	/** ISO timestamp of the response. */
+	fetchedAt?: string;
+	[key: string]: unknown;
 }
 
 // ── Compatibility Types: Switchboard / Payments ───────────────────────

@@ -9,16 +9,16 @@
  *   4. `client.agents.lookup`   — fetch a single agent by id.
  *
  * Run:
- *   NNN_API_KEY=... npx tsx examples/register-and-discover.ts
+ *   HOMEPORT_API_KEY=... npx tsx examples/register-and-discover.ts
  *
  * Requires Node 20+, Bun, or Deno with `fetch`.
  */
 
-import { NnnClient } from '@nexartis/nexartis-nanda-node-sdk';
+import { HomeportClient } from '@nexartis/homeport-sdk';
 
-const client = new NnnClient({
-	baseUrl: 'https://nanda.nexartis.com',
-	apiKey: process.env.NNN_API_KEY,
+const client = new HomeportClient({
+	baseUrl: 'https://homeport.example.com',
+	apiKey: process.env.HOMEPORT_API_KEY,
 	verbose: true
 });
 

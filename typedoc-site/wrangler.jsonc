@@ -2,12 +2,15 @@
 	"$schema": "node_modules/wrangler/config-schema.json",
 	/*
 	 * ===================================================================
-	 * NEXARTIS NANDA NODE SDK — DOCS SITE WORKER
+	 * HOMEPORT SDK — DOCS SITE WORKER
 	 * ===================================================================
 	 *
-	 * Serves the TypeDoc-generated API reference for
-	 * @nexartis/nexartis-nanda-node-sdk via a Cloudflare Worker with a
-	 * static assets binding.
+	 * Serves the TypeDoc-generated API reference for @nexartis/homeport-sdk
+	 * via a Cloudflare Worker with a static assets binding.
+	 *
+	 * Homeport is the open-source self-hostable NANDA node published by
+	 * Nexartis. This worker serves the SDK documentation only; the runtime
+	 * itself lives at github.com/Nexartis/homeport.
 	 *
 	 * Layout of ./dist after `pnpm run docs` + landing-page copy:
 	 *   dist/
@@ -15,15 +18,19 @@
 	 *     api/            ← typedoc output (from root typedoc.json)
 	 *
 	 * Custom domains:
-	 *   env.dev  → nnn-sdk-dev.nexartis.com
-	 *   env.prod → nnn-sdk.nexartis.com
+	 *   env.dev  → homeport-sdk-dev.nexartis.com
+	 *   env.prod → homeport-sdk.nexartis.com
+	 *
+	 * The legacy nnn-sdk[-dev].nexartis.com hostnames are served by the
+	 * sibling redirect-worker/ package (301 → homeport-sdk[-dev]) for the
+	 * announced deprecation window.
 	 *
 	 * Deploy conventions (see repo root rules): invoke from the repository root
 	 * so the SDK build, TypeDoc output, and landing assets are staged first:
 	 *   pnpm run deploy:dev    or    pnpm run deploy:prod
 	 * ===================================================================
 	 */
-	"name": "nexartis-nanda-node-sdk-docs",
+	"name": "homeport-sdk-docs",
 	"main": "src/worker.ts",
 	"compatibility_date": "2025-01-01",
 	"compatibility_flags": ["nodejs_compat"],
@@ -52,36 +59,36 @@
 	// Each environment is explicit; no root-level routes/vars.
 	"env": {
 		// ===================================================================
-		// 🧪 DEVELOPMENT — nnn-sdk-dev.nexartis.com
+		// 🧪 DEVELOPMENT — homeport-sdk-dev.nexartis.com
 		// ===================================================================
 		"dev": {
-			"name": "nexartis-nanda-node-sdk-docs-dev",
+			"name": "homeport-sdk-docs-dev",
 			"routes": [
 				{
-					"pattern": "nnn-sdk-dev.nexartis.com",
+					"pattern": "homeport-sdk-dev.nexartis.com",
 					"custom_domain": true
 				}
 			],
 			"vars": {
 				"ENVIRONMENT": "development",
-				"DOCS_CANONICAL_URL": "https://nnn-sdk-dev.nexartis.com"
+				"DOCS_CANONICAL_URL": "https://homeport-sdk-dev.nexartis.com"
 			}
 		},
 
 		// ===================================================================
-		// 🚀 PRODUCTION — nnn-sdk.nexartis.com
+		// 🚀 PRODUCTION — homeport-sdk.nexartis.com
 		// ===================================================================
 		"prod": {
-			"name": "nexartis-nanda-node-sdk-docs",
+			"name": "homeport-sdk-docs",
 			"routes": [
 				{
-					"pattern": "nnn-sdk.nexartis.com",
+					"pattern": "homeport-sdk.nexartis.com",
 					"custom_domain": true
 				}
 			],
 			"vars": {
 				"ENVIRONMENT": "production",
-				"DOCS_CANONICAL_URL": "https://nnn-sdk.nexartis.com"
+				"DOCS_CANONICAL_URL": "https://homeport-sdk.nexartis.com"
 			}
 		}
 	}

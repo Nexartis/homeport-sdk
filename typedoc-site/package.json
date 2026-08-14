@@ -1,15 +1,18 @@
 {
-  "name": "@nexartis/nexartis-nanda-node-sdk-docs-site",
+  "name": "@nexartis/homeport-sdk-docs-site",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Cloudflare Worker that serves the TypeDoc-generated documentation for @nexartis/nexartis-nanda-node-sdk at nnn-sdk.nexartis.com.",
+  "description": "Cloudflare Worker that serves the TypeDoc-generated documentation for @nexartis/homeport-sdk at homeport-sdk.nexartis.com.",
   "scripts": {
     "dev": "wrangler dev",
     "deploy:dev": "wrangler deploy --env dev",
-    "deploy:prod": "wrangler deploy --env prod"
+    "deploy:prod": "wrangler deploy --env prod",
+    "test:e2e": "vitest run tests/redirect-worker.spec.ts && playwright test"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "vitest": "^2.1.0",
     "wrangler": "^4.103.0"
   },
   "packageManager": "pnpm@10.28.1",
