@@ -4,16 +4,16 @@ Canonical process for shipping `@nexartis/homeport-sdk` after the 1.1.0
 cut. Rebrand one-shot steps (repo rename, `legacy/*` tags) stay in
 `docs/REBRAND-RUNBOOK.md`. This file is what you run next time.
 
-**Never merge `dev` onto nanda `prod`.** Those histories have no
-merge-base. `origin/prod` is still `@nexartis/nexartis-nanda-node-sdk`
-1.3.0. PR #49 stays closed.
+**Never merge nanda history onto Homeport `prod`.** PR #54 overwrites
+`origin/prod` with the Homeport line. The old nanda SHA `e4f0c95` stays
+reachable until garbage-collected. PR #49 stays closed.
 
 ## Identity
 
 | ref | package | how it ships |
 | --- | --- | --- |
 | `origin/dev` | `@nexartis/homeport-sdk` | `v*.*.*` tag on `dev` whose name equals `v${package.json version}` |
-| `origin/prod` | `@nexartis/nexartis-nanda-node-sdk` | separate nanda maintenance path — do not use `publish.yml` |
+| `origin/prod` | `@nexartis/homeport-sdk` | git ref only — publish still tags `dev`, never `prod` |
 
 `publish.yml` fails unless the tree’s `package.json` name is
 `@nexartis/homeport-sdk` **and** `GITHUB_REF_NAME == v${version}`.
