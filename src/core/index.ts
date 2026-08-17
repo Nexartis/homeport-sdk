@@ -70,6 +70,7 @@ export type {
 	DelegateTaskRequest,
 	DelegationResult,
 	DelegationGrantRequest,
+	DelegationGrantProof,
 	DelegationGrantResult,
 	DelegationRevokeRequest,
 	DelegationRevokeResult,
