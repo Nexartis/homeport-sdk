@@ -87,7 +87,16 @@ const grant = await homeport.orchestration.grantDelegation({
   granted_by_did: 'did:web:example-operator',
   granted_to_did: 'did:web:example-delegate',
   granted_scope: ['payments:send'],
-  expires_at: Math.floor(Date.now() / 1000) + 300, // unix seconds; must not exceed parent's
+  expires_at: Math.floor(Date.now() / 1000) + 300,
+  granted_by_proof_hash: '0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef',
+  proof: {
+    principalPk: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+    deviceDid: 'did:key:example-device',
+    requestId: 'preapproval-1',
+    boundAt: Date.now() - 1000,
+    issuedAt: Date.now(),
+    signature: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='
+  }
 });
 const status = await homeport.orchestration.checkDelegation(grant.delegation_id);
 await homeport.orchestration.revokeDelegation({ delegation_id: grant.delegation_id });
