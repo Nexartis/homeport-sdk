@@ -474,6 +474,32 @@ export interface DelegationResult {
 
 // ── Delegation Grants (A2A actions: delegation.grant/.revoke/.check) ──
 
+/**
+ * PUH proof envelope required on every `delegation.grant` (WC-P0-04).
+ *
+ * Field names are **camelCase** on the wire. The Homeport server accepts
+ * camel or snake when reconstructing the envelope, but camelCase is the
+ * documented shape: it mirrors the server's `PuhProof` and the canonical
+ * envelope that `granted_by_proof_hash` hashes and `signature` signs.
+ */
+export interface DelegationGrantProof {
+	/** Yanez biometric principal (Ed25519 SPKI, base64 or hex). */
+	principalPk: string;
+	/** Ed25519 DID of the signing device. */
+	deviceDid: string;
+	/** Yanez preapproval request ID. */
+	requestId: string;
+	/** Unix milliseconds at which the PUH binding was minted. */
+	boundAt: number;
+	/** Unix milliseconds at which the grant was constructed on-device. */
+	issuedAt: number;
+	/**
+	 * Ed25519 signature (base64, url-safe base64, or hex) over the canonical
+	 * proof envelope, verified server-side against `principalPk`.
+	 */
+	signature: string;
+}
+
 /** Parameters for `delegation.grant` — issue a scoped delegation. */
 export interface DelegationGrantRequest {
 	/** DID issuing the grant (grantedByDid). */
@@ -488,6 +514,13 @@ export interface DelegationGrantRequest {
 	expires_at: number;
 	/** SHA-256 hex of the WebAuthn authenticatorData||clientDataJSON that authorized the grant. */
 	granted_by_proof_hash: string;
+	/**
+	 * PUH proof envelope (WC-P0-04). Required — the Homeport server verifies
+	 * `proof.signature` and re-derives `granted_by_proof_hash` from the
+	 * canonical envelope before any grant write. The SDK validates presence
+	 * and shape client-side and fails closed before the POST.
+	 */
+	proof: DelegationGrantProof;
 	/** If this grant is a child of another grant, the parent delegation ID (enables chain-narrowing). */
 	parent_delegation_id?: string | null;
 	/** Whether this grant may be revoked. Defaults to true when omitted. */

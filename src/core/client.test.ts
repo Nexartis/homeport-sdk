@@ -429,7 +429,16 @@ describe('HomeportClient', () => {
 	}
 
 	describe('orchestration.grantDelegation()', () => {
-		it('posts a delegation.grant A2A envelope and unwraps the result', async () => {
+		const grantProof = {
+			principalPk: 'yz-principal-01',
+			deviceDid: 'did:key:z6Mkdevice',
+			requestId: 'req-01',
+			boundAt: 1794000000000,
+			issuedAt: 1794000000500,
+			signature: 'c2lnbmF0dXJl'
+		};
+
+		it('posts a delegation.grant A2A envelope with the proof and hash on the wire', async () => {
 			const grantResult = { delegationId: 'del-42', kymVcId: 'vc-1', expiresAt: 1900000000 };
 			mockA2AResult(grantResult);
 
@@ -439,7 +448,8 @@ describe('HomeportClient', () => {
 				granted_to_did: 'did:key:child',
 				granted_scope: ['tool:search'],
 				expires_at: 1900000000,
-				granted_by_proof_hash: 'a'.repeat(64)
+				granted_by_proof_hash: 'a'.repeat(64),
+				proof: grantProof
 			});
 
 			expect(result).toEqual(grantResult);
@@ -454,6 +464,39 @@ describe('HomeportClient', () => {
 			expect(inner.action).toBe('delegation.grant');
 			expect(inner.granted_by_did).toBe('did:key:parent');
 			expect(inner.granted_scope).toEqual(['tool:search']);
+			expect(inner.granted_by_proof_hash).toBe('a'.repeat(64));
+			expect(inner.proof).toEqual(grantProof);
+		});
+
+		it('fails closed before the POST when proof is missing', async () => {
+			globalThis.fetch = vi.fn();
+			const client = new HomeportClient(BASE_CONFIG);
+			await expect(
+				client.orchestration.grantDelegation({
+					granted_by_did: 'did:key:parent',
+					granted_to_did: 'did:key:child',
+					granted_scope: ['tool:search'],
+					expires_at: 1900000000,
+					granted_by_proof_hash: 'a'.repeat(64)
+				} as unknown as Parameters<typeof client.orchestration.grantDelegation>[0])
+			).rejects.toThrow(/proof is required/);
+			expect(globalThis.fetch).not.toHaveBeenCalled();
+		});
+
+		it('fails closed before the POST when proof.signature is empty', async () => {
+			globalThis.fetch = vi.fn();
+			const client = new HomeportClient(BASE_CONFIG);
+			await expect(
+				client.orchestration.grantDelegation({
+					granted_by_did: 'did:key:parent',
+					granted_to_did: 'did:key:child',
+					granted_scope: ['tool:search'],
+					expires_at: 1900000000,
+					granted_by_proof_hash: 'a'.repeat(64),
+					proof: { ...grantProof, signature: '' }
+				})
+			).rejects.toThrow(/proof\.signature/);
+			expect(globalThis.fetch).not.toHaveBeenCalled();
 		});
 
 		it('surfaces JSON-RPC error as HomeportError', async () => {
@@ -472,7 +515,8 @@ describe('HomeportClient', () => {
 					granted_to_did: 'did:key:child',
 					granted_scope: ['x'],
 					expires_at: 1,
-					granted_by_proof_hash: 'a'.repeat(64)
+					granted_by_proof_hash: 'a'.repeat(64),
+					proof: grantProof
 				})
 			).rejects.toThrow(/scope-widens-parent/);
 		});

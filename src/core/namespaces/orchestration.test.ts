@@ -179,8 +179,18 @@ describe('OrchestrationNamespace', () => {
 			const res = await client.orchestration.grantDelegation({
 				granted_by_did: 'did:a',
 				granted_to_did: 'did:b',
-				granted_scope: ['run']
-			} as unknown as Parameters<typeof client.orchestration.grantDelegation>[0]);
+				granted_scope: ['run'],
+				expires_at: 1900000000,
+				granted_by_proof_hash: 'a'.repeat(64),
+				proof: {
+					principalPk: 'principal',
+					deviceDid: 'did:key:z6Mkdevice',
+					requestId: 'req-1',
+					boundAt: 1794000000000,
+					issuedAt: 1794000000500,
+					signature: 'sig'
+				}
+			});
 			expect((res as unknown as { delegation_id: string }).delegation_id).toBe('d-1');
 			const [url, init] = (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls[0];
 			expect(url).toContain('/a2a');
@@ -190,6 +200,7 @@ describe('OrchestrationNamespace', () => {
 			const inner = JSON.parse(envelope.params.message.parts[0].text);
 			expect(inner.action).toBe('delegation.grant');
 			expect(inner.granted_by_did).toBe('did:a');
+			expect(inner.proof.signature).toBe('sig');
 		});
 
 		it('revokeDelegation() sets action=delegation.revoke', async () => {
