@@ -56,6 +56,16 @@ jobs:
             [[ "$subject" =~ ^Merge\ pull\ request\ \#[0-9]+\ from\  ]]
           }
 
+          # release-please writes chore(dev): release X.Y.Z as github-actions[bot]
+          # with no Signed-off-by slot. Same class as GitHub merge commits.
+          is_release_please_commit() {
+            local sha="$1"
+            local email subject
+            email=$(git log -1 --format=%ae "$sha")
+            subject=$(git log -1 --format=%s "$sha")
+            [[ "$email" == *"github-actions[bot]"* ]] && [[ "$subject" =~ ^chore\(dev\):\ release\  ]]
+          }
+
           is_grandfathered() {
             local sha="$1"
             for g in "${GRANDFATHERED[@]}"; do
@@ -77,6 +87,8 @@ jobs:
               echo "  $sha  OK"
             elif is_github_merge_commit "$sha"; then
               echo "::notice::$sha — GitHub-generated PR merge commit (no sign-off slot)"
+            elif is_release_please_commit "$sha"; then
+              echo "::notice::$sha — release-please bot commit (no sign-off slot)"
             else
               echo "::error::$sha is missing a Signed-off-by trailer"
               git log -1 --format="%h %an <%ae> :: %s" "$sha"
