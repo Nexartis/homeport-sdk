@@ -163,3 +163,6 @@ export type { HomeportLogger } from './logger.js';
 // Retry (standalone utility)
 export { fetchWithRetry, normalizeBaseUrl, calculateBackoffDelay, isTransientError, DEFAULT_RETRY_CONFIG } from './retry.js';
 
+export { composeHomeportA2AFields } from './authority-compose.js';
+export type { AuthorityGrantComposeInput, HomeportA2AGrantFields } from './authority-compose.js';
+
