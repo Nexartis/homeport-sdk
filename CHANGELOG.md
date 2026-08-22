@@ -4,6 +4,14 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.2.0](https://github.com/Nexartis/homeport-sdk/compare/v1.1.1...v1.2.0) (2026-08-22)
+
+
+### Features
+
+* compose Homeport A2A fields from authority-grant/1 ([d7808b3](https://github.com/Nexartis/homeport-sdk/commit/d7808b3be84b37a66cf0eafbe5b177c0f01ce630))
+* Wave 2.4 compose Homeport A2A from authority-grant/1 ([1f26f30](https://github.com/Nexartis/homeport-sdk/commit/1f26f30c2f58b4ecd74d4a0f9eb14c1f16df8ac1))
+
 ## [1.1.1](https://github.com/Nexartis/homeport-sdk/compare/v1.1.0...v1.1.1) (2026-08-21)
 
 
