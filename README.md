@@ -21,7 +21,7 @@
 
 **Homeport** is Nexartis' open-source, self-hostable implementation of the NANDA protocol, running on Cloudflare Workers. A single Homeport instance provides the NANDA Index, `.well-known/agent-card.json` A2A discovery endpoints, agent certification and reputation scoring, compliance auditing, webhook delivery, federation (CRDT gossip) with peer nodes, and a DAG orchestration engine for multi-agent workflows.
 
-This SDK is the official TypeScript client for that API. It is published under **Apache-2.0**, has **zero runtime dependencies** (uses the platform `fetch`), runs on Node, Bun, Deno, Cloudflare Workers, and modern browsers, and exposes a namespaced, fully-typed surface with built-in retry, circuit breaking, response caching, request deduplication, OpenTelemetry trace propagation, and typed errors.
+This SDK is the official TypeScript client for that API. It is published under **Apache-2.0**, has **zero runtime dependencies** (uses the platform `fetch`; `composeHomeportA2AFields` is structural and does not import GitHub Packages), runs on Node, Bun, Deno, Cloudflare Workers, and modern browsers, and exposes a namespaced, fully-typed surface with built-in retry, circuit breaking, response caching, request deduplication, OpenTelemetry trace propagation, and typed errors. Protocol packages: `nexartis-wire-contracts/docs/DEVELOPER.md`.
 
 ## Install
 
