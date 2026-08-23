@@ -168,7 +168,7 @@ The legacy package is `npm deprecate`d with a pointer to this one. See [`CHANGEL
 
 `DelegationGrantRequest.proof` (`src/core/types.ts`, WC-P0-04) is **required** as of this release train. The Homeport server verifies `proof.signature` and re-derives `granted_by_proof_hash` from the canonical proof envelope before any grant write; the SDK validates presence and shape client-side and fails closed before the POST.
 
-**Consumer impact:** every call to `delegation.grant` (and `grantDelegation`) that omits `proof` now throws client-side. Previously-working callers must attach the PUH proof envelope produced by the WebAuthn ceremony that authorized the grant (`granted_by_proof_hash` alone is no longer sufficient).
+**Consumer impact:** every call to `delegation.grant` (and `grantDelegation`) that omits `proof` now throws client-side. Previously-working callers must attach the PUH proof envelope produced by the WebAuthn ceremony that authorized the grant (`granted_by_proof_hash` alone is no longer sufficient). Callers do not construct envelopes by hand — obtain them from the PUH preapproval flow (see the `proof` field in the [quickstart delegation example](#30-second-quickstart), which shows a preapproval-signed envelope).
 
 **Versioning disclosure:** this widens a public request type within a `1.x` release rather than a dedicated major. Consumers who need the old lenient shape should pin their current version; the next major will keep `proof` required. Tracked in promote review threads on `Nexartis/homeport-sdk#61`.
 
