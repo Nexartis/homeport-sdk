@@ -50,7 +50,7 @@ flowchart LR
 
 Scoped delegation grants (Voice-First 1.0 T1) are dispatched over the A2A JSON-RPC envelope, not a REST route. The SDK owns the wire helper (`_sendDelegationAction`) and exposes three methods on `client.orchestration`:
 
-- `grantDelegation({ granted_by_did, granted_to_did, granted_scope, expires_at, parent_delegation_id?, revocable?, proof? })` — POSTs an A2A envelope with method `delegation.grant` and returns `DelegationGrantResult` (`delegation_id`, `expires_at`, `kym_vc_id?`).
+- `grantDelegation({ granted_by_did, granted_to_did, granted_scope, expires_at, granted_by_proof_hash, proof, parent_delegation_id?, revocable? })` — POSTs an A2A envelope with method `delegation.grant`. `proof` (PUH `DelegationGrantProof`) is required; the client fails closed before POST if `proof.signature` is missing. Returns `DelegationGrantResult` (`delegation_id`, `expires_at`, `kym_vc_id?`).
 - `revokeDelegation({ delegation_id, reason? })` — `delegation.revoke`. Cascades to all descendants via `parent_delegation_id`.
 - `checkDelegation(delegation_id)` — `delegation.check`. Returns `{ valid, revoked, revokedAt?, expired, expiresAt?, credentialSubject: { grantedByDid, grantedToDid, scope } }`.
 

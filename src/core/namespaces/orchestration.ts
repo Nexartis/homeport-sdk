@@ -154,6 +154,7 @@ export class OrchestrationNamespace {
 	 * cascade on revoke.
 	 */
 	async grantDelegation(params: DelegationGrantRequest): Promise<DelegationGrantResult> {
+		assertGrantProof(params.proof);
 		this._client.logger.debug('Granting delegation', {
 			delegator: params.granted_by_did,
 			delegate: params.granted_to_did
@@ -307,6 +308,38 @@ export class OrchestrationNamespace {
 		return () => { stopped = true; };
 	}
 
+}
+
+/**
+ * Fail closed on a missing or malformed PUH proof envelope before the
+ * POST (WC-P0-04). Mirrors the server's required-field contract —
+ * presence and shape only; freshness, hash re-derivation, and Ed25519
+ * verification stay server-side.
+ */
+function assertGrantProof(proof: unknown): void {
+	if (!proof || typeof proof !== 'object') {
+		throw new HomeportError(
+			HomeportErrorCode.VALIDATION_ERROR,
+			'grantDelegation: proof is required (PUH proof envelope)'
+		);
+	}
+	const p = proof as Record<string, unknown>;
+	for (const field of ['principalPk', 'deviceDid', 'requestId', 'signature']) {
+		if (typeof p[field] !== 'string' || !p[field]) {
+			throw new HomeportError(
+				HomeportErrorCode.VALIDATION_ERROR,
+				`grantDelegation: proof.${field} must be a non-empty string`
+			);
+		}
+	}
+	for (const field of ['boundAt', 'issuedAt']) {
+		if (typeof p[field] !== 'number' || !Number.isFinite(p[field])) {
+			throw new HomeportError(
+				HomeportErrorCode.VALIDATION_ERROR,
+				`grantDelegation: proof.${field} must be a finite number (unix ms)`
+			);
+		}
+	}
 }
 
 /** Safely invoke a callback, catching and logging errors. */
