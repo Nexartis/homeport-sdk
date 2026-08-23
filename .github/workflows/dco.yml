@@ -38,6 +38,7 @@ jobs:
             "53271b31d4918f8b537fa6b332ad40060608711f"  # chore: remove husky/lint-staged (#9) — pre-DCO, Tony Rose
             "f328a562bd531a0b75b0e36f77b5b66bc80bb801"  # chore: remove husky/lint-staged (#9) (#10) — pre-DCO backport to prod, Tony Rose
             "164803e0d476a19a03b7ffb6bee6b158542b8159"  # Merge PR #11 into dev — GitHub-generated merge commit, has no sign-off slot
+            "a9f87a1b4e54da1e84f57e74093471aa70d41ac3"  # fix(deps): close Dependabot advisories via selector overrides (#60) — first-party commit authored without -s, owner-certified post-hoc, Tony Rose
           )
 
           # Merge commits created by GitHub's "Create a merge commit" button
