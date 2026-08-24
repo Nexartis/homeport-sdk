@@ -98,8 +98,8 @@ const grant = await homeport.orchestration.grantDelegation({
     signature: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=='
   }
 });
-const status = await homeport.orchestration.checkDelegation(grant.delegation_id);
-await homeport.orchestration.revokeDelegation({ delegation_id: grant.delegation_id });
+const status = await homeport.orchestration.checkDelegation(grant.delegationId);
+await homeport.orchestration.revokeDelegation({ delegation_id: grant.delegationId });
 
 // Auto-paginate
 for await (const agent of homeport.agents.searchAll({ capabilities: ['code-review'] })) {
