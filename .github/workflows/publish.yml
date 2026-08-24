@@ -97,28 +97,12 @@ jobs:
             echo "already_published=false" >> $GITHUB_OUTPUT
           fi
 
-      # If an NPM_TOKEN secret is configured, write it into $HOME/.npmrc as a
-      # fallback auth path. When OIDC trusted publishing is available, npm
-      # prefers the OIDC token exchange and this entry is unused.
-      - name: Configure NPM_TOKEN fallback (optional)
-        if: steps.check.outputs.already_published == 'false'
-        run: |
-          if [ -n "${NPM_TOKEN:-}" ]; then
-            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" >> "$HOME/.npmrc"
-            echo "NPM_TOKEN fallback configured in ~/.npmrc"
-          else
-            echo "No NPM_TOKEN set; relying on OIDC trusted publishing"
-          fi
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
       # Use `npm publish` (not `pnpm publish`) — npm performs the OIDC token
       # exchange required by npmjs Trusted Publishing. pnpm does not.
+      # Do not pass NPM_TOKEN / NODE_AUTH_TOKEN: an empty secret shadows OIDC
+      # and npm returns ENEEDAUTH (2026-08-24 run 32676029239).
       - name: Publish to npmjs (OIDC trusted publishing with SLSA provenance)
         if: steps.check.outputs.already_published == 'false'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --provenance --access public
 
       - name: Create GitHub Release
