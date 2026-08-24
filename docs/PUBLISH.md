@@ -135,6 +135,15 @@ curl -sI https://homeport-sdk.nexartis.com/
   as `tony-nexartis` at 2026-08-13T07:01:35Z
 - npmjs: `@nexartis/homeport-sdk@1.1.0`, `gitHead=ea08a57`
 
+## 1.2.0 record (2026-08-23, unpublished)
+
+- Tag `v1.2.0` exists. npmjs still `1.1.0`.
+- First CI: `ENEEDAUTH` (no Trusted Publisher).
+- After a read-only `NPM_TOKEN` was set: PUT returned **404** (forbidden publish).
+- That repo secret was **deleted** 2026-08-23 so it cannot shadow OIDC.
+- Operator: add Trusted Publisher (`Nexartis/homeport-sdk`, `publish.yml`, environment none). Tag `v1.2.0` already exists — a normal push is a no-op. Retrigger with:
+  `git push origin :refs/tags/v1.2.0 && git push origin refs/tags/v1.2.0`
+
 ## Do not
 
 - Merge Homeport `dev` onto nanda `prod`
