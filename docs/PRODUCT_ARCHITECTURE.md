@@ -174,5 +174,4 @@ sequenceDiagram
 
 - [Testing strategy](./TESTING.md)
 - [Known issues and audit findings](./ISSUES.md)
-- [Roadmap](./ROADMAP.md)
 - [Document inventory](./DOCUMENT_INVENTORY.md)
