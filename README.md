@@ -180,7 +180,6 @@ Deeper current-state and audit documentation lives in the repo docs:
 - [Testing strategy](./docs/TESTING.md)
 - [E2E coverage matrix](./docs/E2E_COVERAGE_MATRIX.md)
 - [Known issues and audit findings](./docs/ISSUES.md)
-- [Roadmap](./docs/ROADMAP.md)
 - [Rebrand runbook](./docs/REBRAND-RUNBOOK.md)
 - [Document inventory](./docs/DOCUMENT_INVENTORY.md)
 
