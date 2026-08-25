@@ -42,7 +42,7 @@
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:unit": "vitest run",
-    "test:e2e": "cd typedoc-site && pnpm run test:e2e",
+    "test:e2e": "pnpm run docs-site:install && pnpm --dir typedoc-site run test:e2e",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc",
