@@ -42,7 +42,7 @@
     "clean": "rm -rf dist",
     "test": "vitest run",
     "test:unit": "vitest run",
-    "test:e2e": "pnpm run docs-site:install && pnpm --dir typedoc-site run test:e2e",
+    "test:e2e": "pnpm run docs:stage && pnpm run docs-site:install && pnpm --dir typedoc-site run test:e2e",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc",
@@ -56,7 +56,7 @@
     "validate": "pnpm run test && pnpm run build && pnpm run docs && pnpm run size",
     "deploy:dev": "pnpm run build && pnpm run docs:stage && pnpm run docs-site:install && cd typedoc-site && pnpm run deploy:dev",
     "deploy:prod": "pnpm run build && pnpm run docs:stage && pnpm run docs-site:install && cd typedoc-site && pnpm run deploy:prod",
-    "docs-site:install": "cd typedoc-site && (pnpm install --frozen-lockfile || pnpm install)"
+    "docs-site:install": "pnpm --dir typedoc-site install --frozen-lockfile --ignore-workspace"
   },
   "keywords": [
     "homeport",
