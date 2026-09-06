@@ -6,6 +6,7 @@
   "packages": {
     ".": {
       "package-name": "@nexartis/homeport-sdk",
+      "last-release-sha": "7c06b20cc820bbc37406d3d463f085471ddd0db7",
       "extra-files": [
         {
           "type": "generic",

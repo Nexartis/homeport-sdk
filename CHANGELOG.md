@@ -4,6 +4,14 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.2.3](https://github.com/Nexartis/homeport-sdk/compare/v1.2.2...v1.2.3) (2026-09-04)
+
+
+### Bug Fixes
+
+* install typedoc-site before test:e2e ([c523dfd](https://github.com/Nexartis/homeport-sdk/commit/c523dfd3ca8088e3fbc1c717c2f145023278aa18))
+* make docs E2E self-contained ([5b1caa2](https://github.com/Nexartis/homeport-sdk/commit/5b1caa26a4d11a56a94c567e99140c077d34debd))
+
 ## [1.2.2](https://github.com/Nexartis/homeport-sdk/compare/v1.2.1...v1.2.2) (2026-08-24)
 
 
