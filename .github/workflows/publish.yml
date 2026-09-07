@@ -59,6 +59,14 @@ jobs:
             exit 1
           fi
 
+      - name: Guard release lineage (tag commit must be on origin/dev)
+        run: |
+          git fetch origin dev
+          if ! git merge-base --is-ancestor "${GITHUB_REF_NAME}" origin/dev; then
+            echo "::error::refusing to publish '${GITHUB_REF_NAME}': tag commit $(git rev-parse "${GITHUB_REF_NAME}") is not an ancestor of origin/dev. Rebuild the tag from the real dev lineage (see docs/PUBLISH.md)."
+            exit 1
+          fi
+
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4

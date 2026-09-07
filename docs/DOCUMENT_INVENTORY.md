@@ -23,7 +23,6 @@ This inventory was created during the 2026-06-19 full agentic audit. Existing do
 | `typedoc-site/README.md` | Docs-site deploy guide | Keep as source of truth | TypeDoc generation and Cloudflare dev/prod deploy path. |
 | `typedoc.json` | Generated docs config | Keep as source of truth | API reference output path and plugin config. |
 | `docs/PRODUCT_ARCHITECTURE.md` | Current product architecture | New canonical doc | Product capabilities, flows, boundaries, integrations, and security notes. |
-| `docs/ROADMAP.md` | Future-facing plans | New canonical doc | Future improvements and open questions. |
 | `docs/ISSUES.md` | Known gaps register | New canonical doc | All audit findings, fixed items, and open follow-ups. |
 | `docs/TESTING.md` | Testing strategy | New canonical doc | Validation matrix, unit strategy, E2E applicability, and gaps. |
 | `docs/E2E_COVERAGE_MATRIX.md` | Browser coverage matrix | New canonical doc | Docs-site public journey coverage and authenticated N/A statement. |
@@ -34,4 +33,4 @@ This inventory was created during the 2026-06-19 full agentic audit. Existing do
 
 - No existing Markdown files were deleted or archived in this audit.
 - Historical changelog entries remain unchanged even when they reference prior docs domains.
-- Future-facing items were moved to `ROADMAP.md`; current gaps and risks were moved to `ISSUES.md`.
+- Future-facing items were moved to `ROADMAP.md` (archived 2026-08-25 by the docs-hygiene gate to `_WORKSPACE-DOCS/ARCHIVE-STAGING/homeport-sdk/`); current gaps and risks were moved to `ISSUES.md`.
