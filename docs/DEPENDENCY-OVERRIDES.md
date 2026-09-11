@@ -21,3 +21,27 @@ Packages pinned by security selectors are listed in `minimumReleaseAgeExclude`
 so the 7-day supply-chain quarantine (`minimumReleaseAge: 10080`) never blocks
 an active security patch. `@nexartis/*` is always excluded (first-party
 publishes from our own CI).
+
+## typedoc-site (standalone project — exception)
+
+`typedoc-site/` is a STANDALONE pnpm project (own `pnpm-lock.yaml`, installed
+with `pnpm install --ignore-workspace`; a plain `pnpm install` inside it walks
+up and silently installs the ROOT project instead — measured 2026-09-10). Root
+`pnpm-workspace.yaml` overrides therefore never reach it, and its selector
+overrides live in `typedoc-site/package.json` `pnpm.overrides` — the only
+config surface a standalone project has. Selector form and every other rule
+above still bind.
+
+| override | kind | fixes | exit condition |
+| :--- | :--- | :--- | :--- |
+| `'sharp@<0.35.4': 0.35.4` | security (selector) | Dependabot sharp advisories (<0.35.0, <0.35.4 — 2 high) on typedoc-site/pnpm-lock.yaml | delete when `pnpm audit` stays clean after removal |
+| `'undici@>=7.0.0 <7.29.0': 7.29.0` | security (selector) | Dependabot undici 7.x advisory (1 high + mediums) | delete when `pnpm audit` stays clean after removal |
+| `'postcss@<=8.5.22': 8.5.23` | security (selector) | Dependabot postcss advisory (<=8.5.22) | delete when `pnpm audit` stays clean after removal |
+| `'nanoid@<3.3.18': 3.3.18` | security (selector) | nanoid 3.3.16 high (transitive via postcss), surfaced by the isolated typedoc-site audit 2026-09-10 | delete when `pnpm audit` stays clean after removal |
+
+Audit result after this block: 9 vulnerabilities (4 high, 5 moderate) → 0
+(isolated-lockfile audit; tests 6/6 vitest + 3/3 playwright + frozen install
+exit 0). **Named root-side residual (NOT covered by the 8 GitHub alerts, own
+red/green required):** root lockfile carries `vitest@4.1.10` (GHSA-82fw-gwwq-j7x9
+patched ≥4.1.11) and root override `'sharp@<0.35.0': 0.35.0` sits below the
+0.35.4 patch line — next root one-PR candidate.
