@@ -10,7 +10,7 @@ Never add plain override keys to `package.json`.
 | `'brace-expansion@>=3.0.0 <5.0.7': 5.0.7` | security (selector) | Dependabot brace-expansion advisory (>=3.0.0 <5.0.7); replaces plain `>=5.0.6` pin that resolved vulnerable 5.0.6 | delete when `pnpm audit` stays clean after removal |
 | `'linkify-it@<=5.0.1': 5.0.2` | security (selector) | Dependabot linkify-it advisory (<=5.0.1) | delete when `pnpm audit` stays clean after removal |
 | `'postcss@<=8.5.22': 8.5.23` | security (selector) | Dependabot postcss advisories (<=8.5.17, <=8.5.22) | delete when `pnpm audit` stays clean after removal |
-| `'sharp@<0.35.0': 0.35.0` | security (selector) | Dependabot sharp advisory (<0.35.0) | delete when `pnpm audit` stays clean after removal |
+| `'sharp@<0.35.4': 0.35.4` | security (selector) | Dependabot sharp advisories (<0.35.0, <0.35.4 libheif GHSA-g89c-p67h-r497 / GHSA-2jg2-4ch7-h545); replaces the `sharp@<0.35.0 → 0.35.0` selector that never rewrote the vulnerable 0.35.0–0.35.3 band | delete when `pnpm audit` stays clean after removal |
 | `'undici@>=7.0.0 <7.29.0': 7.29.0` | security (selector) | Dependabot undici 7.x advisory (>=7.0.0 <7.29.0) | delete when `pnpm audit` stays clean after removal |
 | `esbuild: 0.28.1` | graph alignment (migrated from package.json) | keeps single esbuild instance aligned with vite toolchain | bump together with the vite toolchain |
 | `markdown-it: '>=14.2.0'` | legacy security (migrated from package.json) | historical markdown-it advisory | convert to selector or delete once parents require patched range natively |
@@ -41,7 +41,13 @@ above still bind.
 
 Audit result after this block: 9 vulnerabilities (4 high, 5 moderate) → 0
 (isolated-lockfile audit; tests 6/6 vitest + 3/3 playwright + frozen install
-exit 0). **Named root-side residual (NOT covered by the 8 GitHub alerts, own
-red/green required):** root lockfile carries `vitest@4.1.10` (GHSA-82fw-gwwq-j7x9
-patched ≥4.1.11) and root override `'sharp@<0.35.0': 0.35.0` sits below the
-0.35.4 patch line — next root one-PR candidate.
+exit 0). **Root-side residual — CLOSED (stacked on this PR):**
+- `vitest@4.1.10` (GHSA-82fw-gwwq-j7x9, patched ≥4.1.11): closed by dependabot
+  PR #74 (merged; root lockfile carries `vitest@4.1.11`, root `pnpm audit` 0).
+- Root override `'sharp@<0.35.0': 0.35.0` below the 0.35.4 patch line: closed
+  by this commit — selector widened to `'sharp@<0.35.4': 0.35.4`. The old
+  selector never rewrote the vulnerable 0.35.0–0.35.3 band (sharp is not in
+  the root graph today, so the pin is preemptive). Red/green proven in a
+  scratch probe workspace: dep `sharp@0.35.3` + old override → resolves
+  0.35.3, `pnpm audit` 1 high (GHSA-rgj7-g3m4-5g8c); new override → resolves
+  0.35.4, audit clean. Root audit stays 0; frozen install green.
