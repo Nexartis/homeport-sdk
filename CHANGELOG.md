@@ -4,6 +4,15 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.2.4](https://github.com/Nexartis/homeport-sdk/compare/v1.2.3...v1.2.4) (2026-09-11)
+
+
+### Bug Fixes
+
+* **deps:** clear all 8 typedoc-site Dependabot alerts + close the root-side sharp override residual (selector overrides on both surfaces) ([40b6d1b](https://github.com/Nexartis/homeport-sdk/commit/40b6d1b45e1fd21ed8e48734ced42fdcc54d2c32))
+* **deps:** close the root-side sharp override residual — widen the selector 'sharp@&lt;0.35.0': 0.35.0 to 'sharp@&lt;0.35.4': 0.35.4. The old selector never rewrote the vulnerable 0.35.0-0.35.3 band (libheif GHSA-g89c-p67h-r497 / GHSA-2jg2-4ch7-h545, patched &gt;=0.35.4); sharp is absent from the root graph today so the pin is preemptive. Red/green proven in a scratch probe workspace: dep sharp@0.35.3 + old override resolves 0.35.3 with pnpm audit 1 high (GHSA-rgj7-g3m4-5g8c); new override resolves 0.35.4, audit clean. Root audit stays 0, frozen install green, vitest 215/215. The residual's vitest@4.1.10 half was already closed by [#74](https://github.com/Nexartis/homeport-sdk/issues/74) (root lockfile carries vitest@4.1.11). Lockfile twin (header-only) + DEPENDENCY-OVERRIDES.md registry rows updated in the same commit; stacks on PR [#76](https://github.com/Nexartis/homeport-sdk/issues/76) per one-PR law, closes the deep-merger punch-list homeport grooming residual. ([b33305f](https://github.com/Nexartis/homeport-sdk/commit/b33305f0e6ebcad86bfa8c6e0efb23c916361e62))
+* **typedoc-site:** clear all 8 Dependabot alerts — selector overrides sharp 0.35.4 / undici 7.29.0 / postcss 8.5.23 / nanoid 3.3.18 in the standalone project's own package.json (root overrides never reach it; --ignore-workspace topology documented) + lockfile twin + overrides-registry rows; isolated audit 9 vulns (4 high) -&gt; 0; vitest 6/6 + playwright 3/3 + frozen install green; root lockfile byte-identical; closes the deep-merger punch-list homeport grooming row ([94d57f6](https://github.com/Nexartis/homeport-sdk/commit/94d57f6de0217edd691e8469ab11ef1e512b5d04))
+
 ## [1.2.3](https://github.com/Nexartis/homeport-sdk/compare/v1.2.2...v1.2.3) (2026-09-04)
 
 
