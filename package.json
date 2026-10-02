@@ -1,6 +1,6 @@
 {
   "name": "@nexartis/homeport-sdk",
-  "version": "1.2.3",
+  "version": "1.2.4",
   "description": "Official TypeScript SDK for Homeport — the open-source, self-hostable NANDA node from Nexartis. Register agents, run A2A discovery and trust scoring, orchestrate DAG workflows, and resolve the NANDA Index (Project NANDA, MIT Media Lab).",
   "homepage": "https://homeport-sdk.nexartis.com",
   "bugs": {
