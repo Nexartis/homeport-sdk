@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
 /**
  * Coverage for TrustNamespace — resolution, reputation, scores, frameworks,
  * cross-registry sync, graph, path, compliance, and behavior analytics.

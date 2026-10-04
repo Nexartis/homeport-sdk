@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
 /**
  * Coverage for OrchestrationNamespace — workflows, runs, delegation (grant/
  * revoke/check via A2A envelope), and the SSE streaming path

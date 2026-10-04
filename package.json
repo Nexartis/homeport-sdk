@@ -31,6 +31,7 @@
   "files": [
     "dist",
     "LICENSE",
+    "LICENSES/LicenseRef-Nexartis-Proprietary.txt",
     "NOTICE",
     "README.md",
     "CHANGELOG.md"
@@ -56,7 +57,8 @@
     "validate": "pnpm run test && pnpm run build && pnpm run docs && pnpm run size",
     "deploy:dev": "pnpm run build && pnpm run docs:stage && pnpm run docs-site:install && cd typedoc-site && pnpm run deploy:dev",
     "deploy:prod": "pnpm run build && pnpm run docs:stage && pnpm run docs-site:install && cd typedoc-site && pnpm run deploy:prod",
-    "docs-site:install": "pnpm --dir typedoc-site install --frozen-lockfile --ignore-workspace"
+    "docs-site:install": "pnpm --dir typedoc-site install --frozen-lockfile --ignore-workspace",
+    "license:check": "node scripts/license-gate.mjs"
   },
   "keywords": [
     "homeport",
@@ -71,7 +73,7 @@
     "cloudflare-workers"
   ],
   "author": "Nexartis, LLC",
-  "license": "Apache-2.0",
+  "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
     "@size-limit/preset-small-lib": "^12.1.0",
     "@types/node": "^25.5.0",
