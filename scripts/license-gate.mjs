@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // @ts-nocheck — generated twin; owner bin/ozzydev-license-gate.mjs is the type-check surface
 // GENERATED TWIN — do not edit. Owner: nexartis-ozzydev/bin/ozzydev-license-gate.mjs
-// owner_version: 1.0.0 · owner_sha256: d17f3066f256c28d5b65417a4696c3b8b4cf0c55d82540529141cb4b000872ad
+// owner_version: 1.0.0 · owner_sha256: 69537e3168f0c051fa1cfddefd9dde6971629b891e5c47cfe923dd2e923b9ba5
 /**
  * License gate — proprietary/copyright conformance gate (Fleet Hardening v1).
  *
@@ -344,29 +344,35 @@ export function parseReuseToml(text) {
 	};
 	const unquote = (s, lineNo) => {
 		const t = String(s).trim();
-		if (!/^"(?:[^"\\]|\\.)*"$/.test(t)) {
-			fail(`expected a double-quoted string, got ${JSON.stringify(t)}`, lineNo);
+		if (/^"(?:[^"\\]|\\.)*"$/.test(t)) {
+			return t.slice(1, -1).replace(/\\(["\\])/g, '$1');
 		}
-		return t.slice(1, -1).replace(/\\(["\\])/g, '$1');
+		// TOML 1.0 literal strings: single-quoted, no escape processing.
+		if (/^'[^']*'$/.test(t)) {
+			return t.slice(1, -1);
+		}
+		fail(`expected a quoted string, got ${JSON.stringify(t)}`, lineNo);
 	};
 	/** Split a TOML array body on commas OUTSIDE quoted strings. */
 	const splitArray = (inner, lineNo) => {
 		const out = [];
 		let buf = '';
-		let inStr = false;
+		let inStr = null;
 		for (let i = 0; i < inner.length; i++) {
 			const c = inner[i];
 			if (inStr) {
-				if (c === '\\') {
+				if (inStr === '"' && c === '\\') {
 					buf += c + (inner[++i] ?? '');
 					continue;
 				}
-				if (c === '"') inStr = false;
+				if (c === inStr) inStr = null;
 				buf += c;
 				continue;
 			}
-			if (c === '"') {
-				inStr = true;
+			// TOML 1.0 literal strings use single quotes; track the opening
+			// quote so a comma inside either string form is not a separator.
+			if (c === '"' || c === "'") {
+				inStr = c;
 				buf += c;
 				continue;
 			}
@@ -451,7 +457,8 @@ export function parseReuseToml(text) {
 			const open = joined.indexOf('[');
 			const close = joined.indexOf(']', open + 1);
 			if (close === -1) continue;
-			const rest = joined.slice(close + 1).trim();
+			// TOML 1.0 permits an end-of-line comment after the array close.
+			const rest = joined.slice(close + 1).replace(/#.*$/, '').trim();
 			if (rest) fail(`unexpected content after array close: ${rest}`, lineNo);
 			const values = splitArray(joined.slice(open + 1, close), lineNo);
 			if (isSpdxKey(arrayKey)) declare(arrayKey, values);
@@ -495,6 +502,12 @@ export function parseReuseToml(text) {
 				if (!/^("[^"]*"|'[^']*'|-?\d+|true|false)$/.test(value)) {
 					fail(`invalid TOML scalar for "${key}": ${value}`, lineNo);
 				}
+				// Only the supported REUSE.toml schema version is a valid
+				// declaration; a stray `version = 2` (or a quoted/boolean
+				// value) must not read as a version-1 document.
+				if (key === 'version' && value !== '1') {
+					fail(`unsupported REUSE.toml version: ${value} (expected 1)`, lineNo);
+				}
 				continue;
 			} else {
 				fail(`"${key}" appears outside an [[annotations]] block`, lineNo);
@@ -514,7 +527,8 @@ export function parseReuseToml(text) {
 				arrayBuf = [value];
 				continue;
 			}
-			const rest = value.slice(close + 1).trim();
+			// TOML 1.0 permits an end-of-line comment after the array close.
+			const rest = value.slice(close + 1).replace(/#.*$/, '').trim();
 			if (rest) fail(`unexpected content after array: ${rest}`, lineNo);
 			const values = splitArray(value.slice(1, close), lineNo);
 			if (isSpdxKey(key)) declare(key, values);
