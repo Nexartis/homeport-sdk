@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
 /**
  * Example — Agent-to-Agent (A2A) JSON-RPC routing with trace propagation.
  *

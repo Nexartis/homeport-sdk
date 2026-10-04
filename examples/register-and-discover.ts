@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
 /**
  * Example — Register an agent and discover others via the NANDA registry.
  *

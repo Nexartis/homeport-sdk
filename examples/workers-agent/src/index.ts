@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
 /**
  * Example — Cloudflare Workers consumer of @nexartis/homeport-sdk.
  *

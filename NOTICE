@@ -1,7 +1,16 @@
-Homeport SDK
-Copyright (c) 2025-2026 Nexartis, LLC and Contributors
+Nexartis
+Copyright (c) 2026 Nexartis, LLC. All rights reserved.
 
-This product includes software originally developed by Nexartis, LLC.
-Licensed under the Apache License, Version 2.0.
+Nexartis, the Nexartis logo, and the names of Nexartis products and services
+are trademarks or registered trademarks of Nexartis, LLC. All third-party names
+and marks are the property of their respective owners and are used for
+identification only; their use does not imply endorsement.
 
-Homeport implements the NANDA protocol, originated at MIT Media Lab (Project NANDA).
+This repository may contain trade secrets and other confidential information
+of the Company. Access is limited to authorized personnel and licensees.
+Unauthorized disclosure or use is prohibited and may violate the Defend Trade
+Secrets Act (18 U.S.C. §1836) and applicable state trade-secret law.
+
+Third-party open-source components are governed by their own licenses; see
+THIRD-PARTY-NOTICES.md where present, and the license texts bundled with any
+distributed artifact.

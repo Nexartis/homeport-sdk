@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
 /**
  * Compose Homeport A2A grant fields from an authority-grant/1 body.
  * Structural — no GPR runtime dependency (this SDK publishes to npmjs).
