@@ -1,0 +1,45 @@
+# REUSE.toml — bulk license/copyright declarations (REUSE v3.3).
+# Owner: nexartis-ozzydev/bin/ozzydev-license-scaffold.mjs (regenerate on new
+# file classes; a new extension or extensionless path is NOT auto-covered, the
+# license gate will flag it). Path classes that cannot carry an inline comment
+# are declared here; files that CAN carry a header SHOULD declare it inline:
+#   SPDX-FileCopyrightText: 2026 Nexartis, LLC
+#   SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
+version = 1
+
+[[annotations]]
+path = [
+  "docs/**",
+  "assets/**",
+  "public/**",
+  "static/**",
+  ".github/**",
+  "scripts/**",
+  "LICENSES/**",
+  "LICENSE",
+  "NOTICE",
+  "REUSE.toml",
+  "THIRD-PARTY-NOTICES.md",
+  "**/*.css",
+  "**/*.html",
+  "**/*.js",
+  "**/*.json",
+  "**/*.jsonc",
+  "**/*.md",
+  "**/*.mjs",
+  "**/*.ts",
+  "**/*.txt",
+  "**/*.webp",
+  "**/*.yaml",
+  "**/*.yml",
+  ".codesearchignore",
+  ".gitignore",
+  ".mcp.json",
+  ".node-version",
+  ".npmrc",
+  ".release-please-manifest.json",
+  ".size-limit.json",
+  "typedoc-site/.gitignore"
+]
+SPDX-FileCopyrightText = "2026 Nexartis, LLC"
+SPDX-License-Identifier = "LicenseRef-Nexartis-Proprietary"

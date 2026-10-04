@@ -1,0 +1,23 @@
+Nexartis Proprietary License — All Rights Reserved
+Copyright (c) 2026 Nexartis, LLC. All rights reserved.
+
+This software and its source code are the confidential and proprietary
+property of Nexartis, LLC ("Company"). No license, express or implied, to any
+intellectual property right is granted by this document or by possession of
+this software. Unauthorized copying, distribution, modification, public
+display, performance, sublicensing, or use of this software, in whole or in
+part, by any medium or method, is strictly prohibited and may result in civil
+and criminal penalties.
+
+This software is provided "AS IS", without warranty of any kind, express or
+implied, including but not limited to the warranties of merchantability,
+fitness for a particular purpose, title, and non-infringement. In no event
+shall the Company be liable for any claim, damages, or other liability arising
+from, out of, or in connection with the software or its use.
+
+Copyright, trade-secret, and other rights are reserved under all applicable
+laws, including Title 17 of the United States Code and the Defend Trade
+Secrets Act (18 U.S.C. §1836). Third-party components are governed by their
+own licenses and are attributed in NOTICE and THIRD-PARTY-NOTICES.md.
+
+Commercial licensing inquiries: legal@nexartis.com

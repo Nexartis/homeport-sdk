@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: Apache-2.0
+// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { normalizeBaseUrl, calculateBackoffDelay, isTransientError, fetchWithRetry } from './retry';
 import { HomeportError, HomeportErrorCode } from './errors';
