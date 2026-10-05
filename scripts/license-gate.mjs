@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment -- generated twin carries an explained @ts-nocheck */
 // @ts-nocheck — generated twin; owner bin/ozzydev-license-gate.mjs is the type-check surface
 // GENERATED TWIN — do not edit. Owner: nexartis-ozzydev/bin/ozzydev-license-gate.mjs
-// owner_version: 1.0.0 · owner_sha256: 4efd00340394f4b235d080dc9a7845e889687d6f63868453bdcb6e8839f700a7
+// owner_version: 1.0.0 · owner_sha256: f5577531aa14d96d0375688e1bd43754adb4e809303ccadb9541c5a8bb365899
 /**
  * License gate — proprietary/copyright conformance gate (Fleet Hardening v1).
  *
@@ -51,19 +51,17 @@ export const NPM_LICENSE_FIELD = 'SEE LICENSE IN LICENSE';
 function usageText() {
 	// Twin body is copied verbatim. --help must name the file actually invoked:
 	// owner bin/ozzydev-license-gate.mjs, generated twin scripts/license-gate.mjs.
-	// --verify-twins is OWNER-ONLY (a twin refuses `not_owner` at exit 3), so the
-	// twin's help must not advertise a command it cannot run.
 	const base = process.argv[1] ? process.argv[1].split(/[/\\]/).pop() : '';
-	const owner = base === 'ozzydev-license-gate.mjs';
-	const rel = owner
-		? 'bin/ozzydev-license-gate.mjs'
-		: 'scripts/license-gate.mjs';
-	return (
-		`usage: node ${rel} [--repo <path>] [--json] [--strict] [--help]` +
-		(owner
-			? `\n       node ${rel} --verify-twins [--workspace <path>] [--json]`
-			: '')
-	);
+	const isOwner = base === 'ozzydev-license-gate.mjs';
+	const rel = isOwner ? 'bin/ozzydev-license-gate.mjs' : 'scripts/license-gate.mjs';
+	// `--verify-twins` is OWNER-ONLY (a twin has no owner sha to compare against
+	// and refuses `not_owner`), so the twin's help must not advertise it — a
+	// generated twin that advertises a command it cannot run is a false door.
+	let text = `usage: node ${rel} [--repo <path>] [--json] [--strict] [--help]\n`;
+	if (isOwner) {
+		text += `       node ${rel} --verify-twins [--workspace <path>] [--json]\n`;
+	}
+	return text;
 }
 
 // --- tiny glob (REUSE.toml path patterns) --------------------------------
