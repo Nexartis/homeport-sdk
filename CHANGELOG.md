@@ -4,6 +4,14 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.2.5](https://github.com/Nexartis/homeport-sdk/compare/v1.2.4...v1.2.5) (2026-10-05)
+
+
+### Bug Fixes
+
+* **license:** generated twin omits owner-only --verify-twins from --help (owner 4efd0034) ([b68c03a](https://github.com/Nexartis/homeport-sdk/commit/b68c03a4aae09e1e9020e3a4dc1d692406522cf6))
+* **license:** re-stamp twin — hide owner-only --verify-twins from the twin help (codex P2 false door) + ignore the generated license-context workflow (a fixed YAML quote style reds prettier in singleQuote repos). ([fac7bc5](https://github.com/Nexartis/homeport-sdk/commit/fac7bc531597749df8b226c05cc5e7d3617c837f))
+
 ## [1.2.4](https://github.com/Nexartis/homeport-sdk/compare/v1.2.3...v1.2.4) (2026-09-11)
 
 
