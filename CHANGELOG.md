@@ -4,6 +4,14 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.2.9](https://github.com/Nexartis/homeport-sdk/compare/v1.2.8...v1.2.9) (2026-10-09)
+
+
+### Bug Fixes
+
+* **sdk:** address promote blockers on [#99](https://github.com/Nexartis/homeport-sdk/issues/99) ([baa13e6](https://github.com/Nexartis/homeport-sdk/commit/baa13e672003000dac794d4d19a2003beb10ed63))
+* **sdk:** regenerate SDK_VERSION 1.2.8 for the promote ([7267827](https://github.com/Nexartis/homeport-sdk/commit/72678274fb89e9926cf15e198a0ecda9271f7df8))
+
 ## [1.2.8](https://github.com/Nexartis/homeport-sdk/compare/v1.2.7...v1.2.8) (2026-10-09)
 
 
