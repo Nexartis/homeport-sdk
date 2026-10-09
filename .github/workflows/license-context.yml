@@ -7,6 +7,10 @@ on:
     branches: [dev, prod]
   push:
     branches: [dev, prod]
+concurrency:
+  group: license-context-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 jobs:
