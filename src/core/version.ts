@@ -7,4 +7,4 @@
  *
  * @module core/version
  */
-export const SDK_VERSION = '1.2.4'; // x-release-please-version
+export const SDK_VERSION = '1.2.6'; // x-release-please-version
