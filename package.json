@@ -41,7 +41,7 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "pretest": "node scripts/gen-version.mjs",
+    "pretest": "node scripts/gen-version.mjs --check",
     "test": "vitest run",
     "test:unit": "vitest run",
     "test:e2e": "pnpm run docs:stage && pnpm run docs-site:install && pnpm --dir typedoc-site run test:e2e",
