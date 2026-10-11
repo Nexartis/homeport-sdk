@@ -7,7 +7,8 @@
  * shipped 1.2.2 hardcoded through the 1.3.0 release.
  *
  * Usage:
- *   node scripts/gen-version.mjs
+ *   node scripts/gen-version.mjs          # write src/core/version.ts
+ *   node scripts/gen-version.mjs --check  # non-mutating drift guard (exit 1 on drift)
  *
  * The generated file is committed (bundlers must see a plain constant), but
  * every `pnpm run build` / release step should re-run this script first.
@@ -37,6 +38,28 @@ const body = `// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
  */
 export const SDK_VERSION = '${pkg.version}'; // x-release-please-version
 `;
+
+// --check: a NON-MUTATING drift guard. It must never rewrite the tracked
+// constant before a caller asserts it — a pretest that regenerates first makes
+// the drift test pass while the committed tree stays stale (the guard the test
+// exists to provide would be defeated). Exit 1 on drift; write nothing.
+if (process.argv.includes('--check')) {
+	let current = '';
+	try {
+		current = readFileSync(outPath, 'utf8');
+	} catch {
+		current = '';
+	}
+	if (current === body) {
+		console.log(`gen-version: OK — SDK_VERSION='${pkg.version}' matches ${outPath}`);
+		process.exit(0);
+	}
+	console.error(
+		`gen-version: DRIFT — ${outPath} does not match package.json version '${pkg.version}'. ` +
+			`Run 'node scripts/gen-version.mjs' and commit the result.`
+	);
+	process.exit(1);
+}
 
 writeFileSync(outPath, body, 'utf8');
 console.log(`gen-version: wrote SDK_VERSION='${pkg.version}' → ${outPath}`);

@@ -4,6 +4,23 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.2.12](https://github.com/Nexartis/homeport-sdk/compare/v1.2.11...v1.2.12) (2026-10-11)
+
+
+### Bug Fixes
+
+* **sdk:** make the version-drift guard non-mutating — gen-version.mjs --check fails on drift instead of rewriting version.ts before the test asserts (P2 review finding) ([7872ad3](https://github.com/Nexartis/homeport-sdk/commit/7872ad32f8a081385e3e80523fc84d617065b87e))
+* **sdk:** regenerate SDK_VERSION 1.2.11 + pretest guard for release-please version-file drift ([9924b2d](https://github.com/Nexartis/homeport-sdk/commit/9924b2d0ab920fa5e4c26fdfa312089750c2b3ae))
+* **sdk:** regenerate SDK_VERSION 1.2.11 + pretest guard for release-please version-file drift ([8a0529e](https://github.com/Nexartis/homeport-sdk/commit/8a0529e06563e7305e829dd0eb26bde809ce999a))
+
+## [1.2.11](https://github.com/Nexartis/homeport-sdk/compare/v1.2.10...v1.2.11) (2026-10-11)
+
+
+### Bug Fixes
+
+* **sdk:** regenerate SDK_VERSION to 1.2.10 (release-please version-file drift) ([6b4e2af](https://github.com/Nexartis/homeport-sdk/commit/6b4e2af60032c78c181a5346dbbf6e6ae305804c))
+* **sdk:** regenerate SDK_VERSION to 1.2.10 (release-please version-file drift) ([7061e96](https://github.com/Nexartis/homeport-sdk/commit/7061e966a81c3cbc16809aa7590423154853d689))
+
 ## [1.2.10](https://github.com/Nexartis/homeport-sdk/compare/v1.2.9...v1.2.10) (2026-10-10)
 
 
