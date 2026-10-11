@@ -4,6 +4,15 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.2.13](https://github.com/Nexartis/homeport-sdk/compare/v1.2.12...v1.2.13) (2026-10-11)
+
+
+### Bug Fixes
+
+* **release-please:** pin include-component-in-tag=false so manifest mode keeps bare v tags (Codex P1 on [#113](https://github.com/Nexartis/homeport-sdk/issues/113)) ([15f1d88](https://github.com/Nexartis/homeport-sdk/commit/15f1d88c5b933d0bc62e81dba27dfc69ea413675))
+* **sdk:** regenerate SDK_VERSION to 1.2.12 (release-please extra-files drift) ([180edb1](https://github.com/Nexartis/homeport-sdk/commit/180edb1d00f1b943ffac8c4b3d2d95d699db4816))
+* **sdk:** regenerate SDK_VERSION to 1.2.12 (release-please extra-files updater did not fire; unblocks dev + [#108](https://github.com/Nexartis/homeport-sdk/issues/108) promote) ([6f5910c](https://github.com/Nexartis/homeport-sdk/commit/6f5910cbac1aa9cb8fbf90c4e1da35a5632be56f))
+
 ## [1.2.12](https://github.com/Nexartis/homeport-sdk/compare/v1.2.11...v1.2.12) (2026-10-11)
 
 
