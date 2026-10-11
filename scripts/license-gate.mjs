@@ -1,8 +1,8 @@
 #!/usr/bin/env node
-/* eslint-disable @typescript-eslint/ban-ts-comment -- generated twin carries an explained @ts-nocheck */
+/* eslint-disable -- generated twin: the @ts-nocheck below is explained; the owner is the type-check surface */
 // @ts-nocheck — generated twin; owner bin/ozzydev-license-gate.mjs is the type-check surface
 // GENERATED TWIN — do not edit. Owner: nexartis-ozzydev/bin/ozzydev-license-gate.mjs
-// owner_version: 1.0.0 · owner_sha256: f5577531aa14d96d0375688e1bd43754adb4e809303ccadb9541c5a8bb365899
+// owner_version: 1.0.0 · owner_sha256: a9df838524f22c6a7d6e3642cb07e94055c73640bfd5cc62690c3f6939fa4481
 /**
  * License gate — proprietary/copyright conformance gate (Fleet Hardening v1).
  *
@@ -51,17 +51,15 @@ export const NPM_LICENSE_FIELD = 'SEE LICENSE IN LICENSE';
 function usageText() {
 	// Twin body is copied verbatim. --help must name the file actually invoked:
 	// owner bin/ozzydev-license-gate.mjs, generated twin scripts/license-gate.mjs.
+	// --verify-twins is OWNER-ONLY (a twin refuses `not_owner` at exit 3), so the
+	// twin's help must not advertise a command it cannot run (Codex P2, license wave).
 	const base = process.argv[1] ? process.argv[1].split(/[/\\]/).pop() : '';
-	const isOwner = base === 'ozzydev-license-gate.mjs';
-	const rel = isOwner ? 'bin/ozzydev-license-gate.mjs' : 'scripts/license-gate.mjs';
-	// `--verify-twins` is OWNER-ONLY (a twin has no owner sha to compare against
-	// and refuses `not_owner`), so the twin's help must not advertise it — a
-	// generated twin that advertises a command it cannot run is a false door.
-	let text = `usage: node ${rel} [--repo <path>] [--json] [--strict] [--help]\n`;
-	if (isOwner) {
-		text += `       node ${rel} --verify-twins [--workspace <path>] [--json]\n`;
-	}
-	return text;
+	const owner = base === 'ozzydev-license-gate.mjs';
+	const rel = owner ? 'bin/ozzydev-license-gate.mjs' : 'scripts/license-gate.mjs';
+	return (
+		`usage: node ${rel} [--repo <path>] [--json] [--strict] [--help]` +
+		(owner ? `\n       node ${rel} --verify-twins [--workspace <path>] [--json]` : '')
+	);
 }
 
 // --- tiny glob (REUSE.toml path patterns) --------------------------------
@@ -376,6 +374,10 @@ export function parseReuseToml(text) {
 					buf += c + (inner[++i] ?? '');
 					continue;
 				}
+				// TOML 1.0 forbids a physical newline inside a quoted string. The
+				// array body is joined with a real newline (not a space) so this
+				// is detectable rather than silently collapsed (Codex P2).
+				if (c === '\n') fail('physical newline inside a quoted string is not valid TOML', lineNo);
 				if (c === inStr) inStr = null;
 				buf += c;
 				continue;
@@ -406,6 +408,30 @@ export function parseReuseToml(text) {
 			}
 		}
 		return raw.filter(Boolean).map((s) => unquote(s, lineNo));
+	};
+
+	/** Index of the array-closing `]`, skipping any `]` inside a quoted string.
+	 * A naive `indexOf(']')` closed the array early on a value like
+	 * `path = ["a]b"]`, silently truncating the glob list (Codex P2). */
+	const findArrayClose = (s, from) => {
+		let inStr = null;
+		for (let i = from; i < s.length; i++) {
+			const c = s[i];
+			if (inStr) {
+				if (inStr === '"' && c === '\\') {
+					i++;
+					continue;
+				}
+				if (c === inStr) inStr = null;
+				continue;
+			}
+			if (c === '"' || c === "'") {
+				inStr = c;
+				continue;
+			}
+			if (c === ']') return i;
+		}
+		return -1;
 	};
 
 	const lines = String(text).split(/\r?\n/);
@@ -470,9 +496,12 @@ export function parseReuseToml(text) {
 
 		if (arrayKey) {
 			arrayBuf.push(line);
-			const joined = arrayBuf.join(' ');
+			// Join with a real newline (not a space): a physical newline inside a
+			// quoted string stays detectable, and a comment after the close is
+			// stripped on the correct line.
+			const joined = arrayBuf.join('\n');
 			const open = joined.indexOf('[');
-			const close = joined.indexOf(']', open + 1);
+			const close = findArrayClose(joined, open + 1);
 			if (close === -1) continue;
 			// TOML 1.0 permits an end-of-line comment after the array close.
 			const rest = joined
@@ -541,7 +570,7 @@ export function parseReuseToml(text) {
 
 		if (value.startsWith('[')) {
 			if (key === 'precedence') fail('precedence must be a string, not an array', lineNo);
-			const close = value.indexOf(']', 1);
+			const close = findArrayClose(value, 1);
 			if (close === -1) {
 				arrayKey = key;
 				arrayBuf = [value];
@@ -738,22 +767,49 @@ export function runGate(repo = process.cwd()) {
 // the mode from a twin refuses `not_owner` instead of guessing.
 export const TWIN_STAMP_RE = /^\/\/ owner_version: (\S+) · owner_sha256: ([0-9a-f]{64})$/m;
 
+// The generated twin is `header + ownerBody`, where the header is the shebang
+// plus the GENERATED-TWIN comment block and ownerBody is the owner source with
+// its shebang dropped. Verifying the BODY sha — not just the embedded stamp —
+// closes the hole where a hand-edited twin keeps a matching stamp and reads as
+// current (Codex P1/P2 across the license wave: twinDrift returned ok solely
+// because the claimed stamp matched expectedSha; the remainder was never read).
+export const TWIN_HEADER_RE =
+	/^#![^\n]*\n(?:\/\* eslint-disable[^\n]*\n)?(?:\/\/ @ts-nocheck[^\n]*\n)?\/\/ GENERATED TWIN[^\n]*\n\/\/ owner_version: [^\n]*· owner_sha256: [0-9a-f]{64}\n/;
+
+// Normalize line endings before hashing so a Windows CRLF checkout of the twin
+// or the owner produces the same sha as an LF checkout (Codex P2, license wave).
+const normalizeEol = (s) => String(s).replace(/\r\n?/g, '\n');
+
 export function ownerBodySha(ownerSource) {
 	return createHash('sha256')
-		.update(ownerSource.replace(/^#![^\n]*\n/, ''))
+		.update(normalizeEol(ownerSource).replace(/^#![^\n]*\n/, ''))
 		.digest('hex');
 }
 
 export function parseTwinStamp(twinSource) {
-	const m = twinSource.match(TWIN_STAMP_RE);
+	const m = normalizeEol(twinSource).match(TWIN_STAMP_RE);
 	return m ? { version: m[1], sha256: m[2] } : null;
+}
+
+/** sha256 of the twin body (the generated header stripped), or null when the
+ * header is not the expected generated shape. */
+export function twinBodySha(twinSource) {
+	const norm = normalizeEol(twinSource);
+	const m = norm.match(TWIN_HEADER_RE);
+	if (!m) return null;
+	return createHash('sha256').update(norm.slice(m[0].length)).digest('hex');
 }
 
 export function twinDrift(twinSource, expectedSha) {
 	const stamp = parseTwinStamp(twinSource);
 	if (!stamp) return { status: 'missing_stamp' };
+	const bodySha = twinBodySha(twinSource);
+	if (bodySha === null) return { status: 'missing_stamp' };
+	if (bodySha !== expectedSha) {
+		return { status: 'drift', found: bodySha, expected: expectedSha, reason: 'body' };
+	}
 	if (stamp.sha256 !== expectedSha) {
-		return { status: 'drift', found: stamp.sha256, expected: expectedSha };
+		return { status: 'drift', found: stamp.sha256, expected: expectedSha, reason: 'stamp' };
 	}
 	return { status: 'ok', version: stamp.version };
 }
@@ -782,6 +838,13 @@ export function verifyTwins(workspace, ownerSource) {
 			...twinDrift(readFileSync(twinPath, 'utf8'), expectedSha)
 		});
 	}
+	// A workspace that contains no git repositories scanned nothing — reporting
+	// `ok` there is a false green (Codex P2, license wave). Refuse loudly.
+	if (twins.length === 0) {
+		const e = new Error(`workspace_empty: no git repositories found under ${root}`);
+		e.code = 'workspace_empty';
+		throw e;
+	}
 	// `twin_missing` is reported but never fails this check: the contract is
 	// "the twin that exists matches the owner sha". A repo without a twin is a
 	// coverage question for the license scaffold, not twin drift.
@@ -804,7 +867,8 @@ function main(argv) {
 		json: false,
 		strict: false,
 		verifyTwins: false,
-		workspace: null
+		workspace: null,
+		workspaceSeen: false
 	};
 	for (let i = 0; i < argv.length; i++) {
 		const a = argv[i];
@@ -815,11 +879,27 @@ function main(argv) {
 		else if (a === '--json') args.json = true;
 		else if (a === '--strict') args.strict = true;
 		else if (a === '--verify-twins') args.verifyTwins = true;
-		else if (a === '--workspace') args.workspace = argv[++i];
-		else {
+		else if (a === '--workspace') {
+			const v = argv[++i];
+			if (v === undefined || v.startsWith('--')) {
+				process.stderr.write(`license-gate: --workspace requires a path\n${usageText()}\n`);
+				return 2;
+			}
+			args.workspace = v;
+			args.workspaceSeen = true;
+		} else {
 			process.stderr.write(`unknown flag: ${a}\n${usageText()}\n`);
 			return 2;
 		}
+	}
+	// `--workspace` only means anything to the owner-only twin walk; accepting it
+	// (and silently ignoring it) in an ordinary gate run is a false door
+	// (Codex P2, license wave).
+	if (args.workspaceSeen && !args.verifyTwins) {
+		process.stderr.write(
+			`license-gate: --workspace is only valid with --verify-twins\n${usageText()}\n`
+		);
+		return 2;
 	}
 	if (args.verifyTwins) {
 		const ownerPath = fileURLToPath(import.meta.url);

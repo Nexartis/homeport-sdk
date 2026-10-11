@@ -15,8 +15,11 @@ jobs:
     steps:
       - uses: googleapis/release-please-action@v4
         with:
-          release-type: node
-          package-name: '@nexartis/homeport-sdk'
+          # Manifest mode (config-file + manifest-file). Do NOT set `release-type`:
+          # when it is set the action builds the manifest from inputs and ignores
+          # `release-please-config.json`, so its `packages["."].extra-files`
+          # (src/core/version.ts) never bumps — the recurring SDK_VERSION drift
+          # (1.2.9/#103, 1.2.10/#106, 1.2.11/#109, 1.2.12/#111).
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
           target-branch: dev
