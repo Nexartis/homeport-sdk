@@ -72,9 +72,14 @@ jobs:
           mkdir -p typedoc-site/dist
           cp -R typedoc-site/public/. typedoc-site/dist/
 
+      # typedoc-site is a standalone project with its own pnpm-lock.yaml; the
+      # root pnpm-workspace.yaml (config-only, no `packages:`) otherwise makes
+      # pnpm resolve the ROOT workspace and skip typedoc-site/node_modules, so
+      # `wrangler` is absent at deploy time. --ignore-workspace installs
+      # typedoc-site against its own lockfile.
       - name: Install docs-site dependencies
         working-directory: typedoc-site
-        run: pnpm install --frozen-lockfile || pnpm install
+        run: pnpm install --frozen-lockfile --ignore-workspace || pnpm install --ignore-workspace
 
       - name: Deploy to Cloudflare (prod)
         working-directory: typedoc-site
