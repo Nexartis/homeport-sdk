@@ -2,7 +2,7 @@
 /* eslint-disable -- generated twin: the @ts-nocheck below is explained; the owner is the type-check surface */
 // @ts-nocheck — generated twin; owner bin/ozzydev-license-gate.mjs is the type-check surface
 // GENERATED TWIN — do not edit. Owner: nexartis-ozzydev/bin/ozzydev-license-gate.mjs
-// owner_version: 1.0.4 · owner_sha256: c62aa0deee09574e9caeb0e8017012ef3478c4d3bd9a1b965888fe505cac03ec
+// owner_version: 1.0.5 · owner_sha256: df29c588d228bc19a0f6f45e6ddb4387278506ab3837213723e1c13cb18964e1
 /**
  * License gate — proprietary/copyright conformance gate (Fleet Hardening v1).
  *
@@ -43,7 +43,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const SCHEMA = 'ozzydev-license-gate/v1';
-export const VERSION = '1.0.3';
+export const VERSION = '1.0.5';
 export const PROPRIETARY_REF = 'LicenseRef-Nexartis-Proprietary';
 export const PROPRIETARY_TEXT_PATH = 'LICENSES/LicenseRef-Nexartis-Proprietary.txt';
 export const NPM_LICENSE_FIELD = 'SEE LICENSE IN LICENSE';
@@ -744,10 +744,14 @@ function licensesDirEntries(root) {
  * (deprecated `GPL-2.0+`) also accepts the canonical `-or-later` file. Matching
  * is case-insensitive because SPDX identifiers are case-insensitive. */
 function hasLicenseFile(entries, id, plus) {
-	// REUSE 3.3: an or-later expression (deprecated `GPL-2.0+`) REQUIRES the
-	// or-later License File — an only-version file does NOT satisfy an or-later
-	// grant. A bare identifier matches its own file.
-	const names = plus ? [`${id}-or-later`] : [id];
+	// A deprecated unary `+` (`GPL-2.0+`, `Apache-1.0+`) means "or later" and is
+	// satisfied by the base identifier's own License File — `Apache-1.0+` is
+	// covered by `LICENSES/Apache-1.0.txt` (reuse-tool CHANGELOG v1.0.0, #123) —
+	// and, where the identifier carries that alias, also by the canonical
+	// `-or-later` file. A bare identifier matches only its own file. Matching is
+	// case-insensitive because SPDX identifiers are case-insensitive.
+	const names = [id];
+	if (plus) names.push(`${id}-or-later`);
 	return names.some((name) => {
 		const re = new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.[^/]+$`, 'i');
 		return entries.some((f) => re.test(f));
@@ -903,6 +907,14 @@ export function runGate(repo = process.cwd()) {
 			if (precedence === 'override') {
 				if (lastMatch && lastMatch.hasLicense && lastMatch.spdxLicense) {
 					collect(lastMatch.spdxLicense);
+				} else {
+					// REUSE 3.3: an `override` annotation ignores the file's own
+					// header AND any closer Licensing Information; a matching
+					// override that supplies no SPDX-License-Identifier therefore
+					// leaves the file with no effective licence (complete Licensing
+					// Information MUST still be associated with the file) — record
+					// it as uncovered.
+					uncovered.push(rel);
 				}
 			} else {
 				for (const expr of headerExprs) collect(expr);
