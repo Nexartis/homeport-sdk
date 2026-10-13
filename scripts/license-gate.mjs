@@ -2,7 +2,7 @@
 /* eslint-disable -- generated twin: the @ts-nocheck below is explained; the owner is the type-check surface */
 // @ts-nocheck — generated twin; owner bin/ozzydev-license-gate.mjs is the type-check surface
 // GENERATED TWIN — do not edit. Owner: nexartis-ozzydev/bin/ozzydev-license-gate.mjs
-// owner_version: 1.0.0 · owner_sha256: a9df838524f22c6a7d6e3642cb07e94055c73640bfd5cc62690c3f6939fa4481
+// owner_version: 1.0.4 · owner_sha256: c62aa0deee09574e9caeb0e8017012ef3478c4d3bd9a1b965888fe505cac03ec
 /**
  * License gate — proprietary/copyright conformance gate (Fleet Hardening v1).
  *
@@ -43,7 +43,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const SCHEMA = 'ozzydev-license-gate/v1';
-export const VERSION = '1.0.0';
+export const VERSION = '1.0.3';
 export const PROPRIETARY_REF = 'LicenseRef-Nexartis-Proprietary';
 export const PROPRIETARY_TEXT_PATH = 'LICENSES/LicenseRef-Nexartis-Proprietary.txt';
 export const NPM_LICENSE_FIELD = 'SEE LICENSE IN LICENSE';
@@ -345,16 +345,94 @@ export function isSpdxExpression(raw) {
 	return parseOr() && p === tokens.length;
 }
 
+/** Extract every SPDX licence identifier and exception identifier referenced by
+ * an expression, in order. Operators (AND/OR/WITH), parentheses and the `+`
+ * suffix are not identifiers; a `+` marks the preceding id as `-or-later`.
+ * A `DocumentRef-…:LicenseRef-…` token is keyed by its LicenseRef part, which is
+ * the name REUSE uses for the License File. */
+export function spdxIdentifiers(raw) {
+	const input = String(raw ?? '').trim();
+	if (!input) return [];
+	const tokens = [];
+	let i = 0;
+	while (i < input.length) {
+		const c = input[i];
+		if (c === ' ' || c === '\t') {
+			i++;
+			continue;
+		}
+		if (c === '(' || c === ')' || c === '+') {
+			tokens.push(c);
+			i++;
+			continue;
+		}
+		const m = /^[A-Za-z0-9.-]+(?::[A-Za-z0-9.-]+)?/.exec(input.slice(i));
+		if (!m) {
+			i++;
+			continue;
+		}
+		tokens.push(m[0]);
+		i += m[0].length;
+	}
+	const out = [];
+	for (let t = 0; t < tokens.length; t++) {
+		const tok = tokens[t];
+		if (tok === '(' || tok === ')' || tok === 'AND' || tok === 'OR' || tok === 'WITH' || tok === '+')
+			continue;
+		const id = tok.includes(':') ? tok.slice(tok.lastIndexOf(':') + 1) : tok;
+		out.push({ id, plus: tokens[t + 1] === '+' });
+	}
+	return out;
+}
+
 export function parseReuseToml(text) {
 	const fail = (reason, lineNo) => {
 		const e = new Error(`${reason}${lineNo > 0 ? ` (line ${lineNo})` : ''}`);
 		e.code = 'reuse_toml_malformed';
 		throw e;
 	};
+	// TOML 1.0 basic-string escapes. An escape outside this set is malformed
+	// input, never a character to skip: the scanner used to skip the char after
+	// `\` and the permissive unquote() regex accepted the invalid escape, so
+	// `path = ["foo\]bar"]` passed as valid metadata (Codex P2). Validate the
+	// escape set here so malformed input produces the classified error.
+	const BASIC_ESCAPES = { b: '\b', t: '\t', n: '\n', f: '\f', r: '\r', '"': '"', '\\': '\\' };
+	const decodeBasicString = (inner, lineNo) => {
+		let out = '';
+		for (let i = 0; i < inner.length; i++) {
+			const c = inner[i];
+			if (c !== '\\') {
+				if (c === '\n') fail('physical newline inside a quoted string is not valid TOML', lineNo);
+				out += c;
+				continue;
+			}
+			const esc = inner[++i];
+			if (esc === undefined) fail('unterminated escape sequence in a basic string', lineNo);
+			if (esc === 'u' || esc === 'U') {
+				const width = esc === 'u' ? 4 : 8;
+				const hex = inner.slice(i + 1, i + 1 + width);
+				if (hex.length !== width || !/^[0-9A-Fa-f]+$/.test(hex)) {
+					fail(`invalid \\${esc} escape: expected ${width} hex digits`, lineNo);
+				}
+				const cp = parseInt(hex, 16);
+				if (cp > 0x10ffff || (cp >= 0xd800 && cp <= 0xdfff)) {
+					fail(`invalid \\${esc} escape: not a Unicode scalar value`, lineNo);
+				}
+				out += String.fromCodePoint(cp);
+				i += width;
+				continue;
+			}
+			if (!Object.prototype.hasOwnProperty.call(BASIC_ESCAPES, esc)) {
+				fail(`invalid escape sequence \\${esc} in a basic string`, lineNo);
+			}
+			out += BASIC_ESCAPES[esc];
+		}
+		return out;
+	};
 	const unquote = (s, lineNo) => {
 		const t = String(s).trim();
 		if (/^"(?:[^"\\]|\\.)*"$/.test(t)) {
-			return t.slice(1, -1).replace(/\\(["\\])/g, '$1');
+			return decodeBasicString(t.slice(1, -1), lineNo);
 		}
 		// TOML 1.0 literal strings: single-quoted, no escape processing.
 		if (/^'[^']*'$/.test(t)) {
@@ -483,9 +561,22 @@ export function parseReuseToml(text) {
 			fail('[[annotations]] block carries no SPDX-FileCopyrightText or SPDX-License-Identifier', 0);
 		}
 		// Copyright-only is legal REUSE (copyright may aggregate under the
-		// default precedence "closest") but it is not a license. Its globs
-		// must not count as SPDX coverage.
-		if (block.hasLicense) blocks.push({ paths: block.paths });
+		// default precedence "closest") but it is not a license. It is still a
+		// real [[annotations]] table for the LAST-MATCH rule (REUSE 3.3: "If a
+		// Covered File is covered by multiple [[annotations]] tables in the same
+		// REUSE.toml file, then exclusively the last matching table in the file
+		// is used"). Every block is therefore retained in document order with
+		// its hasLicense flag, and runGate resolves the LAST match per file. The
+		// old `if (block.hasLicense) blocks.push(...)` dropped copyright-only
+		// tables, so a later copyright-only table could not override an earlier
+		// licence-bearing glob and the file stayed wrongly licensed (Codex P2,
+		// 2026-10-11).
+		blocks.push({
+			paths: block.paths,
+			hasLicense: block.hasLicense,
+			spdxLicense: block.hasLicense ? block.spdxLicense : null,
+			precedence: block.precedence ?? 'closest'
+		});
 		block = null;
 	};
 
@@ -613,7 +704,10 @@ export function parseReuseToml(text) {
 	return blocks;
 }
 
-function hasSpdxHeader(absPath) {
+/** Every valid SPDX-License-Identifier expression found in the file head (the
+ * first six lines, matching the coverage scan). */
+function spdxHeaderExpressions(absPath) {
+	const out = [];
 	try {
 		const lines = readFileSync(absPath, 'utf8').split(/\r?\n/, 6);
 		for (const line of lines) {
@@ -626,12 +720,38 @@ function hasSpdxHeader(absPath) {
 			// The trailing comment-close stripper must accept the HTML spec's
 			// `--!>` end and not only `-->` (CodeQL js/bad-html-filtering-regexp).
 			const value = m[1].replace(/\s*(?:\*\/|--!?>)\s*$/, '').trim();
-			if (isSpdxExpression(value)) return true;
+			if (isSpdxExpression(value)) out.push(value);
 		}
-		return false;
 	} catch {
-		return false;
+		// Unreadable file → no header.
 	}
+	return out;
+}
+
+function hasSpdxHeader(absPath) {
+	return spdxHeaderExpressions(absPath).length > 0;
+}
+
+function licensesDirEntries(root) {
+	try {
+		return readdirSync(join(root, 'LICENSES'));
+	} catch {
+		return [];
+	}
+}
+
+/** REUSE names a License File `<SPDX-License-Identifier>.<ext>`. A `+` suffix
+ * (deprecated `GPL-2.0+`) also accepts the canonical `-or-later` file. Matching
+ * is case-insensitive because SPDX identifiers are case-insensitive. */
+function hasLicenseFile(entries, id, plus) {
+	// REUSE 3.3: an or-later expression (deprecated `GPL-2.0+`) REQUIRES the
+	// or-later License File — an only-version file does NOT satisfy an or-later
+	// grant. A bare identifier matches its own file.
+	const names = plus ? [`${id}-or-later`] : [id];
+	return names.some((name) => {
+		const re = new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.[^/]+$`, 'i');
+		return entries.some((f) => re.test(f));
+	});
 }
 
 function gitTracked(repo) {
@@ -706,7 +826,16 @@ export function runGate(repo = process.cwd()) {
 			throw e;
 		}
 	}
-	const globs = annotations.flatMap((a) => a.paths.map((p) => globToRegExp(p)));
+	// REUSE 3.3 last-match: for each file, exclusively the LAST matching
+	// [[annotations]] table applies. Keep every table in document order so a
+	// later copyright-only table correctly withdraws an earlier licence-bearing
+	// glob (Codex P2, 2026-10-11).
+	const annotationBlocks = annotations.map((a) => ({
+		globs: a.paths.map((p) => globToRegExp(p)),
+		hasLicense: a.hasLicense,
+		spdxLicense: a.hasLicense ? a.spdxLicense : null,
+		precedence: a.precedence ?? 'closest'
+	}));
 	const tracked = gitTracked(root);
 	// Publishable package manifests beyond the root carry distribution terms
 	// too: a workspace package that could be published under `"license": "MIT"`
@@ -732,10 +861,61 @@ export function runGate(repo = process.cwd()) {
 		}
 	}
 	const uncovered = [];
+	// REUSE 3.3 License Files: for every licence AND exception identifier that
+	// is part of any SPDX expression associated with a Covered File there MUST
+	// be a License File in LICENSES/. Collect the identifiers from file headers
+	// and from the REUSE.toml tables, then verify a file exists for each. The
+	// gate previously verified only the Nexartis proprietary text, so a header
+	// such as `SPDX-License-Identifier: MIT` with no `LICENSES/MIT.txt` reported
+	// OK while `reuse lint` failed (Codex P1, 2026-10-11).
+	const requiredIds = new Map();
+	const collect = (expr) => {
+		for (const ident of spdxIdentifiers(expr)) {
+			// REUSE 3.3: an exact identifier (`GPL-2.0`) and its or-later form
+			// (`GPL-2.0+`) are SEPARATE requirements — each needs its own License
+			// File — so they must NOT collapse into a single entry (Codex P2).
+			const key = `${ident.id}${ident.plus ? '+' : ''}`;
+			if (!requiredIds.has(key)) requiredIds.set(key, { id: ident.id, plus: ident.plus });
+		}
+	};
+	// Collect the identifiers a Covered File ACTUALLY declares — from its header
+	// expression, or from its EFFECTIVE (REUSE 3.3 last-match) annotation. A
+	// declaration that matches no tracked file, or that a later last-match block
+	// supersedes, must never require a LICENSES/ file: scanning every block
+	// globally false-failed `license_file_missing` for an unused identifier
+	// (Codex P2, 2026-10-11).
 	for (const rel of tracked) {
 		const abs = join(root, rel);
-		if (hasSpdxHeader(abs)) continue;
-		if (globs.some((g) => g.test(rel))) continue;
+		const headerExprs = spdxHeaderExpressions(abs);
+		// REUSE 3.3: exclusively the LAST matching [[annotations]] table applies.
+		let lastMatch = null;
+		for (const b of annotationBlocks) {
+			if (b.globs.some((g) => g.test(rel))) lastMatch = b;
+		}
+		const precedence = lastMatch?.precedence ?? 'closest';
+		if (headerExprs.length > 0) {
+			// REUSE 3.3 precedence controls how an annotation interacts with the
+			// file's OWN header: `closest` (default) keeps the header and ignores
+			// the annotation; `aggregate` adds the annotation's licence; `override`
+			// REPLACES the header (its expression is NOT collected). Ignoring the
+			// annotation dropped required License Files; collecting the header under
+			// `override` kept a superseded one (Codex P1/P2).
+			if (precedence === 'override') {
+				if (lastMatch && lastMatch.hasLicense && lastMatch.spdxLicense) {
+					collect(lastMatch.spdxLicense);
+				}
+			} else {
+				for (const expr of headerExprs) collect(expr);
+				if (precedence === 'aggregate' && lastMatch && lastMatch.hasLicense && lastMatch.spdxLicense) {
+					collect(lastMatch.spdxLicense);
+				}
+			}
+			continue;
+		}
+		if (lastMatch && lastMatch.hasLicense) {
+			if (lastMatch.spdxLicense) collect(lastMatch.spdxLicense);
+			continue;
+		}
 		uncovered.push(rel);
 	}
 	const headerFindings = uncovered.length;
@@ -744,6 +924,21 @@ export function runGate(repo = process.cwd()) {
 			class: 'spdx_coverage',
 			detail: `${headerFindings} tracked file(s) lack SPDX header and are not REUSE.toml-declared`,
 			files: uncovered.slice(0, 25)
+		});
+	}
+	const licenseFiles = licensesDirEntries(root);
+	const missingLicenseFiles = [];
+	for (const meta of requiredIds.values()) {
+		if (!hasLicenseFile(licenseFiles, meta.id, meta.plus)) {
+			missingLicenseFiles.push(`${meta.id}${meta.plus ? '+' : ''}`);
+		}
+	}
+	if (missingLicenseFiles.length > 0) {
+		missingLicenseFiles.sort();
+		findings.push({
+			class: 'license_file_missing',
+			detail: `${missingLicenseFiles.length} license identifier(s) in use have no LICENSES/ file: ${missingLicenseFiles.join(', ')}`,
+			files: missingLicenseFiles.slice(0, 25)
 		});
 	}
 
@@ -773,8 +968,16 @@ export const TWIN_STAMP_RE = /^\/\/ owner_version: (\S+) · owner_sha256: ([0-9a
 // closes the hole where a hand-edited twin keeps a matching stamp and reads as
 // current (Codex P1/P2 across the license wave: twinDrift returned ok solely
 // because the claimed stamp matched expectedSha; the remainder was never read).
+//
+// Every stripped header line MUST be a non-executable comment: Node ignores the
+// shebang, and the eslint / ts-nocheck / GENERATED-TWIN / owner_version lines are
+// comments. The optional ESLint line is constrained to a single
+// `/* eslint-disable … */` comment that closes on the SAME line — the previous
+// `[^\n]*` accepted `/* eslint-disable */ process.exit(0); //`, whose executable
+// tail was stripped before hashing, so a tampered twin still read `ok` while
+// running `process.exit(0)` before any check (Codex P1, 2026-10-11).
 export const TWIN_HEADER_RE =
-	/^#![^\n]*\n(?:\/\* eslint-disable[^\n]*\n)?(?:\/\/ @ts-nocheck[^\n]*\n)?\/\/ GENERATED TWIN[^\n]*\n\/\/ owner_version: [^\n]*· owner_sha256: [0-9a-f]{64}\n/;
+	/^#![^\n]*\n(?:\/\* eslint-disable[^*\n]*\*\/[ \t]*\n)?(?:\/\/ @ts-nocheck[^\n]*\n)?\/\/ GENERATED TWIN[^\n]*\n\/\/ owner_version: [^\n]*· owner_sha256: [0-9a-f]{64}\n/;
 
 // Normalize line endings before hashing so a Windows CRLF checkout of the twin
 // or the owner produces the same sha as an LF checkout (Codex P2, license wave).
@@ -875,13 +1078,23 @@ function main(argv) {
 		if (a === '--help' || a === '-h') {
 			process.stdout.write(usageText() + '\n');
 			return 0;
-		} else if (a === '--repo') args.repo = argv[++i];
-		else if (a === '--json') args.json = true;
+		} else if (a === '--repo') {
+			// An omitted value (last arg) or an empty automation expansion must
+			// refuse, never fall back to process.cwd(): `runGate(undefined)` and
+			// `runGate('')` both silently gate the current directory instead of
+			// the requested repo (Codex P2, 2026-10-11).
+			const v = argv[++i];
+			if (v === undefined || v === '' || v.startsWith('--')) {
+				process.stderr.write(`license-gate: --repo requires a path\n${usageText()}\n`);
+				return 2;
+			}
+			args.repo = v;
+		} else if (a === '--json') args.json = true;
 		else if (a === '--strict') args.strict = true;
 		else if (a === '--verify-twins') args.verifyTwins = true;
 		else if (a === '--workspace') {
 			const v = argv[++i];
-			if (v === undefined || v.startsWith('--')) {
+			if (v === undefined || v === '' || v.startsWith('--')) {
 				process.stderr.write(`license-gate: --workspace requires a path\n${usageText()}\n`);
 				return 2;
 			}
