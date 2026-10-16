@@ -130,7 +130,7 @@ const healthy = await homeport.isHealthy();
 
 ## API overview
 
-All methods live on namespaces under the client. The only direct methods on `HomeportClient` are `health()`, `isHealthy()`, and `deepHealth()`.
+All methods live on namespaces under the client. The direct methods on `HomeportClient` are `health()`, `isHealthy()`, `deepHealth()`, `setTraceContext()`, and `invalidateCache()`.
 
 | Namespace | Purpose |
 |---|---|
@@ -146,7 +146,7 @@ Full generated reference (every type, every method, every example) is hosted at 
 
 ## Migrating from `@nexartis/nexartis-nanda-node-sdk`
 
-Current release is `@nexartis/homeport-sdk@1.1.0`. It supersedes `@nexartis/nexartis-nanda-node-sdk` (last published as 1.2.1). The wire protocol is unchanged — names and env vars moved at 1.0.0; 1.1.0 adds visibility / capability / MCP / pricing / trust-badge contracts.
+Current release is `@nexartis/homeport-sdk@1.2.14`. It supersedes `@nexartis/nexartis-nanda-node-sdk` (last published as 1.2.1). The wire protocol is unchanged — names and env vars moved at 1.0.0; 1.1.0 adds visibility / capability / MCP / pricing / trust-badge contracts.
 
 ```bash
 pnpm remove @nexartis/nexartis-nanda-node-sdk
