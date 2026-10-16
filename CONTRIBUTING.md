@@ -112,5 +112,5 @@ security bugs.
 ## License
 
 By contributing, you agree that your contributions will be licensed under the
-the [Nexartis Proprietary License](./LICENSE), and that you have the right to
+the [Apache-2.0 License](./LICENSE), and that you have the right to
 submit them under that license (as asserted by your DCO sign-off).

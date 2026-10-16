@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
+// SPDX-License-Identifier: Apache-2.0
 import { describe, it, expect, vi } from 'vitest';
 import { createHomeportLogger, type HomeportLogger } from './logger';
 

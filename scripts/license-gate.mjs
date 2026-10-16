@@ -2,7 +2,7 @@
 /* eslint-disable -- generated twin: the @ts-nocheck below is explained; the owner is the type-check surface */
 // @ts-nocheck — generated twin; owner bin/ozzydev-license-gate.mjs is the type-check surface
 // GENERATED TWIN — do not edit. Owner: nexartis-ozzydev/bin/ozzydev-license-gate.mjs
-// owner_version: 1.0.5 · owner_sha256: df29c588d228bc19a0f6f45e6ddb4387278506ab3837213723e1c13cb18964e1
+// owner_version: 1.0.6 · owner_sha256: eb836d051428ff3c5a846083197497e894abe99fcb58a8067a9b61e32ec2c806
 /**
  * License gate — proprietary/copyright conformance gate (Fleet Hardening v1).
  *
@@ -43,10 +43,11 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const SCHEMA = 'ozzydev-license-gate/v1';
-export const VERSION = '1.0.5';
+export const VERSION = '1.0.6';
 export const PROPRIETARY_REF = 'LicenseRef-Nexartis-Proprietary';
 export const PROPRIETARY_TEXT_PATH = 'LICENSES/LicenseRef-Nexartis-Proprietary.txt';
 export const NPM_LICENSE_FIELD = 'SEE LICENSE IN LICENSE';
+export const APACHE_LICENSE_FIELD = 'Apache-2.0';
 
 function usageText() {
 	// Twin body is copied verbatim. --help must name the file actually invoked:
@@ -710,8 +711,40 @@ function spdxHeaderExpressions(absPath) {
 	const out = [];
 	try {
 		const lines = readFileSync(absPath, 'utf8').split(/\r?\n/, 6);
+		// REUSE 3.3 §Ignore blocks: licensing info between REUSE-IgnoreStart and
+		// REUSE-IgnoreEnd is NOT a declaration — a documented SPDX example inside
+		// an ignore block must not be collected (Codex P2, 2026-10-14).
+		let ignoring = false;
 		for (const line of lines) {
-			const m = /SPDX-License-Identifier\s*:\s*(\S.*?)\s*$/.exec(line);
+			// REUSE 3.3 §Ignore: only the SPAN delimited by a REUSE-IgnoreStart up
+			// to its matching REUSE-IgnoreEnd is ignored — a marker does NOT blank
+			// the whole line. Mask only the delimited span to spaces and still scan
+			// the REMAINDER of the line, so a real declaration sharing the line
+			// with a marker — e.g. `// REUSE-IgnoreEnd // SPDX-License-Identifier:
+			// MIT` — is collected; a whole-line `continue` dropped it and reported
+			// the file UNCOVERED, a false fail (SI-S8).
+			// EVERY marker is processed in TEXTUAL order — the LAST marker on the
+			// line wins — so a same-line `Start…End` (empty block), `End…Start`
+			// (close then reopen), and any longer alternation leave the correct
+			// state; else `ignoring` sticks and hides every later SPDX header. A
+			// first-occurrence comparison let an odd alternation like
+			// `Start…End…Start` leave the block closed and collect the next SPDX
+			// example as real licensing info (Codex P2, 2026-10-15).
+			const markers = [];
+			const markerRe = /REUSE-Ignore(Start|End)/g;
+			let mk;
+			while ((mk = markerRe.exec(line)) !== null) {
+				markers.push({ at: mk.index, len: mk[0].length, isStart: mk[1] === 'Start' });
+			}
+			let masked = '';
+			let pos = 0;
+			for (const marker of markers) {
+				masked += ignoring ? ' '.repeat(marker.at - pos) : line.slice(pos, marker.at);
+				ignoring = marker.isStart;
+				pos = marker.at + marker.len;
+			}
+			masked += ignoring ? ' '.repeat(line.length - pos) : line.slice(pos);
+			const m = /SPDX-License-Identifier\s*:\s*(\S.*?)\s*$/.exec(masked);
 			if (!m) continue;
 			// The value must be a real identifier ON THE SAME LINE. The old
 			// full-head regex let `\s*` cross newlines, so a blank
@@ -743,15 +776,16 @@ function licensesDirEntries(root) {
 /** REUSE names a License File `<SPDX-License-Identifier>.<ext>`. A `+` suffix
  * (deprecated `GPL-2.0+`) also accepts the canonical `-or-later` file. Matching
  * is case-insensitive because SPDX identifiers are case-insensitive. */
-function hasLicenseFile(entries, id, plus) {
-	// A deprecated unary `+` (`GPL-2.0+`, `Apache-1.0+`) means "or later" and is
-	// satisfied by the base identifier's own License File — `Apache-1.0+` is
-	// covered by `LICENSES/Apache-1.0.txt` (reuse-tool CHANGELOG v1.0.0, #123) —
-	// and, where the identifier carries that alias, also by the canonical
-	// `-or-later` file. A bare identifier matches only its own file. Matching is
+function hasLicenseFile(entries, id) {
+	// A deprecated unary `+` (`GPL-2.0+`, `Apache-1.0+`) is satisfied ONLY by the
+	// base identifier's own License File — `Apache-1.0+` is covered by
+	// `LICENSES/Apache-1.0.txt`, NEVER by a substituted `Apache-1.0-or-later` file
+	// (reuse-tool CHANGELOG v0.15.0, #123: "it should not be identified as missing
+	// … if `LICENSES/Apache-1.0.txt` exists"; `_strip_plus_from_identifier` in
+	// `_util.py` drops the trailing `+` and `report.py` matches the STRIPPED
+	// identifier only). A bare identifier matches only its own file. Matching is
 	// case-insensitive because SPDX identifiers are case-insensitive.
 	const names = [id];
-	if (plus) names.push(`${id}-or-later`);
 	return names.some((name) => {
 		const re = new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\.[^/]+$`, 'i');
 		return entries.some((f) => re.test(f));
@@ -785,16 +819,46 @@ export function runGate(repo = process.cwd()) {
 		findings.push({ class: 'license_missing', detail: 'LICENSE not found at repo root' });
 	} else {
 		const body = readFileSync(lic, 'utf8');
-		const covered = /LICENSES\//.test(body) || /LicenseRef-Nexartis-Proprietary/.test(body);
+		const covered =
+			/LICENSES\//.test(body) ||
+			/LicenseRef-Nexartis-Proprietary/.test(body) ||
+			/Apache License/i.test(body);
 		if (!covered) {
 			findings.push({
 				class: 'license_pointer_missing',
-				detail: 'LICENSE does not point at LICENSES/ or the Nexartis proprietary ref'
+				detail: 'LICENSE does not point at LICENSES/ or a recognized license ref (proprietary / Apache)'
 			});
 		}
 	}
+	// The required license text file depends on the license class: a proprietary
+	// repo carries LICENSES/LicenseRef-Nexartis-Proprietary.txt; an Apache-2.0
+	// repo (e.g. Homeport) carries LICENSES/Apache-2.0.txt. The class is derived
+	// from the LICENSE pointer naming the Apache SPDX id / path / prose — a valid
+	// Apache pointer (`LICENSES/Apache-2.0.txt`) need not carry the prose "Apache
+	// License" (Codex P1, 2026-10-16).
+	const licBody = existsSync(lic) ? readFileSync(lic, 'utf8') : '';
+	// The class follows the PRIMARY pointer, never an Apache mention anywhere in
+	// the body: a proprietary LICENSE that references an Apache-licensed
+	// dependency must not be reclassified (Codex P1, 2026-10-16). A body that
+	// names the proprietary ref is proprietary regardless of any Apache mention;
+	// otherwise the primary pointer (first non-blank, non-comment line) decides.
+	const namesProprietary = /LicenseRef-Nexartis-Proprietary/i.test(licBody);
+	const primaryPointer =
+		licBody
+			.split('\n')
+			.map((l) => l.trim())
+			.find((l) => l && !l.startsWith('#')) ?? '';
+	const isApache =
+		!namesProprietary && /Apache-2\.0|Apache License/i.test(primaryPointer || licBody);
+	const requiredTextPath = isApache ? 'LICENSES/Apache-2.0.txt' : PROPRIETARY_TEXT_PATH;
+	// The expected package.json `license` value follows the SAME detected class —
+	// never an unconditional either/or that lets a proprietary repo publish the
+	// materially more permissive `Apache-2.0` while its LICENSE stays proprietary
+	// (Codex P1, 2026-10-16).
+	const expectedPackageLicense = isApache ? APACHE_LICENSE_FIELD : NPM_LICENSE_FIELD;
+	const licenseClassLabel = isApache ? 'Apache-2.0' : 'proprietary';
 	for (const [p, cls] of [
-		[PROPRIETARY_TEXT_PATH, 'license_text_missing'],
+		[requiredTextPath, 'license_text_missing'],
 		['NOTICE', 'notice_missing'],
 		['REUSE.toml', 'reuse_toml_missing']
 	]) {
@@ -806,10 +870,10 @@ export function runGate(repo = process.cwd()) {
 	if (existsSync(pkgPath)) {
 		try {
 			const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
-			if (pkg.license !== NPM_LICENSE_FIELD) {
+			if (pkg.license !== expectedPackageLicense) {
 				findings.push({
 					class: 'package_license_field',
-					detail: `package.json license=${JSON.stringify(pkg.license ?? null)} (expected "${NPM_LICENSE_FIELD}")`
+					detail: `package.json license=${JSON.stringify(pkg.license ?? null)} (expected "${expectedPackageLicense}" for the detected ${licenseClassLabel} license class)`
 				});
 			}
 		} catch {
@@ -857,10 +921,10 @@ export function runGate(repo = process.cwd()) {
 			continue;
 		}
 		if (pkg.private === true) continue;
-		if (pkg.license !== NPM_LICENSE_FIELD) {
+		if (pkg.license !== expectedPackageLicense) {
 			findings.push({
 				class: 'package_license_field',
-				detail: `${rel} license=${JSON.stringify(pkg.license ?? null)} (expected "${NPM_LICENSE_FIELD}")`
+				detail: `${rel} license=${JSON.stringify(pkg.license ?? null)} (expected "${expectedPackageLicense}" for the detected ${licenseClassLabel} license class)`
 			});
 		}
 	}
@@ -941,7 +1005,7 @@ export function runGate(repo = process.cwd()) {
 	const licenseFiles = licensesDirEntries(root);
 	const missingLicenseFiles = [];
 	for (const meta of requiredIds.values()) {
-		if (!hasLicenseFile(licenseFiles, meta.id, meta.plus)) {
+		if (!hasLicenseFile(licenseFiles, meta.id)) {
 			missingLicenseFiles.push(`${meta.id}${meta.plus ? '+' : ''}`);
 		}
 	}

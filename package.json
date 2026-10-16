@@ -31,7 +31,7 @@
   "files": [
     "dist",
     "LICENSE",
-    "LICENSES/LicenseRef-Nexartis-Proprietary.txt",
+    "LICENSES/Apache-2.0.txt",
     "NOTICE",
     "README.md",
     "CHANGELOG.md"
@@ -69,11 +69,11 @@
     "orchestration",
     "routing",
     "nexartis",
-    "proprietary",
+    "Apache-2.0",
     "cloudflare-workers"
   ],
   "author": "Nexartis, LLC",
-  "license": "SEE LICENSE IN LICENSE",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@size-limit/preset-small-lib": "^12.1.0",
     "@types/node": "^25.5.0",
