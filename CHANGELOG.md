@@ -4,6 +4,14 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.2.16](https://github.com/Nexartis/homeport-sdk/compare/v1.2.15...v1.2.16) (2026-10-16)
+
+
+### Bug Fixes
+
+* **docs-deploy:** pin Cloudflare account_id in typedoc-site/wrangler.jsonc ([ff7866b](https://github.com/Nexartis/homeport-sdk/commit/ff7866bf99ee12314b5d408ce01199e4088be69d))
+* **docs-deploy:** pin the Cloudflare account_id in typedoc-site/wrangler.jsonc so deploy-docs never needs the account-list API call (Workers-scoped token lacks Account Settings:Read) ([0214050](https://github.com/Nexartis/homeport-sdk/commit/021405044d95be56c1dc8280a67fab3189bf8dab))
+
 ## [1.2.15](https://github.com/Nexartis/homeport-sdk/compare/v1.2.14...v1.2.15) (2026-10-16)
 
 
