@@ -1,7 +1,7 @@
 # Project Governance
 
-The Homeport SDK is stewarded by Nexartis, LLC and developed in
-the open under the Apache License, Version 2.0. This document describes how
+The Homeport SDK is stewarded by Nexartis, LLC and distributed under the
+Nexartis Proprietary License. This document describes how
 decisions are made, how contributors earn additional responsibilities, and
 how substantial changes are reviewed.
 
