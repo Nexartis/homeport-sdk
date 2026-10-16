@@ -31,6 +31,12 @@
 	 * ===================================================================
 	 */
 	"name": "homeport-sdk-docs",
+	// Nexartis Cloudflare account. Committed here (not a secret) so `wrangler
+	// deploy` never needs the account-list API call, which fails for a
+	// Workers-scoped CLOUDFLARE_API_TOKEN that lacks Account Settings:Read
+	// (deploy-docs run 38894343604: "Failed to automatically retrieve account
+	// IDs"). An empty CLOUDFLARE_ACCOUNT_ID secret no longer breaks the deploy.
+	"account_id": "80b6115de50fb9c334e34502dcab401d",
 	"main": "src/worker.ts",
 	"compatibility_date": "2025-01-01",
 	"compatibility_flags": ["nodejs_compat"],
