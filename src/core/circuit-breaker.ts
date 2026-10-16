@@ -59,9 +59,8 @@ export class CircuitBreaker {
 	private keyFor(url: string): string {
 		try {
 			const u = new URL(url);
-			const depth = Number.isFinite(this.config!.groupingDepth) && this.config!.groupingDepth! >= 0
-				? this.config!.groupingDepth!
-				: 2;
+			const rawDepth = this.config!.groupingDepth;
+			const depth = typeof rawDepth === 'number' && rawDepth >= 0 ? rawDepth : 2;
 			const segments = u.pathname.split('/').filter(Boolean).slice(0, depth);
 			return `${u.origin}/${segments.join('/')}`;
 		} catch {

@@ -4,7 +4,7 @@ Runnable examples for `@nexartis/homeport-sdk`. Each `.ts` file is
 self-contained and uses the public package name, so you can copy it into your
 own project verbatim after `pnpm add @nexartis/homeport-sdk`.
 
-All examples are licensed under **Apache-2.0** (see SPDX header at top of
+All examples are licensed under the **Nexartis Proprietary License** (see SPDX header at top of
 each file).
 
 ## Prerequisites

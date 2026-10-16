@@ -69,8 +69,7 @@
     "orchestration",
     "routing",
     "nexartis",
-    "apache-2.0",
-    "oss",
+    "proprietary",
     "cloudflare-workers"
   ],
   "author": "Nexartis, LLC",
