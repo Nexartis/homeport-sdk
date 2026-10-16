@@ -4,6 +4,14 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.2.15](https://github.com/Nexartis/homeport-sdk/compare/v1.2.14...v1.2.15) (2026-10-16)
+
+
+### Bug Fixes
+
+* **homeport-sdk:** circuit-breaker Infinity depth + license/version truth ([1098513](https://github.com/Nexartis/homeport-sdk/commit/10985131055d568f46aaab2ce09c3483eb710273))
+* **homeport-sdk:** circuit-breaker Infinity depth + license/version truth ([366cafb](https://github.com/Nexartis/homeport-sdk/commit/366cafb72ac88cc78ccb5be102a2399aa108586d))
+
 ## [1.2.14](https://github.com/Nexartis/homeport-sdk/compare/v1.2.13...v1.2.14) (2026-10-11)
 
 
