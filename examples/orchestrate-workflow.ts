@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Example — Create and run a DAG-based multi-agent workflow.
  *

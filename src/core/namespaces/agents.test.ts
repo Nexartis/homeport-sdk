@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Coverage for AgentsNamespace methods not exercised by client.test.ts.
  * Mirrors the mocked-fetch pattern in ../client.test.ts.

@@ -4,7 +4,7 @@
 # license gate will flag it). Path classes that cannot carry an inline comment
 # are declared here; files that CAN carry a header SHOULD declare it inline:
 #   SPDX-FileCopyrightText: 2026 Nexartis, LLC
-#   SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
+#   SPDX-License-Identifier: Apache-2.0
 version = 1
 
 [[annotations]]
@@ -43,4 +43,4 @@ path = [
   "typedoc-site/.gitignore"
 ]
 SPDX-FileCopyrightText = "2026 Nexartis, LLC"
-SPDX-License-Identifier = "LicenseRef-Nexartis-Proprietary"
+SPDX-License-Identifier = "Apache-2.0"
