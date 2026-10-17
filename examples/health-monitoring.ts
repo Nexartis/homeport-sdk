@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: LicenseRef-Nexartis-Proprietary
+// SPDX-License-Identifier: Apache-2.0
 /**
  * Example — Health monitoring with lifecycle hooks, circuit breaker, and deep health.
  *
