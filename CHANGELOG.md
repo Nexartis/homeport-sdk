@@ -4,6 +4,14 @@ All notable changes to the Homeport SDK will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Pre-rebrand history for the predecessor package `@nexartis/nexartis-nanda-node-sdk` (≤ 1.3.0) is archived in [`CHANGELOG.pre-homeport.md`](./CHANGELOG.pre-homeport.md).
 
+## [1.2.17](https://github.com/Nexartis/homeport-sdk/compare/v1.2.16...v1.2.17) (2026-10-17)
+
+
+### Bug Fixes
+
+* **license:** restore Apache-2.0 (revert erroneous proprietary relicensing) ([3efca77](https://github.com/Nexartis/homeport-sdk/commit/3efca7751ddef6580122f9df273ee15b7e071488))
+* **license:** restore Apache-2.0 (revert erroneous proprietary relicensing) ([f55ec19](https://github.com/Nexartis/homeport-sdk/commit/f55ec19b6168f696235193606af6986e11bf3607))
+
 ## [1.2.16](https://github.com/Nexartis/homeport-sdk/compare/v1.2.15...v1.2.16) (2026-10-16)
 
 
